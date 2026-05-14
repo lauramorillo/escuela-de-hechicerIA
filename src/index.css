@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Georgia", serif;
+  --color-magic-gold: #c5a059;
+  --color-ink: #0a0502;
+  --color-gryffindor: #740001;
+  --color-slytherin: #1A472A;
+  --color-hufflepuff: #ecb939;
+  --color-ravenclaw: #0E1A40;
+  
+  --color-gryffindor-main: #740001;
+  --color-gryffindor-accent: #D3A625;
+  --color-slytherin-main: #1A472A;
+  --color-slytherin-accent: #aaaaaa;
+  --color-hufflepuff-main: #FFDB00;
+  --color-hufflepuff-accent: #000000;
+  --color-ravenclaw-main: #0E1A40;
+  --color-ravenclaw-accent: #946B2D;
+}
+
+@layer utilities {
+  .house-Gryffindor {
+    @apply bg-[var(--color-gryffindor)] border-[var(--color-magic-gold)];
+  }
+  .house-Slytherin {
+    @apply bg-[var(--color-slytherin)] border-[var(--color-magic-gold)];
+  }
+  .house-Hufflepuff {
+    @apply bg-[var(--color-hufflepuff)] border-[var(--color-magic-gold)];
+  }
+  .house-Ravenclaw {
+    @apply bg-[var(--color-ravenclaw)] border-[var(--color-magic-gold)];
+  }
+}
+

@@ -1,0 +1,10 @@
+{
+  "name": "Sombrero Seleccionador Mágico",
+  "description": "Descubre a qué casa de Hogwarts perteneces. Ponte el Sombrero Seleccionador y la magia de Gemini decidirá tu destino.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
