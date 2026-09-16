@@ -18,6 +18,8 @@
   --color-hufflepuff-accent: #000000;
   --color-ravenclaw-main: #0E1A40;
   --color-ravenclaw-accent: #946B2D;
+  --color-magic-purple: #a855f7;
+  --color-magic-purple-dark: #581c87;
 }
 
 @layer utilities {
