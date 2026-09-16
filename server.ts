@@ -1,16 +1,30 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import textToSpeech from "@google-cloud/text-to-speech";
 
-const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
+const ttsClient = new textToSpeech.v1beta1.TextToSpeechClient();
+
+const isVertex = Boolean(process.env.GOOGLE_CLOUD_PROJECT);
+const apiKey = process.env.GEMINI_API_KEY;
+
+let ai: GoogleGenAI;
+
+if (isVertex) {
+  console.log(`🏰 Conectando con Vertex AI (Agent Platform) - Proyecto: ${process.env.GOOGLE_CLOUD_PROJECT}, Región: ${process.env.GOOGLE_CLOUD_LOCATION || 'europe-west1'}`);
+  ai = new GoogleGenAI({
+    vertexai: true,
+    project: process.env.GOOGLE_CLOUD_PROJECT,
+    location: process.env.GOOGLE_CLOUD_LOCATION || "europe-west1",
+  });
+} else {
+  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+    console.warn("⚠️ [GEMINI] Advertencia: GEMINI_API_KEY no está configurada o contiene el valor por defecto en .env");
   }
-});
+  ai = new GoogleGenAI({ apiKey });
+}
 
 async function startServer() {
   const app = express();
@@ -34,10 +48,13 @@ async function startServer() {
       const houses = ["Gryffindor", "Slytherin", "Ravenclaw", "Hufflepuff"];
       const targetHouse = houses[Math.floor(Math.random() * houses.length)];
 
+      const modelName = process.env.GEMINI_MODEL || (isVertex ? "gemini-2.5-flash" : "gemini-2.5-flash");
+
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: modelName,
         contents: [
           {
+            role: "user",
             parts: [
               {
                 text: `Analiza la imagen. Tu objetivo principal es detectar si hay una persona que tiene puesto en la cabeza ALGO que parezca un sombrero (particularmente el Sombrero Seleccionador de Harry Potter, que puede ser un cono marrón/negro, un peluche o similar). Evalúa la confianza de 0.0 a 1.0. Sé MUY GENEROSO: si ves a la persona con cualquier tipo de sombrero o bulto en la cabeza, asigna una confianza alta. Si la confianza es mayor a 0.3, establece 'detected: true'. Si 'detected' es true, asigna OBLIGATORIAMENTE a la persona a la casa ${targetHouse}. Genera una o dos frases en Español actuando como el Sombrero Seleccionador, describiendo las cualidades que ves en la persona que encajan con ${targetHouse} y terminando con el nombre de esta casa elegida recordando gritarlo. Inspírate en: Gryffindor (Valor, osadía), Slytherin (Ambición, astucia), Ravenclaw (Inteligencia, curiosidad), Hufflepuff (Lealtad, honestidad). Si nadie está en la imagen o si definitivamente no hay nada sobre su cabeza, devuelve { "detected": false, "confidence": <score> }. Devuelve un JSON.`
@@ -89,26 +106,7 @@ async function startServer() {
     }
   });
 
-  // Helper to add WAV header to raw PCM
-  function addWavHeader(pcmBuffer: Buffer, sampleRate: number, numChannels: number, bitDepth: number) {
-    const header = Buffer.alloc(44);
-    header.write('RIFF', 0);
-    header.writeUInt32LE(36 + pcmBuffer.length, 4); // File size
-    header.write('WAVE', 8);
-    header.write('fmt ', 12);
-    header.writeUInt32LE(16, 16); // Subchunk1Size
-    header.writeUInt16LE(1, 20); // AudioFormat = 1 (PCM)
-    header.writeUInt16LE(numChannels, 22); // NumChannels
-    header.writeUInt32LE(sampleRate, 24); // SampleRate
-    header.writeUInt32LE(sampleRate * numChannels * (bitDepth / 8), 28); // ByteRate
-    header.writeUInt16LE(numChannels * (bitDepth / 8), 32); // BlockAlign
-    header.writeUInt16LE(bitDepth, 34); // BitsPerSample
-    header.write('data', 36);
-    header.writeUInt32LE(pcmBuffer.length, 40); // Subchunk2Size
-    return Buffer.concat([header, pcmBuffer]);
-  }
-
-  // API route for TTS (Text-to-Speech)
+  // API route for TTS (Google Cloud Text-to-Speech v1beta1 con Gemini TTS & prompt de interpretación)
   app.post("/api/tts", async (req, res) => {
     try {
       const { text } = req.body;
@@ -116,29 +114,37 @@ async function startServer() {
         return res.status(400).json({ error: "No text provided" });
       }
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash-tts-preview",
-        contents: [{ parts: [{ text }] }],
-        config: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Charon' } // Let's use Charon for a deep wizardly voice
-            }
-          }
-        }
+      // Prompt de dirección teatral para el modelo generativo de voz Gemini:
+      const prompt =
+        "Actúa como el Sombrero Seleccionador de Hogwarts de Harry Potter: habla con un tono sabio, misterioso, antiguo y solemne. Al final proclama con energía, orgullo y grandeza la casa asignada.";
+
+      const voiceName = process.env.TTS_VOICE || "Charon"; // Charon, Fenrir o Achernar
+
+      const [response] = await ttsClient.synthesizeSpeech({
+        audioConfig: {
+          audioEncoding: "LINEAR16",
+          pitch: 0,
+          speakingRate: 1,
+        },
+        input: {
+          prompt,
+          text,
+        },
+        voice: {
+          languageCode: "es-es",
+          modelName: "gemini-3.1-flash-tts-preview",
+          name: voiceName,
+        },
       });
-      
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (base64Audio) {
-         // Convert raw PCM to WAV so standard browsers can play it via Data URL natively
-         const pcmBuffer = Buffer.from(base64Audio, 'base64');
-         const wavBuffer = addWavHeader(pcmBuffer, 24000, 1, 16);
-         const finalBase64 = wavBuffer.toString('base64');
-         
-         res.json({ audio: finalBase64 });
+
+      if (response.audioContent) {
+        const audioBuffer = Buffer.isBuffer(response.audioContent)
+          ? response.audioContent
+          : Buffer.from(response.audioContent);
+        const finalBase64 = audioBuffer.toString("base64");
+        res.json({ audio: finalBase64 });
       } else {
-         res.status(500).json({ error: "No audio generated" });
+        res.status(500).json({ error: "No audio generated" });
       }
     } catch (error: any) {
       console.error(error);

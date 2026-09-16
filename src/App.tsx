@@ -162,7 +162,6 @@ export default function App() {
           <h1 className="text-lg md:text-xl font-bold uppercase tracking-[3px] text-magic-gold">
             The Sorting Ceremony
           </h1>
-          <div className="text-xs opacity-60">EST. 990 A.D.</div>
         </motion.div>
 
         {/* Main Content Area */}
@@ -390,7 +389,6 @@ export default function App() {
       <div className="absolute bottom-0 w-full h-[40px] bg-black/50 flex flex-wrap items-center justify-between px-4 md:px-10 text-[10px] md:text-xs uppercase tracking-[1px] text-magic-gold z-50">
         <div>• MAGIC_AI: ACTIVE</div>
         <div className="hidden sm:block">SUBJECT: {appState === 'result' && result?.house ? 'INITIATE ASSIGNED' : 'UNKNOWN INITIATE'}</div>
-        <div>LATENCY: 14ms</div>
       </div>
 
       <style>{`
