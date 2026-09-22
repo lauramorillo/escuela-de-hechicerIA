@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "cloud-build-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-build-basics/SKILL.md",
+      "computedHash": "90d8a6b74c254301663d41741f2b757cbc60b9022410f723bed9a0c773cb8296"
+    },
+    "cloud-run-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-run-basics/SKILL.md",
+      "computedHash": "a0446f5d1ce8edcb6413b34b7ee5f9a50941f7813dc12a650b258dd6f5435c50"
+    },
+    "firebase-basics": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/firebase-basics/SKILL.md",
+      "computedHash": "d06efe30e52a84ead9e3acbe2759726cc035b6b18baef76252117d205d7f2906"
+    },
+    "google-cloud-solution-architecture": {
+      "source": "google/skills",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cloud-solution-architecture/SKILL.md",
+      "computedHash": "3c3e236cd4c167058a39bd753ec067c24299a8c58193457489c5e5f7b641e0cc"
+    }
+  }
+}
