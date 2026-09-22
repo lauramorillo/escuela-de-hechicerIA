@@ -2,9 +2,9 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# Escuela de HechicerIA - Sombrero Seleccionador
 
-This contains everything you need to run your app locally.
+Aplicación interactiva con reconocimiento visual, asignación y balanceo atómico de casas en Cloud Firestore y síntesis de voz con Cloud Text-to-Speech y Gemini.
 
 View your app in AI Studio: https://ai.studio/apps/4ea89dad-e40c-4ed4-99e4-d372f0b7861a
 

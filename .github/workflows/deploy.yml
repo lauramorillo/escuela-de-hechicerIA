@@ -1,0 +1,59 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'terraform/**'
+      - '.gitignore'
+
+env:
+  PROJECT_ID: escuela-de-hechiceria
+  REGION: europe-west1
+  REPO_NAME: escuela-de-hechiceria-repo
+  SERVICE_NAME: escuela-de-hechiceria
+  WIF_PROVIDER: ${{ secrets.WIF_PROVIDER || vars.WIF_PROVIDER }}
+  WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT || vars.WIF_SERVICE_ACCOUNT }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Permite a GitHub generar el token OIDC seguro
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker for Google Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_TAG="${{ github.sha }}"
+          IMAGE_BASE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}"
+          
+          docker build \
+            -t "${IMAGE_BASE}:${IMAGE_TAG}" \
+            -t "${IMAGE_BASE}:latest" \
+            .
+            
+          docker push "${IMAGE_BASE}:${IMAGE_TAG}"
+          docker push "${IMAGE_BASE}:latest"
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}

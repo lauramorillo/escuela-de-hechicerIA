@@ -6,3 +6,13 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!terraform.tfvars.example
+*.tfplan

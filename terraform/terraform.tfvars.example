@@ -1,0 +1,6 @@
+project_id         = "escuela-de-hechiceria"
+region             = "europe-west1"
+app_name           = "escuela-de-hechiceria"
+active_workshop_id = "morcillaconf-2026"
+container_image    = "europe-west1-docker.pkg.dev/escuela-de-hechiceria/escuela-de-hechiceria-repo/escuela-de-hechiceria:latest"
+github_repository  = "lauramorillo/escuela-de-hechicerIA"
