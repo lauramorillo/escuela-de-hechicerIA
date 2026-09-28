@@ -1,16 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Camera, Play, RefreshCw, Volume2, Wand2 } from 'lucide-react';
+import { Sparkles, Camera, Play, RefreshCw, Volume2, Wand2, GraduationCap } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
+import { ClassesHub } from './components/ClassesHub.tsx';
+import { ClassDetail } from './components/ClassDetail.tsx';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-type AppState = 'welcome' | 'scanning' | 'detecting' | 'speaking' | 'result' | 'error';
+type AppState = 'welcome' | 'scanning' | 'detecting' | 'speaking' | 'result' | 'classes_hub' | 'class_detail' | 'error';
+
 
 interface DetectionResult {
   detected: boolean;
@@ -38,7 +41,9 @@ export default function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [result, setResult] = useState<DetectionResult | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [isFaceDetected, setIsFaceDetected] = useState(false);
+
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isSpeakingAnimation, setIsSpeakingAnimation] = useState(false);
 
@@ -86,7 +91,7 @@ export default function App() {
             const savedPhoto =
               (data.studentId && localStorage.getItem(`sorting_hat_photo_${data.studentId}`)) ||
               localStorage.getItem('sorting_hat_last_photo') ||
-              '/escuela-hechiceria-bg.jpg';
+              '/escuela-hechiceria-bg-no-tittle.jpg';
 
             setCapturedImage(savedPhoto);
             setAppState('result');
@@ -152,14 +157,6 @@ export default function App() {
     audioRef.current.onended = () => {
       setIsSpeakingAnimation(false);
       mouthOpenRef.current = 0;
-      // Capturar la imagen de celebración del alumno con el sombrero
-      const finalPhoto = getCompoundScreenshot();
-      if (finalPhoto) {
-        setCapturedImage(finalPhoto);
-        try {
-          localStorage.setItem('sorting_hat_last_photo', finalPhoto);
-        } catch (e) {}
-      }
       setAppState('result');
     };
     audioRef.current.onplay = () => {
@@ -337,29 +334,50 @@ export default function App() {
               // Boca articulada en movimiento al hablar
               const naturalW = img.naturalWidth || 826;
               const naturalH = img.naturalHeight || 1201;
-              // Hendidura física oscura de la boca debajo de la cara triangular (~63.3% de la altura)
-              const splitRatio = 0.633;
+              // Hendidura anatómica oscura de la boca (~64.0% de la altura, y=768px)
+              const splitRatio = 0.640;
               const splitY = naturalH * splitRatio;
               const destSplitY = cur.h * splitRatio;
 
-              // Descenso de la mandíbula inferior (ala)
-              const mouthDrop = mouthOpen * (cur.h * 0.038);
+              // Descenso de la mandíbula inferior (ala) - apertura más visible y expresiva
+              const mouthDrop = mouthOpen * (cur.h * 0.052);
               // Leve oscilación teatral del cono al gesticular
-              const speakWobble = Math.sin(Date.now() / 140) * mouthOpen * 0.032;
+              const speakWobble = Math.sin(Date.now() / 140) * mouthOpen * 0.025;
 
-              // 1. Cavidad interior oscura de la boca que se abre
+              // 1. Cavidad interior oscura: media elipse arqueada/circular por arriba y recta por abajo
               ctx.save();
-              ctx.fillStyle = '#0a0503';
+              const mouthCenterX = -anchorOffsetX + (408 / naturalW) * cur.w;
+              const mouthRadiusX = (172 / naturalW) * cur.w;
+              const baselineY = -anchorOffsetY + destSplitY + mouthDrop + 1;
+              const mouthHeight = mouthDrop * 1.08;
+
               ctx.beginPath();
+              // Arco superior que va de izquierda (PI) a derecha (2*PI)
               ctx.ellipse(
+                mouthCenterX,
+                baselineY,
+                mouthRadiusX,
+                mouthHeight,
                 0,
-                -anchorOffsetY + destSplitY + mouthDrop * 0.45,
-                cur.w * 0.18,
-                mouthDrop * 1.15,
-                0,
-                0,
-                Math.PI * 2
+                Math.PI,
+                Math.PI * 2,
+                false
               );
+              // Línea recta en la base que conecta derecha con izquierda a lo largo de la mandíbula
+              ctx.closePath();
+
+              // Degradado vertical de profundidad
+              const grad = ctx.createLinearGradient(
+                mouthCenterX,
+                baselineY - mouthHeight,
+                mouthCenterX,
+                baselineY
+              );
+              grad.addColorStop(0, '#1a0e08');
+              grad.addColorStop(0.35, '#070302');
+              grad.addColorStop(1, '#020101');
+
+              ctx.fillStyle = grad;
               ctx.fill();
               ctx.restore();
 
@@ -614,7 +632,7 @@ export default function App() {
           >
             {/* Obra de arte completa a pantalla completa */}
             <img
-              src="/escuela-hechiceria-bg.jpg"
+              src="/escuela-hechiceria-bg-no-tittle.jpg"
               alt="Escuela de Hechicería"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
@@ -648,6 +666,25 @@ export default function App() {
                     Entrar a la Ceremonia
                   </>
                 )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!result) {
+                    setResult({
+                      detected: true,
+                      house: 'Gryffindor',
+                      phrase: '¡Bienvenido a Hogwarts! Las Aulas Mágicas están abiertas.',
+                      studentId: 'student_tester',
+                    });
+                  }
+                  setAppState('classes_hub');
+                }}
+                className="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 underline font-sans cursor-pointer transition-colors"
+              >
+                <GraduationCap className="w-4 h-4 text-amber-400" />
+                <span>Acceder directamente a las Aulas Mágicas (Pruebas)</span>
               </button>
             </div>
           </motion.div>
@@ -840,10 +877,10 @@ export default function App() {
               </div>
             </div>
 
-            {/* Veredicto y Botón de Reinicio */}
-            <div className="relative z-30 w-full max-w-2xl text-center">
+            {/* Veredicto y Botones de Acción */}
+            <div className="relative z-30 w-full max-w-2xl text-center flex flex-col items-center gap-3">
               <div
-                className="p-4 sm:p-6 rounded-2xl relative overflow-hidden"
+                className="w-full p-3.5 sm:p-5 rounded-2xl relative overflow-hidden"
                 style={{
                   background: 'rgba(12, 7, 3, 0.9)',
                   backdropFilter: 'blur(16px)',
@@ -853,16 +890,51 @@ export default function App() {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-yellow-500/10" />
                 <p
-                  className="text-base sm:text-lg md:text-xl leading-relaxed italic relative z-10"
+                  className="text-sm sm:text-base md:text-lg leading-relaxed italic relative z-10"
                   style={{ color: '#f0e6d6' }}
                 >
                   "{result.phrase}"
                 </p>
               </div>
+
+              {/* Botón de Empezar clases */}
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={() => setAppState('classes_hub')}
+                  className="px-10 py-4 rounded-full font-bold text-base sm:text-lg flex items-center gap-3 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 text-black shadow-[0_0_35px_rgba(234,179,8,0.7)] hover:scale-105 transition-all duration-300 cursor-pointer"
+                >
+                  <GraduationCap className="w-6 h-6 text-stone-950" />
+                  <span>Empezar clases</span>
+                </button>
+              </div>
             </div>
           </motion.div>
+
+        )}
+
+        {appState === 'classes_hub' && (
+          <ClassesHub
+            studentHouse={result?.house || 'Gryffindor'}
+            studentId={result?.studentId || ''}
+            onSelectClass={(classId) => {
+              setSelectedClassId(classId);
+              setAppState('class_detail');
+            }}
+            onBackToResult={() => setAppState('result')}
+          />
+        )}
+
+        {appState === 'class_detail' && selectedClassId && (
+          <ClassDetail
+            classId={selectedClassId}
+            studentHouse={result?.house || 'Gryffindor'}
+            studentId={result?.studentId || ''}
+            workshopId={result?.workshopId}
+            onBack={() => setAppState('classes_hub')}
+          />
         )}
       </AnimatePresence>
+
 
       <style>{`
         @keyframes float {

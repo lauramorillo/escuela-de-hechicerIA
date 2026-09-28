@@ -23,6 +23,18 @@ export interface StudentDoc {
   justification: string;
 }
 
+export interface SubmissionDoc {
+  class_id: string;
+  answer: string;
+  grade: string;
+  grade_label: string;
+  points: number;
+  feedback: string;
+  advice: string;
+  evaluated_at?: FirebaseFirestore.FieldValue | Date | string;
+}
+
+
 export interface AssignmentResult {
   studentId: string;
   house: HouseId;
@@ -62,6 +74,7 @@ class InMemoryDb {
   private workshops = new Map<string, {
     houses: Map<HouseId, HouseDoc>;
     students: Map<string, StudentDoc>;
+    submissions: Map<string, Map<string, SubmissionDoc>>;
   }>();
 
   private getWorkshop(workshopId: string) {
@@ -71,7 +84,7 @@ class InMemoryDb {
       for (const house of HOUSES) {
         houses.set(house, { members_count: 0, score: 0, updated_at: new Date() });
       }
-      ws = { houses, students: new Map() };
+      ws = { houses, students: new Map(), submissions: new Map() };
       this.workshops.set(workshopId, ws);
     }
     return ws;
@@ -124,6 +137,20 @@ class InMemoryDb {
     return this.getWorkshop(workshopId).students.get(studentId) || null;
   }
 
+  async removeStudent(workshopId: string, studentId: string): Promise<boolean> {
+    const ws = this.getWorkshop(workshopId);
+    const student = ws.students.get(studentId);
+    if (!student) return false;
+
+    const houseDoc = ws.houses.get(student.house);
+    if (houseDoc && houseDoc.members_count > 0) {
+      houseDoc.members_count -= 1;
+      houseDoc.updated_at = new Date();
+    }
+    ws.students.delete(studentId);
+    return true;
+  }
+
   async getHouseStats(workshopId: string): Promise<HouseCounts> {
     const ws = this.getWorkshop(workshopId);
     const counts = createEmptyCounts();
@@ -131,6 +158,53 @@ class InMemoryDb {
       counts[h] = ws.houses.get(h)?.members_count ?? 0;
     }
     return counts;
+  }
+
+  async getHouseScores(workshopId: string): Promise<Record<HouseId, number>> {
+    const ws = this.getWorkshop(workshopId);
+    const scores: Record<HouseId, number> = { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 };
+    for (const h of HOUSES) {
+      scores[h] = ws.houses.get(h)?.score ?? 0;
+    }
+    return scores;
+  }
+
+  async saveSubmission(workshopId: string, studentId: string, submission: SubmissionDoc): Promise<void> {
+    const ws = this.getWorkshop(workshopId);
+    if (!ws.submissions.has(studentId)) {
+      ws.submissions.set(studentId, new Map());
+    }
+    ws.submissions.get(studentId)!.set(submission.class_id, {
+      ...submission,
+      evaluated_at: submission.evaluated_at || new Date(),
+    });
+  }
+
+  async getSubmissions(workshopId: string, studentId: string): Promise<Record<string, SubmissionDoc>> {
+    const ws = this.getWorkshop(workshopId);
+    const studentSubs = ws.submissions.get(studentId);
+    const result: Record<string, SubmissionDoc> = {};
+    if (studentSubs) {
+      studentSubs.forEach((sub, classId) => {
+        result[classId] = sub;
+      });
+    }
+    return result;
+  }
+
+  async addHousePoints(workshopId: string, houseId: HouseId, points: number): Promise<number> {
+    const ws = this.getWorkshop(workshopId);
+    const houseDoc = ws.houses.get(houseId);
+    if (houseDoc) {
+      houseDoc.score = (houseDoc.score || 0) + points;
+      houseDoc.updated_at = new Date();
+      return houseDoc.score;
+    }
+    return points;
+  }
+
+  async deleteWorkshop(workshopId: string): Promise<void> {
+    this.workshops.delete(workshopId);
   }
 }
 
@@ -224,14 +298,15 @@ class DatabaseService {
   private readCountsFromSnaps(
     snaps: DocumentSnapshot[],
     houseRefs: DocumentReference[],
-    transaction: Transaction
+    transaction: Transaction,
+    skipHouseId?: HouseId
   ): HouseCounts {
     const counts = createEmptyCounts();
     snaps.forEach((snap, idx) => {
       const houseId = HOUSES[idx];
       if (snap.exists) {
         counts[houseId] = snap.data()?.members_count ?? 0;
-      } else {
+      } else if (houseId !== skipHouseId) {
         transaction.set(houseRefs[idx], {
           members_count: 0,
           score: 0,
@@ -258,10 +333,20 @@ class DatabaseService {
         const chosenRef = db.doc(`workshops/${workshopId}/houses/${chosenHouse}`);
         const studentRef = db.doc(`workshops/${workshopId}/students/${studentId}`);
 
-        transaction.update(chosenRef, {
-          members_count: FieldValue.increment(1),
-          updated_at: FieldValue.serverTimestamp(),
-        });
+        const chosenSnap = snaps[HOUSES.indexOf(chosenHouse)];
+        if (chosenSnap && chosenSnap.exists) {
+          transaction.update(chosenRef, {
+            members_count: FieldValue.increment(1),
+            updated_at: FieldValue.serverTimestamp(),
+          });
+        } else {
+          transaction.set(chosenRef, {
+            members_count: 1,
+            score: 0,
+            updated_at: FieldValue.serverTimestamp(),
+          });
+        }
+
         transaction.set(studentRef, {
           house: chosenHouse,
           assigned_at: FieldValue.serverTimestamp(),
@@ -336,6 +421,45 @@ class DatabaseService {
     }
   }
 
+  async removeStudent(workshopId: string, studentId: string): Promise<boolean> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.removeStudent(workshopId, studentId);
+    }
+
+    try {
+      const db = this.firestore;
+      return await db.runTransaction(
+        async (transaction) => {
+          const studentRef = db.doc(`workshops/${workshopId}/students/${studentId}`);
+          const studentSnap = await transaction.get(studentRef);
+
+          if (!studentSnap.exists) {
+            return false;
+          }
+
+          const studentData = studentSnap.data() as StudentDoc;
+          const houseId = studentData.house;
+          const houseRef = db.doc(`workshops/${workshopId}/houses/${houseId}`);
+          const houseSnap = await transaction.get(houseRef);
+
+          if (houseSnap.exists) {
+            const currentCount = houseSnap.data()?.members_count ?? 0;
+            transaction.update(houseRef, {
+              members_count: Math.max(0, currentCount - 1),
+              updated_at: FieldValue.serverTimestamp(),
+            });
+          }
+
+          transaction.delete(studentRef);
+          return true;
+        },
+        { maxAttempts: FIRESTORE_MAX_ATTEMPTS }
+      );
+    } catch {
+      return this.inMemoryFallback.removeStudent(workshopId, studentId);
+    }
+  }
+
   async getHouseStats(workshopId: string): Promise<HouseCounts> {
     if (this.isUsingFallback || !this.firestore) {
       return this.inMemoryFallback.getHouseStats(workshopId);
@@ -345,17 +469,143 @@ class DatabaseService {
       const houseRefs = HOUSES.map((id) => this.firestore!.doc(`workshops/${workshopId}/houses/${id}`));
       const snaps = await this.firestore.getAll(...houseRefs);
       const counts = createEmptyCounts();
+      let anyMissing = false;
 
       snaps.forEach((snap, idx) => {
         if (snap.exists) {
           counts[HOUSES[idx]] = snap.data()?.members_count ?? 0;
+        } else {
+          anyMissing = true;
         }
       });
+
+      if (anyMissing) {
+        this.ensureHousesInitialized(workshopId).catch(() => {});
+      }
+
       return counts;
     } catch {
       return this.inMemoryFallback.getHouseStats(workshopId);
     }
   }
+
+  async deleteWorkshop(workshopId: string): Promise<void> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.deleteWorkshop(workshopId);
+    }
+
+    try {
+      const docRef = this.firestore.doc(`workshops/${workshopId}`);
+      await this.firestore.recursiveDelete(docRef);
+    } catch (err) {
+      console.error(`Error al eliminar workshop ${workshopId}:`, err);
+      return this.inMemoryFallback.deleteWorkshop(workshopId);
+    }
+  }
+
+  async cleanAllTestWorkshops(): Promise<string[]> {
+    if (this.isUsingFallback || !this.firestore) return [];
+    try {
+      const docRefs = await this.firestore.collection("workshops").listDocuments();
+      const deleted: string[] = [];
+      for (const docRef of docRefs) {
+        if (docRef.id.startsWith("test-") || docRef.id.startsWith("ws-")) {
+          await this.firestore.recursiveDelete(docRef);
+          deleted.push(docRef.id);
+        }
+      }
+      return deleted;
+    } catch (err) {
+      console.error("Error al limpiar workshops de test:", err);
+      return [];
+    }
+  }
+
+  async getHouseScores(workshopId: string): Promise<Record<HouseId, number>> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.getHouseScores(workshopId);
+    }
+    try {
+      const houseRefs = HOUSES.map((id) => this.firestore!.doc(`workshops/${workshopId}/houses/${id}`));
+      const snaps = await this.firestore.getAll(...houseRefs);
+      const scores: Record<HouseId, number> = { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 };
+      snaps.forEach((snap, idx) => {
+        if (snap.exists) {
+          scores[HOUSES[idx]] = snap.data()?.score ?? 0;
+        }
+      });
+      return scores;
+    } catch {
+      return this.inMemoryFallback.getHouseScores(workshopId);
+    }
+  }
+
+  async saveSubmission(workshopId: string, studentId: string, submission: SubmissionDoc): Promise<void> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission);
+    }
+    try {
+      const subRef = this.firestore.doc(`workshops/${workshopId}/students/${studentId}/submissions/${submission.class_id}`);
+      await subRef.set({
+        ...submission,
+        evaluated_at: FieldValue.serverTimestamp(),
+      });
+    } catch {
+      return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission);
+    }
+  }
+
+  async getSubmissions(workshopId: string, studentId: string): Promise<Record<string, SubmissionDoc>> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.getSubmissions(workshopId, studentId);
+    }
+    try {
+      const colRef = this.firestore.collection(`workshops/${workshopId}/students/${studentId}/submissions`);
+      const snap = await colRef.get();
+      const result: Record<string, SubmissionDoc> = {};
+      snap.forEach((doc) => {
+        result[doc.id] = doc.data() as SubmissionDoc;
+      });
+      return result;
+    } catch {
+      return this.inMemoryFallback.getSubmissions(workshopId, studentId);
+    }
+  }
+
+  async addHousePoints(workshopId: string, houseId: HouseId, points: number): Promise<number> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.addHousePoints(workshopId, houseId, points);
+    }
+    try {
+      const houseRef = this.firestore.doc(`workshops/${workshopId}/houses/${houseId}`);
+      return await this.firestore.runTransaction(
+        async (transaction) => {
+          const snap = await transaction.get(houseRef);
+          let currentScore = 0;
+          let currentMembers = 0;
+          if (snap.exists) {
+            currentScore = snap.data()?.score ?? 0;
+            currentMembers = snap.data()?.members_count ?? 0;
+          }
+          const newScore = currentScore + points;
+          transaction.set(
+            houseRef,
+            {
+              score: newScore,
+              members_count: currentMembers,
+              updated_at: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          return newScore;
+        },
+        { maxAttempts: FIRESTORE_MAX_ATTEMPTS }
+      );
+    } catch {
+      return this.inMemoryFallback.addHousePoints(workshopId, houseId, points);
+    }
+  }
 }
 
 export const dbService = new DatabaseService();
+

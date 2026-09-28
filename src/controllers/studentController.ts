@@ -24,11 +24,37 @@ export async function getStudentSession(req: Request, res: Response): Promise<vo
   });
 }
 
-export function resetSession(req: Request, res: Response): void {
+export async function resetSession(req: Request, res: Response): Promise<void> {
+  const session = readStudentSession(req);
+  const studentId =
+    session?.studentId ||
+    (typeof req.query.studentId === "string" ? req.query.studentId : undefined) ||
+    (typeof req.body?.studentId === "string" ? req.body.studentId : undefined);
+
+  const workshopId =
+    session?.workshopId ||
+    (typeof req.query.workshopId === "string" ? req.query.workshopId : undefined) ||
+    (typeof req.body?.workshopId === "string" ? req.body.workshopId : undefined) ||
+    (await dbService.getEffectiveWorkshopId());
+
+  let studentRemoved = false;
+  if (studentId) {
+    studentRemoved = await dbService.removeStudent(workshopId, studentId);
+  }
+
   clearStudentSession(res);
+
   if (req.method === "GET" && req.accepts("html") && !req.xhr) {
     res.redirect("/");
     return;
   }
-  res.json({ success: true, message: "Sesión reiniciada" });
+
+  res.json({
+    success: true,
+    message: studentRemoved
+      ? "Sesión reiniciada y alumno eliminado de la casa"
+      : "Sesión reiniciada",
+    studentId,
+    studentRemoved,
+  });
 }

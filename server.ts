@@ -7,6 +7,7 @@ import { dbService } from "./db.ts";
 import { getStudentSession, resetSession } from "./src/controllers/studentController.ts";
 import { getHouseStats } from "./src/controllers/houseController.ts";
 import { detectAndSort, synthesizeSpeech } from "./src/controllers/sortingController.ts";
+import { getAvailableClasses } from "./src/controllers/classesController.ts";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -37,6 +38,7 @@ async function startServer(): Promise<void> {
   app.get("/api/me", getStudentSession);
   app.all("/api/reset", resetSession);
   app.get("/api/houses", getHouseStats);
+  app.get("/api/classes", getAvailableClasses);
   app.post("/api/detect", detectAndSort);
   app.post("/api/tts", synthesizeSpeech);
 

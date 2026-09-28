@@ -1,10 +1,22 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { dbService } from "../db.ts";
 
 describe("Multitenancy por Edición (Workshop Isolation)", () => {
+  const createdWorkshops: string[] = [];
+  function trackWorkshop(id: string): string {
+    createdWorkshops.push(id);
+    return id;
+  }
+
+  afterAll(async () => {
+    for (const ws of createdWorkshops) {
+      await dbService.deleteWorkshop(ws);
+    }
+  });
+
   it("debe aislar completamente dos workshops diferentes", async () => {
-    const ws1 = `ws-madrid-${Date.now()}`;
-    const ws2 = `ws-barcelona-${Date.now()}`;
+    const ws1 = trackWorkshop(`ws-madrid-${Date.now()}`);
+    const ws2 = trackWorkshop(`ws-barcelona-${Date.now()}`);
 
     await dbService.ensureHousesInitialized(ws1);
     await dbService.ensureHousesInitialized(ws2);

@@ -1,8 +1,20 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { dbService, HOUSES, HouseId } from "../db.ts";
 
 describe("Sombrero Seleccionador - Balanceo y Concurrencia", () => {
-  const workshopId = `test-balancing-${Date.now()}`;
+  const createdWorkshops: string[] = [];
+  function trackWorkshop(id: string): string {
+    createdWorkshops.push(id);
+    return id;
+  }
+
+  afterAll(async () => {
+    for (const ws of createdWorkshops) {
+      await dbService.deleteWorkshop(ws);
+    }
+  });
+
+  const workshopId = trackWorkshop(`test-balancing-${Date.now()}`);
 
   beforeEach(async () => {
     await dbService.ensureHousesInitialized(workshopId);
@@ -17,7 +29,7 @@ describe("Sombrero Seleccionador - Balanceo y Concurrencia", () => {
   });
 
   it("debe mantener el invariante (max - min <= 2) paso a paso con 20 asignaciones consecutivas", async () => {
-    const stepWorkshopId = `test-step-${Date.now()}`;
+    const stepWorkshopId = trackWorkshop(`test-step-${Date.now()}`);
     await dbService.ensureHousesInitialized(stepWorkshopId);
 
     for (let i = 1; i <= 20; i++) {
@@ -41,7 +53,7 @@ describe("Sombrero Seleccionador - Balanceo y Concurrencia", () => {
   });
 
   it("debe asignar 60 alumnos en paralelo garantizando la concurrencia y max - min <= 2", async () => {
-    const concurrentWorkshopId = `test-concur-${Date.now()}`;
+    const concurrentWorkshopId = trackWorkshop(`test-concur-${Date.now()}`);
     await dbService.ensureHousesInitialized(concurrentWorkshopId);
 
     const TOTAL = 60;
@@ -81,4 +93,48 @@ describe("Sombrero Seleccionador - Balanceo y Concurrencia", () => {
     expect(studentDoc?.justification).toContain(sample.houseDisplayName);
     expect(studentDoc?.assigned_at).toBeDefined();
   }, 80000);
+
+  it("debe eliminar un alumno y decrementar el contador de su casa correctamente al resetear", async () => {
+    const resetWorkshopId = trackWorkshop(`test-reset-${Date.now()}`);
+    await dbService.ensureHousesInitialized(resetWorkshopId);
+
+    const studentId = "student_to_remove_123";
+    const assigned = await dbService.assignStudentToBalancedHouse(resetWorkshopId, studentId, "gryffindor");
+
+    // Verificar que el alumno existe y la casa tiene 1 miembro
+    const beforeStats = await dbService.getHouseStats(resetWorkshopId);
+    expect(beforeStats[assigned.house]).toBe(1);
+    const studentBefore = await dbService.getStudent(resetWorkshopId, studentId);
+    expect(studentBefore).not.toBeNull();
+    expect(studentBefore?.house).toBe(assigned.house);
+
+    // Eliminar el alumno
+    const removed = await dbService.removeStudent(resetWorkshopId, studentId);
+    expect(removed).toBe(true);
+
+    // Verificar que el alumno ya no existe y el contador volvió a 0
+    const studentAfter = await dbService.getStudent(resetWorkshopId, studentId);
+    expect(studentAfter).toBeNull();
+
+    const afterStats = await dbService.getHouseStats(resetWorkshopId);
+    expect(afterStats[assigned.house]).toBe(0);
+
+    // Intentar borrar de nuevo debe devolver false
+    const removedAgain = await dbService.removeStudent(resetWorkshopId, studentId);
+    expect(removedAgain).toBe(false);
+  });
+
+  it("debe autorrecuperarse y recrear las casas si son eliminadas en tiempo de ejecución", async () => {
+    const healWorkshopId = trackWorkshop(`test-heal-${Date.now()}`);
+    // Simular que el workshop no tiene casas o fueron borradas
+    const stats = await dbService.getHouseStats(healWorkshopId);
+    expect(Object.keys(stats)).toHaveLength(4);
+
+    // Debe ser capaz de asignar un alumno directamente sin error
+    const assigned = await dbService.assignStudentToBalancedHouse(healWorkshopId, "student_heal_1");
+    expect(HOUSES).toContain(assigned.house);
+
+    const afterStats = await dbService.getHouseStats(healWorkshopId);
+    expect(afterStats[assigned.house]).toBe(1);
+  });
 });

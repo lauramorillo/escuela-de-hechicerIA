@@ -3,6 +3,9 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Georgia", serif;
+  --font-marauder: "Cinzel Decorative", Georgia, serif;
+  --font-handwriting: "Fondamento", Georgia, cursive;
+  --font-medieval: "MedievalSharp", Georgia, cursive;
   --color-magic-gold: #c5a059;
   --color-ink: #0a0502;
   --color-gryffindor: #740001;
