@@ -94,7 +94,8 @@ flowchart LR
 
 ## 🎨 5. Catálogo de Fondos e Ilustraciones (`public/`)
 
-- `escuela-hechiceria-bg-no-tittle.jpg`: Fondo oficial del Hub de Desafíos y la pantalla de bienvenida (con la pizarra central despejada y sin textos superpuestos).
+- `escuela-hechiceria-bg.jpg`: Fondo oficial de la pantalla de inicio y bienvenida (con el título e ilustraciones con letras).
+- `escuela-hechiceria-bg-no-tittle.jpg`: Fondo oficial del Hub de Desafíos / Selección de Clases (con la pizarra central despejada y sin textos superpuestos).
 - `transfiguracion-bg.jpg`: Aula gótica de McGonagall con pizarra de runas verdes.
 - `mapa-merodeador-bg.jpg`: Pergamino del Mapa del Merodeador sobre mesa rústica con vela, pluma y varita.
 - `mortifago-bg.jpg`: Mortífago con máscara de plata labrada frente a Hogwarts sitiado.

@@ -93,7 +93,7 @@ export default function App() {
           const savedPhoto =
             (data.studentId && localStorage.getItem(`sorting_hat_photo_${data.studentId}`)) ||
             localStorage.getItem('sorting_hat_last_photo') ||
-            '/escuela-hechiceria-bg-no-tittle.jpg';
+            '/escuela-hechiceria-bg.jpg';
 
           setCapturedImage(savedPhoto);
           setAppState('result');
@@ -678,7 +678,7 @@ export default function App() {
           >
             {/* Obra de arte completa a pantalla completa */}
             <img
-              src="/escuela-hechiceria-bg-no-tittle.jpg"
+              src="/escuela-hechiceria-bg.jpg"
               alt="Escuela de Hechicería"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
