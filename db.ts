@@ -90,8 +90,18 @@ class InMemoryDb {
     return ws;
   }
 
+  private globalPasskey: string | null = "alohomora";
+
   async getGlobalWorkshopId(): Promise<string | null> {
     return DEFAULT_WORKSHOP_ID;
+  }
+
+  async getWorkshopPasskey(): Promise<string | null> {
+    return this.globalPasskey;
+  }
+
+  async setWorkshopPasskey(passkey: string | null): Promise<void> {
+    this.globalPasskey = passkey ? passkey.trim() : null;
   }
 
   async ensureHousesInitialized(workshopId: string): Promise<void> {
@@ -270,6 +280,44 @@ class DatabaseService {
         { merge: true }
       );
     }
+  }
+
+  async getWorkshopPasskey(): Promise<string | null> {
+    if (!this.isUsingFallback && this.firestore) {
+      try {
+        const configDoc = await this.firestore.doc("config/global").get();
+        if (configDoc.exists) {
+          const data = configDoc.data();
+          if (data && "passkey" in data) {
+            const pk = typeof data.passkey === "string" ? data.passkey.trim() : "";
+            return pk.length > 0 ? pk : null;
+          }
+          // Si el documento existe pero aún no tiene passkey, inicializarlo con 'alohomora'
+          await this.firestore.doc("config/global").set(
+            { passkey: "alohomora", updated_at: FieldValue.serverTimestamp() },
+            { merge: true }
+          );
+          return "alohomora";
+        }
+      } catch (err) {
+        console.warn("Error leyendo passkey de Firestore, usando fallback:", err);
+      }
+    }
+    return this.inMemoryFallback.getWorkshopPasskey();
+  }
+
+  async setWorkshopPasskey(passkey: string): Promise<void> {
+    const trimmed = passkey.trim();
+    if (!this.isUsingFallback && this.firestore) {
+      await this.firestore.doc("config/global").set(
+        {
+          passkey: trimmed,
+          updated_at: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    await this.inMemoryFallback.setWorkshopPasskey(trimmed);
   }
 
   async ensureHousesInitialized(workshopId: string): Promise<void> {

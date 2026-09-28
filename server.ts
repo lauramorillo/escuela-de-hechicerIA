@@ -8,6 +8,7 @@ import { getStudentSession, resetSession } from "./src/controllers/studentContro
 import { getHouseStats } from "./src/controllers/houseController.ts";
 import { detectAndSort, synthesizeSpeech } from "./src/controllers/sortingController.ts";
 import { getAvailableClasses } from "./src/controllers/classesController.ts";
+import { getGatekeeperStatus, verifyGatekeeperPasskey } from "./src/controllers/gatekeeperController.ts";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -35,6 +36,8 @@ async function startServer(): Promise<void> {
   const workshopId = await dbService.getEffectiveWorkshopId();
   await dbService.ensureHousesInitialized(workshopId);
 
+  app.get("/api/gatekeeper/status", getGatekeeperStatus);
+  app.post("/api/gatekeeper/verify", verifyGatekeeperPasskey);
   app.get("/api/me", getStudentSession);
   app.all("/api/reset", resetSession);
   app.get("/api/houses", getHouseStats);

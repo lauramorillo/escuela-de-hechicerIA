@@ -7,6 +7,7 @@ import { twMerge } from 'tailwind-merge';
 import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
 import { ClassesHub } from './components/ClassesHub.tsx';
 import { ClassDetail } from './components/ClassDetail.tsx';
+import { GatekeeperScreen } from './components/GatekeeperScreen.tsx';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -43,6 +44,8 @@ export default function App() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [isFaceDetected, setIsFaceDetected] = useState(false);
+  const [isGateLocked, setIsGateLocked] = useState<boolean | null>(null);
+  const [activeWorkshop, setActiveWorkshop] = useState<string>('');
 
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isSpeakingAnimation, setIsSpeakingAnimation] = useState(false);
@@ -71,39 +74,59 @@ export default function App() {
   const animFrameIdRef = useRef<number>(0);
 
   // 0. Comprobar si el alumno ya fue seleccionado previamente (Cookie persistente)
+  const checkExistingStudent = useCallback(async () => {
+    try {
+      const res = await fetch('/api/me');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.assigned && data.house) {
+          console.log('🏰 Alumno ya asignado en esta sesión:', data);
+          setResult({
+            detected: true,
+            house: data.house,
+            phrase: data.phrase,
+            studentId: data.studentId,
+            workshopId: data.workshopId,
+          });
+
+          // Cargar foto capturada previamente si está en caché local, o arte de fondo
+          const savedPhoto =
+            (data.studentId && localStorage.getItem(`sorting_hat_photo_${data.studentId}`)) ||
+            localStorage.getItem('sorting_hat_last_photo') ||
+            '/escuela-hechiceria-bg-no-tittle.jpg';
+
+          setCapturedImage(savedPhoto);
+          setAppState('result');
+        }
+      }
+    } catch (err) {
+      console.warn('No se pudo comprobar la sesión del alumno:', err);
+    }
+  }, []);
+
+  // 0.1 Verificar palabra clave de acceso (Gatekeeper) al entrar
   useEffect(() => {
-    async function checkExistingStudent() {
+    async function initGatekeeper() {
       try {
-        const res = await fetch('/api/me');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.assigned && data.house) {
-            console.log('🏰 Alumno ya asignado en esta sesión:', data);
-            setResult({
-              detected: true,
-              house: data.house,
-              phrase: data.phrase,
-              studentId: data.studentId,
-              workshopId: data.workshopId,
-            });
-
-            // Cargar foto capturada previamente si está en caché local, o arte de fondo
-            const savedPhoto =
-              (data.studentId && localStorage.getItem(`sorting_hat_photo_${data.studentId}`)) ||
-              localStorage.getItem('sorting_hat_last_photo') ||
-              '/escuela-hechiceria-bg-no-tittle.jpg';
-
-            setCapturedImage(savedPhoto);
-            setAppState('result');
+        const gateRes = await fetch('/api/gatekeeper/status');
+        if (gateRes.ok) {
+          const gateData = await gateRes.json();
+          setActiveWorkshop(gateData.workshopId || '');
+          if (gateData.required && !gateData.authenticated) {
+            setIsGateLocked(true);
+            return;
           }
         }
       } catch (err) {
-        console.warn('No se pudo comprobar la sesión del alumno:', err);
+        console.warn('Error comprobando gatekeeper:', err);
       }
+
+      setIsGateLocked(false);
+      checkExistingStudent();
     }
 
-    checkExistingStudent();
-  }, []);
+    initGatekeeper();
+  }, [checkExistingStudent]);
 
   // 1. Cargar imagen del Sombrero Seleccionador
   useEffect(() => {
@@ -618,6 +641,29 @@ export default function App() {
         return 'bg-black/30 border-white/20';
     }
   };
+
+  if (isGateLocked === null) {
+    return (
+      <div className="fixed inset-0 w-screen h-screen bg-black flex items-center justify-center text-amber-300 font-serif">
+        <div className="flex flex-col items-center gap-3">
+          <Sparkles className="w-8 h-8 animate-spin text-amber-400" />
+          <span className="text-sm tracking-widest uppercase font-sans text-stone-400">Consultando encantamientos...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isGateLocked) {
+    return (
+      <GatekeeperScreen
+        workshopId={activeWorkshop}
+        onUnlock={() => {
+          setIsGateLocked(false);
+          checkExistingStudent();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 w-screen h-screen bg-black text-white font-serif overflow-hidden select-none">
