@@ -41,13 +41,13 @@ export function GatekeeperScreen({ onUnlock, workshopId }: GatekeeperScreenProps
           onUnlock();
         }, 800);
       } else {
-        setErrorMsg(data.error || "Encantamiento incorrecto. Las puertas de Hogwarts no ceden.");
+        setErrorMsg(data.error || "Palabra clave incorrecta. Las puertas no se abren.");
         setShakeKey((prev) => prev + 1);
         setPasskeyInput("");
         inputRef.current?.focus();
       }
     } catch {
-      setErrorMsg("Error al conectar con la protección mágica del castillo.");
+      setErrorMsg("Error al verificar la palabra clave. Inténtalo de nuevo.");
       setShakeKey((prev) => prev + 1);
     } finally {
       setLoading(false);
@@ -97,19 +97,19 @@ export function GatekeeperScreen({ onUnlock, workshopId }: GatekeeperScreenProps
         {/* Badge */}
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs tracking-widest uppercase font-sans mb-3">
           <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-          Puerta de Acceso a Hogwarts
+          Acceso al Taller
         </div>
 
         {/* Título */}
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 bg-clip-text text-transparent mb-3 drop-shadow-md">
-          {isSuccess ? "¡Encantamiento Correcto!" : "Las Puertas Están Cerradas"}
+          {isSuccess ? "¡Acceso Concedido!" : "Puertas de Acceso"}
         </h1>
 
         {/* Descripción */}
         <p className="text-stone-300 text-sm sm:text-base font-sans leading-relaxed max-w-md mb-6">
           {isSuccess
-            ? "El cerrojo mágico cede ante tu voz. Cruzando el umbral hacia el Gran Comedor..."
-            : "Pronuncia la palabra clave o encantamiento revelado para este taller para franqueartu entrada a la Escuela de HechicerIA."}
+            ? "¡Palabra clave correcta! Cruzando el umbral hacia la Ceremonia de Selección..."
+            : "Introduce la palabra clave del taller para acceder a la Escuela de HechicerIA."}
         </p>
 
         {/* Formulario de palabra clave */}
@@ -124,7 +124,7 @@ export function GatekeeperScreen({ onUnlock, workshopId }: GatekeeperScreenProps
                 if (errorMsg) setErrorMsg("");
               }}
               disabled={loading || isSuccess}
-              placeholder="Introduce la palabra mágica..."
+              placeholder="Introduce la palabra clave..."
               autoComplete="off"
               spellCheck="false"
               className="w-full px-5 py-4 rounded-2xl bg-black/60 border border-amber-500/40 focus:border-amber-400 text-amber-100 placeholder:text-stone-500 text-center text-lg sm:text-xl font-sans tracking-wide outline-none shadow-inner transition-all focus:shadow-[0_0_25px_rgba(234,179,8,0.3)] disabled:opacity-50"
@@ -153,17 +153,17 @@ export function GatekeeperScreen({ onUnlock, workshopId }: GatekeeperScreenProps
             {loading ? (
               <>
                 <Sparkles className="w-5 h-5 animate-spin" />
-                <span>Consultando al castillo...</span>
+                <span>Comprobando acceso...</span>
               </>
             ) : isSuccess ? (
               <>
                 <ShieldCheck className="w-5 h-5" />
-                <span>¡Puertas Abiertas!</span>
+                <span>¡Acceso Concedido!</span>
               </>
             ) : (
               <>
                 <Wand2 className="w-5 h-5" />
-                <span>Alohomora ✨</span>
+                <span>Entrar ✨</span>
               </>
             )}
           </button>

@@ -713,25 +713,6 @@ export default function App() {
                   </>
                 )}
               </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (!result) {
-                    setResult({
-                      detected: true,
-                      house: 'Gryffindor',
-                      phrase: '¡Bienvenido a Hogwarts! Las Aulas Mágicas están abiertas.',
-                      studentId: 'student_tester',
-                    });
-                  }
-                  setAppState('classes_hub');
-                }}
-                className="mt-1 flex items-center gap-1.5 text-xs sm:text-sm text-amber-300/80 hover:text-amber-200 underline font-sans cursor-pointer transition-colors"
-              >
-                <GraduationCap className="w-4 h-4 text-amber-400" />
-                <span>Acceder directamente a las Aulas Mágicas (Pruebas)</span>
-              </button>
             </div>
           </motion.div>
         )}

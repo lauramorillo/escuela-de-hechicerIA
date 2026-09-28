@@ -77,7 +77,7 @@ export async function verifyGatekeeperPasskey(req: Request, res: Response): Prom
 
     res.status(401).json({
       ok: false,
-      error: "Encantamiento o palabra clave incorrecta. Las puertas de Hogwarts no ceden.",
+      error: "Palabra clave incorrecta. Las puertas no se abren.",
     });
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err.message || "Error al validar la palabra clave" });
