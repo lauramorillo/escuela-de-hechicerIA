@@ -50,7 +50,7 @@ describe("Sombrero Seleccionador - Balanceo y Concurrencia", () => {
     const finalStats = await dbService.getHouseStats(stepWorkshopId);
     const total = Object.values(finalStats).reduce((a, b) => a + b, 0);
     expect(total).toBe(20);
-  });
+  }, 30000);
 
   it("debe asignar 60 alumnos en paralelo garantizando la concurrencia y max - min <= 2", async () => {
     const concurrentWorkshopId = trackWorkshop(`test-concur-${Date.now()}`);

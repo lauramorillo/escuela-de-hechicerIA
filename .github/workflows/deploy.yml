@@ -6,7 +6,6 @@ on:
       - main
     paths-ignore:
       - 'README.md'
-      - 'terraform/**'
       - '.gitignore'
 
 env:
@@ -16,6 +15,7 @@ env:
   SERVICE_NAME: escuela-de-hechiceria
   WIF_PROVIDER: ${{ secrets.WIF_PROVIDER || vars.WIF_PROVIDER }}
   WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT || vars.WIF_SERVICE_ACCOUNT }}
+  VITE_EVALUATION_SERVICE_URL: ${{ vars.VITE_EVALUATION_SERVICE_URL || 'https://escuela-de-hechiceria-profesores-hk7klenoma-ew.a.run.app' }}
 
 jobs:
   build-and-deploy:
@@ -44,6 +44,7 @@ jobs:
           IMAGE_BASE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}"
           
           docker build \
+            --build-arg VITE_EVALUATION_SERVICE_URL="${{ env.VITE_EVALUATION_SERVICE_URL }}" \
             -t "${IMAGE_BASE}:${IMAGE_TAG}" \
             -t "${IMAGE_BASE}:latest" \
             .
