@@ -37,24 +37,20 @@ describe("Multitenancy por Edición (Workshop Isolation)", () => {
     expect(totalWs2).toBe(0);
   });
 
-  it("debe resolver el workshopId desde ACTIVE_WORKSHOP_ID o usar fallback", async () => {
-    const originalEnv = process.env.ACTIVE_WORKSHOP_ID;
+  it("debe resolver el workshopId dinámicamente desde config/global en Firestore", async () => {
+    const originalId = await dbService.getEffectiveWorkshopId();
+    expect(typeof originalId).toBe("string");
+    expect(originalId.length).toBeGreaterThan(0);
 
-    try {
-      process.env.ACTIVE_WORKSHOP_ID = "edicion-especial-hogwarts";
-      const resolved = await dbService.getEffectiveWorkshopId();
-      expect(resolved).toBe("edicion-especial-hogwarts");
+    const testCustomWorkshop = `ws-dynamic-${Date.now()}`;
+    await dbService.setActiveWorkshopId(testCustomWorkshop);
 
-      delete process.env.ACTIVE_WORKSHOP_ID;
-      const defaultResolved = await dbService.getEffectiveWorkshopId();
-      expect(typeof defaultResolved).toBe("string");
-      expect(defaultResolved.length).toBeGreaterThan(0);
-    } finally {
-      if (originalEnv !== undefined) {
-        process.env.ACTIVE_WORKSHOP_ID = originalEnv;
-      } else {
-        delete process.env.ACTIVE_WORKSHOP_ID;
-      }
-    }
+    const resolved = await dbService.getEffectiveWorkshopId();
+    expect(resolved).toBe(testCustomWorkshop);
+
+    // Restaurar workshop original
+    await dbService.setActiveWorkshopId(originalId);
+    const restored = await dbService.getEffectiveWorkshopId();
+    expect(restored).toBe(originalId);
   });
 });

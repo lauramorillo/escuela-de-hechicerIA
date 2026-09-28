@@ -235,20 +235,41 @@ class DatabaseService {
   }
 
   async getEffectiveWorkshopId(): Promise<string> {
-    const envWorkshop = process.env.ACTIVE_WORKSHOP_ID?.trim();
-    if (envWorkshop) return envWorkshop;
-
     if (!this.isUsingFallback && this.firestore) {
       try {
-        const configDoc = await this.firestore.doc("config/global").get();
-        const activeId = configDoc.data()?.active_workshop_id;
-        if (activeId) return activeId;
-      } catch {
-        // Fallback to default
+        const configRef = this.firestore.doc("config/global");
+        const configDoc = await configRef.get();
+        if (configDoc.exists) {
+          const activeId = configDoc.data()?.active_workshop_id?.trim();
+          if (activeId) return activeId;
+        } else {
+          await configRef.set({
+            active_workshop_id: DEFAULT_WORKSHOP_ID,
+            updated_at: FieldValue.serverTimestamp(),
+          });
+          return DEFAULT_WORKSHOP_ID;
+        }
+      } catch (err) {
+        console.warn("Error consultando config/global en Firestore, usando fallback:", err);
       }
     }
 
+    const envWorkshop = process.env.ACTIVE_WORKSHOP_ID?.trim();
+    if (envWorkshop) return envWorkshop;
+
     return DEFAULT_WORKSHOP_ID;
+  }
+
+  async setActiveWorkshopId(workshopId: string): Promise<void> {
+    if (!this.isUsingFallback && this.firestore) {
+      await this.firestore.doc("config/global").set(
+        {
+          active_workshop_id: workshopId.trim(),
+          updated_at: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
   }
 
   async ensureHousesInitialized(workshopId: string): Promise<void> {
