@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean:test-data": "tsx scripts/clean_test_data.ts"
+    "clean:test-data": "tsx scripts/clean_test_data.ts",
+    "workshop": "tsx scripts/set_workshop.ts"
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.2.0",
