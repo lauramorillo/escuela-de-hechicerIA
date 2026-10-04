@@ -9,6 +9,7 @@ import { getHouseStats } from "./src/controllers/houseController.ts";
 import { detectAndSort, synthesizeSpeech } from "./src/controllers/sortingController.ts";
 import { getAvailableClasses } from "./src/controllers/classesController.ts";
 import { getGatekeeperStatus, verifyGatekeeperPasskey } from "./src/controllers/gatekeeperController.ts";
+import { proxyEvaluation } from "./src/controllers/evaluationProxyController.ts";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -42,6 +43,7 @@ async function startServer(): Promise<void> {
   app.all("/api/reset", resetSession);
   app.get("/api/houses", getHouseStats);
   app.get("/api/classes", getAvailableClasses);
+  app.post("/api/evaluate", proxyEvaluation);
   app.post("/api/detect", detectAndSort);
   app.post("/api/tts", synthesizeSpeech);
 

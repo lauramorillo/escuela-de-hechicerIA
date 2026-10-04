@@ -41,12 +41,17 @@ export interface ClassItem {
 
 export interface SubmissionItem {
   class_id: string;
-  answer: string;
+  answer?: string;
   grade: string;
   grade_label: string;
   points: number;
+  bonus_points?: number;
+  total_awarded_points?: number;
+  first_house_bonus?: boolean;
   feedback: string;
   advice: string;
+  audio_phrase?: string;
+  audio?: string | null;
 }
 
 interface ClassesHubProps {
@@ -132,7 +137,7 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
   };
 
   const totalPointsEarned: number = (Object.values(submissions) as SubmissionItem[]).reduce(
-    (acc: number, sub: SubmissionItem) => acc + (sub.points || 0),
+    (acc: number, sub: SubmissionItem) => acc + (sub.total_awarded_points ?? sub.points ?? 0),
     0
   );
 
@@ -259,12 +264,18 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                     </div>
                     {isCompleted ? (
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${getGradeColor(submission.grade)}`}>
-                        {["E", "S", "A"].includes(submission.grade) ? (
+                        {submission.first_house_bonus ? (
+                          <span>🏆</span>
+                        ) : ["E", "S", "A"].includes(submission.grade) ? (
                           <CheckCircle2 className="w-3.5 h-3.5" />
                         ) : (
                           <AlertCircle className="w-3.5 h-3.5" />
                         )}
-                        {submission.grade} • {submission.points > 0 ? `+${submission.points}` : submission.points} pts
+                        {submission.grade} • {
+                          (submission.total_awarded_points ?? submission.points) > 0
+                            ? `+${submission.total_awarded_points ?? submission.points}`
+                            : (submission.total_awarded_points ?? submission.points)
+                        } pts
                       </span>
                     ) : (
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-stone-800/80 text-stone-400 border border-stone-700">

@@ -25,6 +25,8 @@ import {
   Upload,
   CheckCircle2,
   FileCode,
+  Volume2,
+  Trophy,
 } from "lucide-react";
 import type { ClassItem, SubmissionItem, SubExercise } from "./ClassesHub";
 import { MaraudersMapBackground } from "./MaraudersMapBackground";
@@ -41,9 +43,13 @@ interface EvaluationResponse {
   grade: "E" | "S" | "A" | "I" | "D" | "T";
   gradeLabel: string;
   points: number;
+  bonusPoints?: number;
+  totalAwardedPoints?: number;
+  firstHouseBonus?: boolean;
   feedback: string;
   advice: string;
-  firstHouseBonus?: boolean;
+  audioPhrase?: string;
+  audio?: string | null;
 }
 
 const PROFESSOR_AVATARS: Record<string, { icon: string; titleColor: string; quote: string }> = {
@@ -284,6 +290,39 @@ def procesar_lote(lote):
     }
   };
 
+  const playProclamationAudio = (audioBase64?: string | null, phrase?: string, points = 0) => {
+    if (audioBase64) {
+      try {
+        const snd = new Audio(`data:audio/wav;base64,${audioBase64}`);
+        snd.play().catch((err) => console.log("Audio autoplay prevenido por navegador:", err));
+        return;
+      } catch (err) {
+        console.warn("Fallo en reproducción de audio base64:", err);
+      }
+    }
+
+    if (phrase && typeof window !== "undefined" && "speechSynthesis" in window) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.lang = "es-ES";
+        if (points > 0) {
+          utterance.pitch = 1.3;
+          utterance.rate = 1.05;
+        } else if (points < 0) {
+          utterance.pitch = 0.8;
+          utterance.rate = 0.95;
+        } else {
+          utterance.pitch = 1.0;
+          utterance.rate = 1.0;
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn("Error en SpeechSynthesis:", e);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -310,9 +349,10 @@ def procesar_lote(lote):
     setErrorMessage(null);
 
     try {
-      const remoteServiceUrl =
-        (import.meta as any).env?.VITE_EVALUATION_SERVICE_URL || "http://localhost:8080";
-      const targetUrl = `${remoteServiceUrl.replace(/\/$/, "")}/evaluate`;
+      const remoteServiceUrl = (import.meta as any).env?.VITE_EVALUATION_SERVICE_URL;
+      const targetUrl = remoteServiceUrl
+        ? `${remoteServiceUrl.replace(/\/$/, "")}/evaluate`
+        : "/api/evaluate";
 
       const requestPayload = {
         workshopId: workshopId || "dev-workshop",
@@ -338,10 +378,17 @@ def procesar_lote(lote):
         grade: data.grade,
         gradeLabel: data.gradeLabel,
         points: data.points,
+        bonusPoints: data.bonusPoints,
+        totalAwardedPoints: data.totalAwardedPoints,
+        firstHouseBonus: data.firstHouseBonus,
         feedback: data.feedback,
         advice: data.advice,
-        firstHouseBonus: data.firstHouseBonus,
+        audioPhrase: data.audioPhrase,
+        audio: data.audio,
       };
+
+      const effectiveTotalPoints =
+        evaluation.totalAwardedPoints ?? (evaluation.points + (evaluation.firstHouseBonus ? 50 : 0));
 
       setSubmission({
         class_id: classId,
@@ -349,10 +396,22 @@ def procesar_lote(lote):
         grade: evaluation.grade,
         grade_label: evaluation.gradeLabel,
         points: evaluation.points,
+        bonus_points: evaluation.bonusPoints,
+        total_awarded_points: effectiveTotalPoints,
+        first_house_bonus: evaluation.firstHouseBonus,
         feedback: evaluation.feedback,
         advice: evaluation.advice,
+        audio_phrase: evaluation.audioPhrase,
+        audio: evaluation.audio,
       });
       setIsEditing(false);
+
+      // Reproducción inmediata del audio proclamando los puntos con entonación
+      playProclamationAudio(
+        evaluation.audio,
+        evaluation.audioPhrase || `¡${effectiveTotalPoints} puntos para ${studentHouse}!`,
+        effectiveTotalPoints
+      );
     } catch (err: any) {
       setErrorMessage(err.message || "Ocurrió un error inesperado al contactar con el profesor.");
     } finally {
@@ -563,16 +622,48 @@ def procesar_lote(lote):
                   <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#ead3a4] border-2 border-[#7a441b] shadow-sm">
                     <Award className="w-5 h-5 text-[#7a441b]" />
                     <span className="text-base sm:text-lg font-black text-[#2f180a]">
-                      {submission.points >= 0 ? `+${submission.points}` : submission.points} pts para {studentHouse}
+                      {submission.first_house_bonus
+                        ? `+75 pts (+25 E + 50 Primera Casa) para ${studentHouse}`
+                        : `${(submission.total_awarded_points ?? submission.points) >= 0 ? `+${submission.total_awarded_points ?? submission.points}` : (submission.total_awarded_points ?? submission.points)} pts para ${studentHouse}`}
                     </span>
                   </div>
                 </div>
 
+                {submission.first_house_bonus && (
+                  <div className="my-4 p-3.5 rounded-xl bg-[#ead4a8] border-2 border-[#7a441b] flex items-center gap-3 text-[#2f180a] shadow-md">
+                    <Trophy className="w-6 h-6 text-[#9a4e12] shrink-0 animate-bounce" />
+                    <div>
+                      <span className="font-black uppercase tracking-wider block text-xs text-[#703b15]">
+                        🏆 ¡PRIMERA CASA DEL TORNEO! (+75 PUNTOS)
+                      </span>
+                      <span className="text-xs sm:text-sm font-semibold text-[#3b1e0d]">
+                        ¡Tu casa se adjudica 75 puntos en total (+25 por Extraordinario y +50 por ser la primera en lograrlo)!
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Dictamen de Remus Lupin */}
                 <div className="my-5 p-4 rounded-xl bg-[#f4e7cb] border border-[#8f5a2e]/60">
-                  <p className="text-xs uppercase tracking-widest text-[#703b15] font-bold mb-1">
-                    Dictamen del Profesor Remus Lupin:
-                  </p>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-xs uppercase tracking-widest text-[#703b15] font-bold">
+                      Dictamen del Profesor Remus Lupin:
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        playProclamationAudio(
+                          submission.audio,
+                          submission.audio_phrase || `¡${submission.total_awarded_points ?? submission.points} puntos para ${studentHouse}!`,
+                          submission.total_awarded_points ?? submission.points
+                        )
+                      }
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ded0b1] hover:bg-[#d0be98] text-[#4d280e] text-xs font-bold border border-[#7a441b]/50 shadow-sm transition-colors cursor-pointer"
+                    >
+                      <Volume2 className="w-3.5 h-3.5 text-[#7a441b]" />
+                      Escuchar voz
+                    </button>
+                  </div>
                   <p className="text-base sm:text-lg italic text-[#2b1609] leading-relaxed">
                     "{submission.feedback}"
                   </p>
@@ -1124,16 +1215,48 @@ def procesar_lote(lote):
                 <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-amber-950/80 border border-amber-500/60 shadow-lg">
                   <Award className="w-5 h-5 text-amber-400" />
                   <span className="text-base sm:text-lg font-extrabold text-amber-300">
-                    {submission.points >= 0 ? `+${submission.points}` : submission.points} pts para {studentHouse}
+                    {submission.first_house_bonus
+                      ? `+75 pts (+25 E + 50 Primera Casa) para ${studentHouse}`
+                      : `${(submission.total_awarded_points ?? submission.points) >= 0 ? `+${submission.total_awarded_points ?? submission.points}` : (submission.total_awarded_points ?? submission.points)} pts para ${studentHouse}`}
                   </span>
                 </div>
               </div>
 
+              {submission.first_house_bonus && (
+                <div className="my-5 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-transparent border border-amber-400/60 flex items-center gap-3.5 text-amber-200 shadow-md">
+                  <Trophy className="w-7 h-7 text-amber-300 shrink-0 animate-bounce" />
+                  <div>
+                    <span className="font-extrabold uppercase tracking-wider block text-xs text-amber-300">
+                      🏆 ¡PRIMERA CASA DEL TORNEO! (+75 PUNTOS)
+                    </span>
+                    <span className="text-xs sm:text-sm font-semibold text-amber-100/90">
+                      ¡Tu casa se adjudica 75 puntos en total (+25 por Extraordinario y +50 por ser la primera en conseguirlo)!
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Dictamen del Profesor */}
               <div className="my-6">
-                <p className="text-xs uppercase tracking-widest text-amber-500/80 font-bold mb-2">
-                  Dictamen de {classInfo?.professor}:
-                </p>
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <p className="text-xs uppercase tracking-widest text-amber-500/80 font-bold">
+                    Dictamen de {classInfo?.professor}:
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      playProclamationAudio(
+                        submission.audio,
+                        submission.audio_phrase || `¡${submission.total_awarded_points ?? submission.points} puntos para ${studentHouse}!`,
+                        submission.total_awarded_points ?? submission.points
+                      )
+                    }
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/40 shadow-sm transition-colors cursor-pointer"
+                  >
+                    <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                    Escuchar proclamación del profesor
+                  </button>
+                </div>
                 <div className="p-4 rounded-xl bg-black/60 border border-stone-800">
                   <p className="text-base sm:text-lg italic text-amber-100/90 leading-relaxed">
                     "{submission.feedback}"

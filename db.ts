@@ -1,4 +1,7 @@
+import fs from "fs";
 import { Firestore, FieldValue, type DocumentReference, type DocumentSnapshot, type Transaction } from "@google-cloud/firestore";
+
+const SHARED_LOCAL_DB_FILE = "/tmp/taller_escuela_hechiceria_db.json";
 
 export const HOUSES = ["gryffindor", "slytherin", "ravenclaw", "hufflepuff"] as const;
 export type HouseId = typeof HOUSES[number];
@@ -21,16 +24,24 @@ export interface StudentDoc {
   house: HouseId;
   assigned_at: FirebaseFirestore.FieldValue | Date | string;
   justification: string;
+  score?: number;
+  last_activity?: FirebaseFirestore.FieldValue | Date | string;
 }
 
 export interface SubmissionDoc {
   class_id: string;
-  answer: string;
+  answer?: string;
   grade: string;
   grade_label: string;
   points: number;
+  bonus_points?: number;
+  total_awarded_points?: number;
+  first_house_bonus?: boolean;
   feedback: string;
   advice: string;
+  audio_phrase?: string;
+  audio?: string | null;
+  test_results?: any;
   evaluated_at?: FirebaseFirestore.FieldValue | Date | string;
 }
 
@@ -176,6 +187,20 @@ class InMemoryDb {
     for (const h of HOUSES) {
       scores[h] = ws.houses.get(h)?.score ?? 0;
     }
+
+    try {
+      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        const fileScores = parsed.scores?.[workshopId];
+        if (fileScores) {
+          for (const h of HOUSES) {
+            scores[h] = Math.max(scores[h], fileScores[h] || 0);
+          }
+        }
+      }
+    } catch {}
+
     return scores;
   }
 
@@ -188,11 +213,43 @@ class InMemoryDb {
       ...submission,
       evaluated_at: submission.evaluated_at || new Date(),
     });
+
+    try {
+      let currentData: any = {};
+      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+        currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
+      }
+      if (!currentData.submissions) currentData.submissions = {};
+      if (!currentData.submissions[workshopId]) currentData.submissions[workshopId] = {};
+      if (!currentData.submissions[workshopId][studentId]) currentData.submissions[workshopId][studentId] = {};
+      currentData.submissions[workshopId][studentId][submission.class_id] = submission;
+      fs.writeFileSync(SHARED_LOCAL_DB_FILE, JSON.stringify(currentData, null, 2), "utf-8");
+    } catch {}
   }
 
   async getSubmissions(workshopId: string, studentId: string): Promise<Record<string, SubmissionDoc>> {
     const ws = this.getWorkshop(workshopId);
-    const studentSubs = ws.submissions.get(studentId);
+    let studentSubs = ws.submissions.get(studentId);
+
+    if (!studentSubs || studentSubs.size === 0) {
+      try {
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+          const parsed = JSON.parse(raw);
+          const fromFile = parsed.submissions?.[workshopId]?.[studentId];
+          if (fromFile) {
+            if (!ws.submissions.has(studentId)) {
+              ws.submissions.set(studentId, new Map());
+            }
+            studentSubs = ws.submissions.get(studentId)!;
+            for (const [cId, subData] of Object.entries(fromFile)) {
+              studentSubs.set(cId, subData as SubmissionDoc);
+            }
+          }
+        }
+      } catch {}
+    }
+
     const result: Record<string, SubmissionDoc> = {};
     if (studentSubs) {
       studentSubs.forEach((sub, classId) => {
@@ -205,12 +262,27 @@ class InMemoryDb {
   async addHousePoints(workshopId: string, houseId: HouseId, points: number): Promise<number> {
     const ws = this.getWorkshop(workshopId);
     const houseDoc = ws.houses.get(houseId);
+    let newScore = points;
     if (houseDoc) {
       houseDoc.score = (houseDoc.score || 0) + points;
       houseDoc.updated_at = new Date();
-      return houseDoc.score;
+      newScore = houseDoc.score;
     }
-    return points;
+
+    try {
+      let currentData: any = {};
+      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+        currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
+      }
+      if (!currentData.scores) currentData.scores = {};
+      if (!currentData.scores[workshopId]) {
+        currentData.scores[workshopId] = { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 };
+      }
+      currentData.scores[workshopId][houseId] = (currentData.scores[workshopId][houseId] || 0) + points;
+      fs.writeFileSync(SHARED_LOCAL_DB_FILE, JSON.stringify(currentData, null, 2), "utf-8");
+    } catch {}
+
+    return newScore;
   }
 
   async deleteWorkshop(workshopId: string): Promise<void> {
@@ -619,6 +691,17 @@ class DatabaseService {
         ...submission,
         evaluated_at: FieldValue.serverTimestamp(),
       });
+
+      // Actualizar el expediente del alumno con su puntuación acumulada
+      const studentRef = this.firestore.doc(`workshops/${workshopId}/students/${studentId}`);
+      const pointsToAdd = submission.total_awarded_points ?? submission.points ?? 0;
+      await studentRef.set(
+        {
+          score: FieldValue.increment(pointsToAdd),
+          last_activity: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
     } catch {
       return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission);
     }
