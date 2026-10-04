@@ -19,6 +19,9 @@ import {
   Wand2,
   Swords,
   Flame,
+  Lock,
+  Unlock,
+  Eye,
 } from "lucide-react";
 import type { ClassItem, SubmissionItem, SubExercise } from "./ClassesHub";
 import { MaraudersMapBackground } from "./MaraudersMapBackground";
@@ -114,6 +117,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   const [activeTab, setActiveTab] = useState<string>("mission");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedSubExerciseId, setSelectedSubExerciseId] = useState<string>("defense_attack");
+  const [revealedHints, setRevealedHints] = useState<Record<number, boolean>>({});
 
   const professorData = PROFESSOR_AVATARS[classId] || PROFESSOR_AVATARS.transfiguration;
   const currentSubExercise: SubExercise | undefined = isDefense
@@ -152,20 +156,18 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
 
   const handleInsertTemplate = () => {
     if (isTransfiguration) {
-      const template = `### 1. CÁMARAS AFECTADAS Y CIFRA MÁGICA:
-- Cámaras con desbordamiento: [ej. 713, 999...]
-- Cifra total corregida (en Knuts): [ej. XXXXX Knuts]
-- Pérdida evitada a Gringotts: [ej. XXXXX Knuts]
+      const template = `### 1. CÁMARAS AFECTADAS POR EL DEFECTO HISTÓRICO:
+[Indica aquí los números de las cámaras del lote de prueba afectadas, ej: 105, 394...]
 
-### 2. EXPLICACIÓN DEL ERROR RÚNICO (COBOL):
-[Explica brevemente por qué ocurría el truncamiento en la cláusula PIC 9(03)V99 de WS-GOBLIN-SURCHARGE...]
-
-### 3. CÓDIGO TRANSFIGURADO (Python 3):
+### 2. CÓDIGO PYTHON 3 (CORREGIDO):
 \`\`\`python
-# Pega aquí tu script en Python 3 que procesa el lote
+# Pega aquí tu script en Python 3 con el error solucionado
 import json
 
-def procesar_camaras_gringotts():
+def calcular_tasa_camara(camara):
+    pass
+
+def procesar_lote(lote):
     pass
 \`\`\``;
       setAnswerText(template);
@@ -911,18 +913,90 @@ def procesar_camaras_gringotts():
                   : "bg-[#0b0f1e] border-indigo-800/60"
               }`}
             >
-              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400 font-bold mb-4">
-                <Lightbulb className="w-4 h-4 text-amber-400" />
-                <span>Pistas de IA para Resolver el Desafío</span>
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-stone-800">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-400 font-bold">
+                  <Lightbulb className="w-4 h-4 text-amber-400" />
+                  <span>Pistas del Claustro Mágico</span>
+                </div>
+                <span className="text-[11px] font-mono text-stone-400">
+                  {Object.values(revealedHints).filter(Boolean).length} de {classInfo.hints.length} desveladas
+                </span>
               </div>
-              <ul className="space-y-3 text-xs sm:text-sm text-stone-300">
-                {classInfo.hints.map((hint, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5 bg-black/50 p-3 rounded-xl border border-stone-800">
-                    <span className="text-amber-400 font-bold font-mono">0{idx + 1}.</span>
-                    <span>{hint}</span>
-                  </li>
-                ))}
-              </ul>
+
+              <div className="p-3.5 mb-5 rounded-xl bg-amber-950/20 border border-amber-800/30 flex items-start gap-3">
+                <Lock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-200/80 leading-relaxed font-sans">
+                  Las pistas están veladas por encantamiento. El claustro aconseja reflexionar y experimentar primero con vuestro asistente de IA. Revelad una pista únicamente si os encontráis en un callejón sin salida.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {classInfo.hints.map((hint, idx) => {
+                  const isRevealed = Boolean(revealedHints[idx]);
+                  const hintTitles = isTransfiguration
+                    ? [
+                        "Enfoque y traducción rúnica con IA",
+                        "Tipos de datos y límites en sistemas antiguos",
+                        "Detección de anomalías en grandes fortunas",
+                      ]
+                    : [];
+                  const title = hintTitles[idx] || `Pista de orientación mágica 0${idx + 1}`;
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-4 rounded-xl border transition-all duration-300 ${
+                        isRevealed
+                          ? "bg-black/70 border-amber-500/40 shadow-lg"
+                          : "bg-black/30 border-stone-800 hover:border-stone-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          {isRevealed ? (
+                            <Unlock className="w-4 h-4 text-amber-400 shrink-0" />
+                          ) : (
+                            <Lock className="w-4 h-4 text-stone-500 shrink-0" />
+                          )}
+                          <span
+                            className={`text-xs sm:text-sm font-bold font-sans ${
+                              isRevealed ? "text-amber-200" : "text-stone-400"
+                            }`}
+                          >
+                            Pista 0{idx + 1}: {title}
+                          </span>
+                        </div>
+
+                        {!isRevealed ? (
+                          <button
+                            type="button"
+                            onClick={() => setRevealedHints((prev) => ({ ...prev, [idx]: true }))}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 border border-amber-600/30 text-amber-300 text-xs font-bold font-sans transition-all cursor-pointer hover:scale-105 active:scale-95"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Desvelar pista</span>
+                          </button>
+                        ) : (
+                          <span className="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Desvelada
+                          </span>
+                        )}
+                      </div>
+
+                      {isRevealed && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-3 pt-3 border-t border-stone-800/80 text-xs sm:text-sm text-stone-200 font-sans leading-relaxed"
+                        >
+                          {hint}
+                        </motion.div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -1055,7 +1129,7 @@ def procesar_camaras_gringotts():
                 onChange={(e) => setAnswerText(e.target.value)}
                 placeholder={
                   isTransfiguration
-                    ? "# Pega tu código en Python 3 y el desglose de las cámaras...\ndef procesar_camaras():\n    pass"
+                    ? "### 1. CÁMARAS AFECTADAS POR EL DEFECTO HISTÓRICO:\n[Indica aquí los números de las cámaras afectadas]\n\n### 2. CÓDIGO PYTHON 3 (CORREGIDO):\n```python\n# Pega aquí tu código en Python 3 corregido...\n```"
                     : "[\n  {\n    \"oleada\": 1,\n    \"tool_call\": { \"name\": \"lanzar_contrahechizo\", \"arguments\": { \"hechizo\": \"Expecto Patronum\", \"sector\": \"puente\" } }\n  }\n]"
                 }
                 disabled={submitting}

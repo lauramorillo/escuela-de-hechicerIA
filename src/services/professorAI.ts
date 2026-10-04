@@ -345,14 +345,13 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "Durante una restauración en la Sección Prohibida de la Biblioteca de Hogwarts, la señora Pince desenterró un pergamino amarillento de 1899. Contiene las fórmulas originales de los duendes de Gringotts para calcular los costes de custodia de las cámaras acorazadas. Está escrito en unas runas arcaicas conocidas como C.O.B.O.L. (Common Order of Binary Occult Lore) que casi ningún mago viviente sabe interpretar.",
     assignment:
       "La Profesora McGonagall exige rigor absoluto. Vuestra misión en este desafío consiste en:\n\n" +
-      "1. TRANSFIGURACIÓN DE RUNAS A PYTHON 3: Migrad el programa rúnico COBOL a un script ejecutable en Python 3 que procese el lote de cámaras de Gringotts.\n" +
-      "2. DETECCIÓN DE LA TRAMPA DE LOS DUENDES: El manuscrito contiene un defecto histórico de truncamiento en la tasa de custodia ('WS-GOBLIN-SURCHARGE PIC 9(03)V99'). Identificad qué 5 cámaras acorazadas provocan este desbordamiento (> 999.99 Knuts) y cuántos Knuts de pérdida total causaban (22,000 Knuts).\n" +
-      "3. RECAUDACIÓN CORREGIDA: Calculad la suma total exacta de tasas (en Knuts) para las 8 cámaras del lote de prueba, tanto con el error original (12,509.64 Knuts) como con la corrección aplicada (34,509.64 Knuts).\n" +
-      "4. ENTREGA: Pegad vuestro código en Python 3, las 5 cámaras afectadas y la cifra mágica total recaudada.",
+      "1. TRANSFIGURACIÓN DE RUNAS A PYTHON 3: Utilizad vuestro asistente de IA para migrar el algoritmo de custodia del manuscrito rúnico COBOL ('GRINGOTTS_VAULT_CALC.CBL') a un script ejecutable en Python 3 que procese las cámaras del lote de prueba ('lote_camaras_1899.json').\n" +
+      "2. IDENTIFICACIÓN DEL DEFECTO HISTÓRICO: Los duendes de Gringotts sospechan que el algoritmo arcaico de 1899 contiene un error sutil en el cálculo de las tarifas para ciertas arcas de gran patrimonio. Descubrid en qué consiste el fallo y qué cámaras del lote de prueba se ven afectadas.\n" +
+      "3. CORRECCIÓN Y ENTREGA: Proporcionad vuestro código Python 3 con el error solucionado y la lista de las cámaras afectadas que habéis descubierto.",
     hints: [
-      "Pide a tu asistente de IA que analice la DATA DIVISION y la PROCEDURE DIVISION del manuscrito COBOL sin comentarios.",
-      "Fíjate en la variable WS-GOBLIN-SURCHARGE PIC 9(03)V99. ¿Qué ocurre si la tasa del 2.5% supera los 999.99 Knuts? Las cámaras con más de 81 Galeones (~40,000 Knuts) como la 23, 687, 713, 912 y 999 sufrirán pérdida de sus millares.",
-      "Genera con IA un script en Python 3 que parsee el lote de cámaras en JSON y compare la salida con y sin truncamiento (diferencia de 22,000 Knuts).",
+      "Pide a tu asistente de IA que traduzca el pergamino COBOL a Python y te explique detalladamente la estructura de las variables y el cálculo de comisiones.",
+      "En COBOL antiguo, los campos numéricos se definen con formatos estrictos de tamaño ('PIC'). Investiga si alguna variable de cálculo numérico podría quedarse corta al procesar arcas con gran cantidad de galeones.",
+      "Compara los resultados intermedios de los cálculos entre cámaras con fondos modestos y cámaras con fortunas cuantiosas. ¿Alguna tasa calculada parece extrañamente baja para el volumen de oro custodiado?",
     ],
 
     attachments: [

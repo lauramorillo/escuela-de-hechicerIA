@@ -46,33 +46,27 @@ flowchart LR
 - **Profesor:** Profesora Minerva McGonagall.
 - **Pilar:** *Guiar a la IA (Migración Legacy COBOL a Python 3).*
 - **Narrativa:** Un manuscrito bancario de 1899 escrito en runas COBOL por los duendes de Gringotts (`GRINGOTTS_VAULT_CALC.CBL`) calcula las tasas de custodia de las cámaras acorazadas.
-- **Trampa Histórica (Overflow):** La variable `WS-GOBLIN-SURCHARGE PIC 9(03)V99` solo admite hasta 999.99 Knuts. Cualquier fortuna superior a **81 Galeones** (~40,000 Knuts) sufre desbordamiento perdiendo sus millares.
-- **Cámaras afectadas en el lote oficial (`lote_camaras_1899.json`):**
-  - Cámaras **23, 687, 713, 912 y 999** (5 de 8 cámaras).
-  - Recaudación corregida total: **34,509.67 Knuts**.
-  - Recaudación con error de 1899: **12,509.67 Knuts**.
-  - Pérdida global histórica para Gringotts: exactamente **22,000.00 Knuts**.
-- **Código COBOL Compilable:** El archivo [`gringotts.cob`](file:///Users/laura_morillo/MyProjects/escuela-de-hechicerIA/gringotts.cob) contiene la versión corregida de entrada/salida secuencial (`FILE-CONTROL`, `FD VAULT-FILE`, redondeo con `ROUNDED` y estricto cumplimiento de las 72 columnas de formato fijo). Compila directamente con:
-  ```bash
-  cobc -x -o gringotts gringotts.cob
-  ./gringotts
-  ```
+- **Objetivo Pedagógico:** Migración de lógica procedural legacy a un lenguaje moderno, identificando y corrigiendo un defecto sutil en los cálculos numéricos de sistemas arcaicos mediante el uso de asistentes de IA.
+- **Entrega requerida del alumno:**
+  1. **Código Python 3 corregido:** Script funcional que procesa el lote de cámaras aplicando las reglas bancarias y resolviendo el error del algoritmo original.
+  2. **Lista de cámaras afectadas:** Identificación de las cámaras del lote de prueba que se veían afectadas por el fallo histórico.
+- **Sistema de Pistas Pedagógicas:** Las pistas están ocultas bajo candado en la UI ("Pistas del Claustro") con revelado progresivo bajo demanda para no adelantar pistas directas ni desvelar la solución de entrada.
+- **Archivos de trabajo:** `GRINGOTTS_VAULT_CALC.CBL` (manuscrito COBOL original) y `lote_camaras_1899.json` (datos de prueba).
 
 ### Desafío 2: El Mapa del Merodeador (`defense`)
 - **Profesor:** Profesor Remus Lupin (Lunático).
 - **Pilar:** *Proteger a la IA (Red & Blue Teaming).*
+- **Objetivo Pedagógico:** Comprensión práctica de los riesgos de Prompt Injection y Jailbreaking en LLMs, así como el diseño de directivas de sistema defensivas eficaces.
 - **Sub-desafíos interactivos:**
-  1. **El Asalto (`defense_attack` - Red Teamer):** El alumno debe quebrar las defensas de un guardián débil mediante Prompt Injection (suplantando a Snape, pidiendo traducción a latín o ficción) para extraer el pasadizo secreto a Honeydukes.
-  2. **La Contención (`defense_guard` - Blue Teamer):** El alumno diseña el *System Prompt* definitivo para blindar el pergamino del Mapa del Merodeador ante ataques forzados y activarse exclusivamente ante la fórmula: *"Juro solemnemente que mis intenciones no son buenas"*.
+  1. **El Asalto (`defense_attack` - Red Teamer):** El alumno debe explorar técnicas de ingeniería de prompts (suplantación, inversión de directivas, traducción o contextos ficticios) para conseguir que un guardián débil revele un secreto custodiado.
+  2. **La Contención (`defense_guard` - Blue Teamer):** El alumno diseña el *System Prompt* de protección del Mapa del Merodeador para resistir intentos de manipulación forzada y conceder acceso únicamente ante las condiciones mágicas autorizadas.
 
 ### Desafío 3: La Batalla de Hogwarts (`battle`)
 - **Profesor:** Comando de Defensa de Hogwarts (Minerva McGonagall y la Orden del Fénix).
 - **Pilar:** *Estructurar Salidas & Agentes Autónomos (Tool Calling).*
-- **Narrativa:** Asedio nocturno al castillo. Los alumnos programan la mente de un Agente que debe repeler 4 oleadas mortífagas invocando herramientas con JSON Schema estricto:
-  - Oleada 1 (Dementores en el puente): `lanzar_contrahechizo` con `Expecto Patronum` en `puente`.
-  - Oleada 2 (Daños en la cúpula): `reforzar_barrera` en `patio_central` con potencia $\ge 50$.
-  - Oleada 3 (Gigantes en las puertas): `activar_estatuas_piertotum` con orden `bloquear_puerta_principal`.
-  - Oleada 4 (Duelo con Bellatrix): `lanzar_contrahechizo` con `Expelliarmus` en `viaducto`.
+- **Narrativa:** Asedio nocturno al castillo. Los alumnos deben programar la toma de decisiones y las llamadas a herramientas estructuradas (Function / Tool Calling con JSON Schema) de un Agente que defienda el castillo frente a 4 oleadas consecutivas de amenazas en diferentes sectores.
+- **Objetivo Pedagógico:** Generación de salidas estructuradas estrictas, selección adecuada de herramientas a partir de un catálogo y razonamiento paso a paso (Thought + Action).
+- **Archivos de trabajo:** `herramientas_defensa.json` (catálogo de herramientas mágicas disponibles).
 
 ---
 
