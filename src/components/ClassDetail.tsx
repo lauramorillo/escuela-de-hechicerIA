@@ -22,6 +22,9 @@ import {
   Lock,
   Unlock,
   Eye,
+  Upload,
+  CheckCircle2,
+  FileCode,
 } from "lucide-react";
 import type { ClassItem, SubmissionItem, SubExercise } from "./ClassesHub";
 import { MaraudersMapBackground } from "./MaraudersMapBackground";
@@ -35,11 +38,12 @@ interface ClassDetailProps {
 }
 
 interface EvaluationResponse {
-  grade: "E" | "S" | "A" | "I" | "D";
+  grade: "E" | "S" | "A" | "I" | "D" | "T";
   gradeLabel: string;
   points: number;
   feedback: string;
   advice: string;
+  firstHouseBonus?: boolean;
 }
 
 const PROFESSOR_AVATARS: Record<string, { icon: string; titleColor: string; quote: string }> = {
@@ -85,7 +89,7 @@ const GRADE_METRICS: Record<string, { label: string; badge: string; color: strin
     desc: "Aprobado suficiente para continuar.",
   },
   I: {
-    label: "Insuficiente",
+    label: "Insatisfactorio",
     badge: "I",
     color: "from-orange-500 to-amber-700 text-white border-orange-300 shadow-[0_0_20px_rgba(249,115,22,0.4)]",
     desc: "Necesitas practicar antes del examen.",
@@ -95,6 +99,12 @@ const GRADE_METRICS: Record<string, { label: string; badge: string; color: strin
     badge: "D",
     color: "from-rose-600 to-red-800 text-white border-rose-400 shadow-[0_0_25px_rgba(225,29,72,0.5)]",
     desc: "¡Cuidado con la varita!",
+  },
+  T: {
+    label: "Trol",
+    badge: "T",
+    color: "from-stone-700 to-stone-900 text-red-400 border-red-500 shadow-[0_0_25px_rgba(239,68,68,0.5)]",
+    desc: "¡Peligro! Entrega inaceptable o perjudicial.",
   },
 };
 
@@ -111,6 +121,9 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   const [classInfo, setClassInfo] = useState<ClassItem | null>(null);
   const [submission, setSubmission] = useState<SubmissionItem | null>(null);
   const [answerText, setAnswerText] = useState("");
+  const [jsonAuditText, setJsonAuditText] = useState("");
+  const [pythonFileName, setPythonFileName] = useState("");
+  const [pythonFileContent, setPythonFileContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -118,6 +131,8 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedSubExerciseId, setSelectedSubExerciseId] = useState<string>("defense_attack");
   const [revealedHints, setRevealedHints] = useState<Record<number, boolean>>({});
+
+  const isPassed = Boolean(submission && ["E", "S", "A"].includes(submission.grade));
 
   const professorData = PROFESSOR_AVATARS[classId] || PROFESSOR_AVATARS.transfiguration;
   const currentSubExercise: SubExercise | undefined = isDefense
@@ -139,6 +154,16 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
         if (prev) {
           setSubmission(prev);
           setAnswerText(prev.answer || "");
+          if (classId === "transfiguration" && prev.answer) {
+            const jsonMatch = prev.answer.match(/```json\s*([\s\S]*?)```/i);
+            if (jsonMatch && jsonMatch[1]) {
+              setJsonAuditText(jsonMatch[1].trim());
+            }
+            const pyMatch = prev.answer.match(/```python\s*([\s\S]*?)```/i);
+            if (pyMatch && pyMatch[1]) {
+              setPythonFileContent(pyMatch[1].trim());
+            }
+          }
         } else {
           setIsEditing(true);
         }
@@ -154,23 +179,45 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
     setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const handleInsertJsonTemplate = () => {
+    setJsonAuditText(`{
+  "variable_cobol_afectada": "WS-NOMBRE-VARIABLE",
+  "camaras_afectadas": [
+    {
+      "numero_camara": 9999,
+      "tarifa_total_knuts": 1250.50
+    }
+  ]
+}`);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPythonFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setPythonFileContent(content || "");
+    };
+    reader.readAsText(file);
+  };
+
   const handleInsertTemplate = () => {
     if (isTransfiguration) {
-      const template = `### 1. CÁMARAS AFECTADAS POR EL DEFECTO HISTÓRICO:
-[Indica aquí los números de las cámaras del lote de prueba afectadas, ej: 105, 394...]
-
-### 2. CÓDIGO PYTHON 3 (CORREGIDO):
-\`\`\`python
-# Pega aquí tu script en Python 3 con el error solucionado
+      handleInsertJsonTemplate();
+      if (!pythonFileContent) {
+        setAnswerText(`# Escribe aquí tu función en Python 3 o adjunta tu archivo .py abajo
 import json
 
 def calcular_tasa_camara(camara):
+    # Calcula la tarifa total en Knuts sin el límite rúnico
     pass
 
 def procesar_lote(lote):
-    pass
-\`\`\``;
-      setAnswerText(template);
+    return [calcular_tasa_camara(c) for c in lote]
+`);
+      }
     } else if (isDefense && currentSubExercise) {
       setAnswerText(currentSubExercise.defaultTemplate);
     } else if (isBattle) {
@@ -239,9 +286,24 @@ def procesar_lote(lote):
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answerText.trim()) {
-      setErrorMessage("Por favor, redacta tu respuesta antes de enviarla.");
-      return;
+
+    let finalAnswer = answerText.trim();
+    if (isTransfiguration) {
+      const scriptCode = (pythonFileContent || answerText).trim();
+      if (!jsonAuditText.trim()) {
+        setErrorMessage("Por favor, completa el informe de auditoría Rúnica en formato JSON antes de enviar.");
+        return;
+      }
+      if (!scriptCode) {
+        setErrorMessage("Por favor, adjunta o escribe tu script Python 3 (.py) antes de enviar.");
+        return;
+      }
+      finalAnswer = `### INFORME DE AUDITORÍA RÚNICA (JSON):\n\`\`\`json\n${jsonAuditText.trim()}\n\`\`\`\n\n### SCRIPT PYTHON 3 (.py):\n\`\`\`python\n${scriptCode}\n\`\`\``;
+    } else {
+      if (!finalAnswer) {
+        setErrorMessage("Por favor, redacta tu respuesta antes de enviarla.");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -258,7 +320,7 @@ def procesar_lote(lote):
         house: studentHouse.toLowerCase(),
         classId,
         subExerciseId: isDefense ? selectedSubExerciseId : undefined,
-        answer: answerText.trim(),
+        answer: finalAnswer,
       };
 
       const res = await fetch(targetUrl, {
@@ -278,11 +340,12 @@ def procesar_lote(lote):
         points: data.points,
         feedback: data.feedback,
         advice: data.advice,
+        firstHouseBonus: data.firstHouseBonus,
       };
 
       setSubmission({
         class_id: classId,
-        answer: answerText.trim(),
+        answer: finalAnswer,
         grade: evaluation.grade,
         grade_label: evaluation.gradeLabel,
         points: evaluation.points,
@@ -530,19 +593,26 @@ def procesar_lote(lote):
                   </p>
                 </div>
 
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-[#391e0d] hover:bg-[#291407] text-[#fff8ee] text-sm font-bold transition-all cursor-pointer shadow-md hover:scale-[1.01]"
-                >
-                  <RefreshCw className="w-4 h-4 text-amber-300" />
-                  <span>✨ Travesura realizada (Presentar nueva respuesta)</span>
-                </button>
+                {isPassed ? (
+                  <div className="flex items-center justify-center gap-2.5 w-full py-4 px-4 rounded-xl bg-[#2e1708] border border-[#8a4218]/40 text-[#dfcaa0] text-xs sm:text-sm font-semibold text-center shadow-inner">
+                    <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
+                    <span>Examen T.I.M.O. superado ({submission.grade_label}). Calificación oficial sellada en el expediente.</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-[#391e0d] hover:bg-[#291407] text-[#fff8ee] text-sm font-bold transition-all cursor-pointer shadow-md hover:scale-[1.01]"
+                  >
+                    <RefreshCw className="w-4 h-4 text-amber-300" />
+                    <span>Volver a intentar para superar el examen</span>
+                  </button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Formulario de Entrega del Desafío Activo */}
-          {(!submission || isEditing) && (
+          {(!submission || (isEditing && !isPassed)) && (
             <form
               onSubmit={handleSubmit}
               className="flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-[#fffbf2] border-3 border-[#6b3813] shadow-[0_10px_35px_rgba(70,35,10,0.2)] relative"
@@ -899,9 +969,22 @@ def procesar_lote(lote):
                   <span>{copiedId === currentAttachment.id ? "¡Copiado!" : "Copiar"}</span>
                 </button>
               </div>
-              <pre className="p-4 sm:p-5 overflow-x-auto text-xs font-mono text-amber-100/90 bg-[#101014] leading-relaxed max-h-[500px]">
-                <code>{currentAttachment.content}</code>
-              </pre>
+              <div className="p-4 sm:p-5 overflow-x-auto text-xs font-mono text-amber-100/90 bg-[#101014] leading-relaxed max-h-[520px]">
+                <table className="w-full border-collapse">
+                  <tbody>
+                    {currentAttachment.content.split("\n").map((line, idx) => (
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="select-none text-stone-600 pr-4 text-right align-top w-12 border-r border-stone-800/80 mr-3 text-[11px] font-mono">
+                          {idx + 1}
+                        </td>
+                        <td className="pl-4 whitespace-pre font-mono">
+                          {line}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -1073,20 +1156,27 @@ def procesar_lote(lote):
                 </p>
               </div>
 
-              {/* Botón para reintentar */}
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 border border-amber-600/40 text-amber-200 text-sm font-bold transition-all cursor-pointer hover:scale-[1.01]"
-              >
-                <RefreshCw className="w-4 h-4 text-amber-400" />
-                <span>Presentar nueva respuesta para subir nota</span>
-              </button>
+              {/* Botón para reintentar o banner de examen sellado */}
+              {isPassed ? (
+                <div className="flex items-center justify-center gap-2.5 w-full py-4 px-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-semibold text-center shadow-inner">
+                  <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />
+                  <span>Examen T.I.M.O. superado con éxito ({submission.grade_label}). Calificación oficial sellada por el Claustro.</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 border border-amber-600/40 text-amber-200 text-sm font-bold transition-all cursor-pointer hover:scale-[1.01]"
+                >
+                  <RefreshCw className="w-4 h-4 text-amber-400" />
+                  <span>Volver a intentar para superar el examen</span>
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Formulario de Entrega */}
-        {(!submission || isEditing) && (
+        {(!submission || (isEditing && !isPassed)) && (
           <form
             onSubmit={handleSubmit}
             className={`flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl border shadow-2xl relative ${
@@ -1096,49 +1186,128 @@ def procesar_lote(lote):
             }`}
           >
             <div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <label
-                  htmlFor="magic-answer"
-                  className="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2"
-                >
-                  <Feather className="w-4 h-4 text-amber-400" />
-                  <span>
-                    {isTransfiguration
-                      ? "Pizarra de Minerva McGonagall • Escribe tu solución en Python 3:"
-                      : "Consola de Combate Agéntico • Escribe el Tool Calling (JSON / Código):"}
-                  </span>
-                </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleInsertTemplate}
-                    className="text-xs text-amber-400 hover:text-amber-300 underline cursor-pointer"
-                  >
-                    Insertar plantilla de entrega
-                  </button>
-                  <span className="text-xs text-stone-400 font-mono">
-                    {answerText.length} caracteres
-                  </span>
-                </div>
-              </div>
+              {isTransfiguration ? (
+                <div className="space-y-6">
+                  {/* Bloque 1: Informe de Auditoría Rúnica JSON */}
+                  <div className="p-4 sm:p-5 rounded-xl bg-black/40 border border-amber-600/30">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-stone-800/80">
+                      <label htmlFor="json-audit" className="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2">
+                        <Code2 className="w-4 h-4 text-amber-400" />
+                        <span>1. Informe de Auditoría Rúnica (JSON):</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleInsertJsonTemplate}
+                        className="text-xs text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                      >
+                        Pegar plantilla JSON de ejemplo
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-stone-400 mb-2">
+                      Indica la variable COBOL afectada (<code className="text-amber-300">variable_cobol_afectada</code>) y la lista de arcas con su <code className="text-amber-300">numero_camara</code> y <code className="text-amber-300">tarifa_total_knuts</code>.
+                    </p>
+                    <textarea
+                      id="json-audit"
+                      rows={6}
+                      value={jsonAuditText}
+                      onChange={(e) => setJsonAuditText(e.target.value)}
+                      placeholder={`{\n  "variable_cobol_afectada": "WS-...",\n  "camaras_afectadas": [\n    {\n      "numero_camara": 9999,\n      "tarifa_total_knuts": 1250.50\n    }\n  ]\n}`}
+                      disabled={submitting}
+                      className="w-full p-3 rounded-lg font-mono text-xs sm:text-sm leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#101014] border border-[#452818] focus:border-amber-500 text-amber-100 placeholder:text-stone-700"
+                    />
+                  </div>
 
-              <textarea
-                id="magic-answer"
-                rows={10}
-                value={answerText}
-                onChange={(e) => setAnswerText(e.target.value)}
-                placeholder={
-                  isTransfiguration
-                    ? "### 1. CÁMARAS AFECTADAS POR EL DEFECTO HISTÓRICO:\n[Indica aquí los números de las cámaras afectadas]\n\n### 2. CÓDIGO PYTHON 3 (CORREGIDO):\n```python\n# Pega aquí tu código en Python 3 corregido...\n```"
-                    : "[\n  {\n    \"oleada\": 1,\n    \"tool_call\": { \"name\": \"lanzar_contrahechizo\", \"arguments\": { \"hechizo\": \"Expecto Patronum\", \"sector\": \"puente\" } }\n  }\n]"
-                }
-                disabled={submitting}
-                className={`w-full p-4 rounded-xl font-mono text-xs sm:text-sm leading-relaxed resize-y outline-none transition-all shadow-inner ${
-                  isTransfiguration
-                    ? "bg-[#101014] border-2 border-[#452818] focus:border-amber-500 text-stone-100 placeholder:text-stone-600"
-                    : "bg-[#050711] border-2 border-indigo-900/80 focus:border-indigo-400 text-indigo-100 placeholder:text-indigo-900/70"
-                }`}
-              />
+                  {/* Bloque 2: Script Python 3 (.py) */}
+                  <div className="p-4 sm:p-5 rounded-xl bg-black/40 border border-amber-600/30">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-stone-800/80">
+                      <label htmlFor="python-script" className="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2">
+                        <FileCode className="w-4 h-4 text-amber-400" />
+                        <span>2. Script Python 3 corregido (.py):</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-mono font-bold cursor-pointer transition-colors border border-amber-500/40">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{pythonFileName ? "Cambiar archivo .py" : "Adjuntar archivo .py"}</span>
+                        <input
+                          type="file"
+                          accept=".py"
+                          onChange={handleFileUpload}
+                          className="hidden"
+                          disabled={submitting}
+                        />
+                      </label>
+                    </div>
+
+                    {pythonFileName && (
+                      <div className="mb-3 p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between text-xs text-emerald-300 font-mono">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span>Archivo adjunto: <strong>{pythonFileName}</strong> ({pythonFileContent.split("\n").length} líneas)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPythonFileName("");
+                            setPythonFileContent("");
+                          }}
+                          className="text-[11px] text-stone-400 hover:text-rose-400 underline cursor-pointer"
+                        >
+                          Quitar archivo
+                        </button>
+                      </div>
+                    )}
+
+                    <textarea
+                      id="python-script"
+                      rows={8}
+                      value={pythonFileContent || answerText}
+                      onChange={(e) => {
+                        if (pythonFileName) {
+                          setPythonFileContent(e.target.value);
+                        } else {
+                          setAnswerText(e.target.value);
+                        }
+                      }}
+                      placeholder={`# Pega aquí tu código Python 3 si no adjuntas el archivo directamente:\nimport json\n\ndef calcular_tasa_camara(camara):\n    pass\n\ndef procesar_lote(lote):\n    return [calcular_tasa_camara(c) for c in lote]`}
+                      disabled={submitting}
+                      className="w-full p-3 rounded-lg font-mono text-xs sm:text-sm leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#101014] border border-[#452818] focus:border-amber-500 text-stone-100 placeholder:text-stone-700"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <label
+                      htmlFor="magic-answer"
+                      className="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2"
+                    >
+                      <Feather className="w-4 h-4 text-amber-400" />
+                      <span>Consola de Combate Agéntico • Escribe el Tool Calling (JSON):</span>
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleInsertTemplate}
+                        className="text-xs text-amber-400 hover:text-amber-300 underline cursor-pointer"
+                      >
+                        Insertar plantilla de entrega
+                      </button>
+                      <span className="text-xs text-stone-400 font-mono">
+                        {answerText.length} caracteres
+                      </span>
+                    </div>
+                  </div>
+
+                  <textarea
+                    id="magic-answer"
+                    rows={10}
+                    value={answerText}
+                    onChange={(e) => setAnswerText(e.target.value)}
+                    placeholder={'[\n  {\n    "oleada": 1,\n    "tool_call": { "name": "lanzar_contrahechizo", "arguments": { "hechizo": "Expecto Patronum", "sector": "puente" } }\n  }\n]'}
+                    disabled={submitting}
+                    className="w-full p-4 rounded-xl font-mono text-xs sm:text-sm leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#050711] border-2 border-indigo-900/80 focus:border-indigo-400 text-indigo-100 placeholder:text-indigo-900/70"
+                  />
+                </div>
+              )}
 
               {errorMessage && (
                 <div className="flex items-center gap-2 text-rose-300 bg-rose-950/60 border border-rose-800/80 p-3 rounded-xl text-xs sm:text-sm mt-3">
@@ -1162,9 +1331,17 @@ def procesar_lote(lote):
 
               <button
                 type="submit"
-                disabled={submitting || !answerText.trim()}
+                disabled={
+                  submitting ||
+                  (isTransfiguration
+                    ? !jsonAuditText.trim() || !(pythonFileContent || answerText).trim()
+                    : !answerText.trim())
+                }
                 className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${
-                  submitting || !answerText.trim()
+                  submitting ||
+                  (isTransfiguration
+                    ? !jsonAuditText.trim() || !(pythonFileContent || answerText).trim()
+                    : !answerText.trim())
                     ? "bg-stone-800 text-stone-500 border border-stone-700 cursor-not-allowed"
                     : isTransfiguration
                     ? "bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-stone-950 shadow-[0_0_30px_rgba(217,119,6,0.5)] hover:scale-105 cursor-pointer font-black"

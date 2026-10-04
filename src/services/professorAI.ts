@@ -345,12 +345,30 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "Durante una restauración en la Sección Prohibida de la Biblioteca de Hogwarts, la señora Pince desenterró un pergamino amarillento de 1899. Contiene las fórmulas originales de los duendes de Gringotts para calcular los costes de custodia de las cámaras acorazadas. Está escrito en unas runas arcaicas conocidas como C.O.B.O.L. (Common Order of Binary Occult Lore) que casi ningún mago viviente sabe interpretar.",
     assignment:
       "La Profesora McGonagall exige rigor absoluto. Vuestra misión en este desafío consiste en:\n\n" +
-      "1. TRANSFIGURACIÓN DE RUNAS A PYTHON 3: Utilizad vuestro asistente de IA para migrar el algoritmo de custodia del manuscrito rúnico COBOL ('GRINGOTTS_VAULT_CALC.CBL') a un script ejecutable en Python 3 que procese las cámaras del lote de prueba ('lote_camaras_1899.json').\n" +
-      "2. IDENTIFICACIÓN DEL DEFECTO HISTÓRICO: Los duendes de Gringotts sospechan que el algoritmo arcaico de 1899 contiene un error sutil en el cálculo de las tarifas para ciertas arcas de gran patrimonio. Descubrid en qué consiste el fallo y qué cámaras del lote de prueba se ven afectadas.\n" +
-      "3. CORRECCIÓN Y ENTREGA: Proporcionad vuestro código Python 3 con el error solucionado y la lista de las cámaras afectadas que habéis descubierto.",
+      "1. TRANSFIGURACIÓN DE RUNAS A PYTHON 3: Utilizad vuestro asistente de IA para migrar el algoritmo de custodia del manuscrito rúnico COBOL ('GRINGOTTS_VAULT_CALC.CBL') a un script funcional en Python 3 que calcule correctamente la tarifa total en Knuts de las cámaras del lote de prueba ('lote_camaras_1899.json').\n\n" +
+      "2. DETECCIÓN DEL DEFECTO RÚNICO: Localizad la variable de la DATA DIVISION cuyo tamaño insuficiente ('PIC') causaba el truncamiento contable en grandes patrimonios, y auditad qué cámaras del lote sufrieron este error histórico.\n\n" +
+      "3. REPORTE Y ENTREGA OFICIAL: Vuestra entrega debe componerse de dos partes:\n" +
+      "   • INFORME DE AUDITORÍA RÚNICA (JSON): Objeto JSON que indique el nombre exacto de la variable COBOL afectada ('variable_cobol_afectada') y la lista de cámaras afectadas ('camaras_afectadas') con su 'numero_camara' y la 'tarifa_total_knuts' (tarifa final corregida que debió cobrar Gringotts en Knuts, redondeada a 2 decimales):\n\n" +
+      "```json\n" +
+      "{\n" +
+      '  "variable_cobol_afectada": "WS-NOMBRE-VARIABLE",\n' +
+      '  "camaras_afectadas": [\n' +
+      "    {\n" +
+      '      "numero_camara": 9999,\n' +
+      '      "tarifa_total_knuts": 1250.50\n' +
+      "    }\n" +
+      "  ]\n" +
+      "}\n" +
+      "```\n\n" +
+      "   • SCRIPT PYTHON 3 (.py): Vuestro archivo de código Python con el cálculo rúnico sin límites artificiales.\n\n" +
+      "4. CALIFICACIONES DEL T.I.M.O.:\n" +
+      "   • E (Extraordinario): +25 pts (¡+50 pts de bonificación para la PRIMERA casa cuyo estudiante obtenga un Extraordinario!).\n" +
+      "   • S (Supera las expectativas): +15 pts | A (Aceptable): +5 pts.\n" +
+      "   • I (Insatisfactorio): 0 pts | D (Desastroso): -5 pts | T (Trol): -10 pts.\n" +
+      "   • Atención: Una vez aprobado el examen (E, S o A), la calificación queda sellada y no se admiten más entregas.",
     hints: [
       "Pide a tu asistente de IA que traduzca el pergamino COBOL a Python y te explique detalladamente la estructura de las variables y el cálculo de comisiones.",
-      "En COBOL antiguo, los campos numéricos se definen con formatos estrictos de tamaño ('PIC'). Investiga si alguna variable de cálculo numérico podría quedarse corta al procesar arcas con gran cantidad de galeones.",
+      "En COBOL antiguo, los campos numéricos se definen con formatos estrictos de tamaño ('PIC'). Investiga si alguna variable de cálculo numérico en la DATA DIVISION podría quedarse corta al procesar arcas con gran cantidad de galeones.",
       "Compara los resultados intermedios de los cálculos entre cámaras con fondos modestos y cámaras con fortunas cuantiosas. ¿Alguna tasa calculada parece extrañamente baja para el volumen de oro custodiado?",
     ],
 

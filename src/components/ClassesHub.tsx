@@ -122,8 +122,12 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
         return "bg-emerald-500/20 text-emerald-300 border-emerald-500/50";
       case "I":
         return "bg-orange-500/20 text-orange-300 border-orange-500/50";
-      default:
+      case "D":
         return "bg-rose-500/20 text-rose-300 border-rose-500/50";
+      case "T":
+        return "bg-stone-800/80 text-red-400 border-red-600/50";
+      default:
+        return "bg-stone-500/20 text-stone-300 border-stone-500/50";
     }
   };
 
@@ -255,8 +259,12 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                     </div>
                     {isCompleted ? (
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${getGradeColor(submission.grade)}`}>
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        {submission.grade} • +{submission.points} pts
+                        {["E", "S", "A"].includes(submission.grade) ? (
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5" />
+                        )}
+                        {submission.grade} • {submission.points > 0 ? `+${submission.points}` : submission.points} pts
                       </span>
                     ) : (
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-stone-800/80 text-stone-400 border border-stone-700">
