@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Sparkles, ArrowLeft, Award, CheckCircle2, Wand2, Shield, Eye, Flame, Map, Swords } from "lucide-react";
+import { Sparkles, ArrowLeft, Award, CheckCircle2, AlertCircle, Wand2, Shield, Eye, Flame, Map, Swords } from "lucide-react";
 
 export interface ClassAttachment {
   id: string;
