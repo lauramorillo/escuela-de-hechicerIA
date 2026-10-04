@@ -294,8 +294,15 @@ class DatabaseService {
   private firestore: Firestore | null = null;
   private inMemoryFallback = new InMemoryDb();
   private isUsingFallback = false;
+  private memoryActiveWorkshopId: string | null = null;
 
   constructor() {
+    // Aislar tests unitarios en memoria para no contaminar la base de datos de producción
+    if ((process.env.NODE_ENV === "test" || process.env.VITEST) && process.env.USE_REAL_FIRESTORE !== "true") {
+      this.isUsingFallback = true;
+      return;
+    }
+
     try {
       const projectId = process.env.GOOGLE_CLOUD_PROJECT || "escuela-de-hechiceria";
       this.firestore = new Firestore({ projectId });
@@ -336,6 +343,8 @@ class DatabaseService {
       }
     }
 
+    if (this.memoryActiveWorkshopId) return this.memoryActiveWorkshopId;
+
     const envWorkshop = process.env.ACTIVE_WORKSHOP_ID?.trim();
     if (envWorkshop) return envWorkshop;
 
@@ -343,6 +352,7 @@ class DatabaseService {
   }
 
   async setActiveWorkshopId(workshopId: string): Promise<void> {
+    this.memoryActiveWorkshopId = workshopId.trim();
     if (!this.isUsingFallback && this.firestore) {
       await this.firestore.doc("config/global").set(
         {
@@ -631,16 +641,15 @@ class DatabaseService {
   }
 
   async deleteWorkshop(workshopId: string): Promise<void> {
-    if (this.isUsingFallback || !this.firestore) {
-      return this.inMemoryFallback.deleteWorkshop(workshopId);
-    }
+    await this.inMemoryFallback.deleteWorkshop(workshopId);
 
-    try {
-      const docRef = this.firestore.doc(`workshops/${workshopId}`);
-      await this.firestore.recursiveDelete(docRef);
-    } catch (err) {
-      console.error(`Error al eliminar workshop ${workshopId}:`, err);
-      return this.inMemoryFallback.deleteWorkshop(workshopId);
+    if (this.firestore) {
+      try {
+        const docRef = this.firestore.doc(`workshops/${workshopId}`);
+        await this.firestore.recursiveDelete(docRef);
+      } catch (err) {
+        console.error(`Error al eliminar workshop ${workshopId} de Firestore:`, err);
+      }
     }
   }
 
