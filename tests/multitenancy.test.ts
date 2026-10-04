@@ -15,8 +15,8 @@ describe("Multitenancy por Edición (Workshop Isolation)", () => {
   });
 
   it("debe aislar completamente dos workshops diferentes", async () => {
-    const ws1 = trackWorkshop(`ws-madrid-${Date.now()}`);
-    const ws2 = trackWorkshop(`ws-barcelona-${Date.now()}`);
+    const ws1 = trackWorkshop(`test-ws-madrid-${Date.now()}`);
+    const ws2 = trackWorkshop(`test-ws-barcelona-${Date.now()}`);
 
     await dbService.ensureHousesInitialized(ws1);
     await dbService.ensureHousesInitialized(ws2);
@@ -42,7 +42,7 @@ describe("Multitenancy por Edición (Workshop Isolation)", () => {
     expect(typeof originalId).toBe("string");
     expect(originalId.length).toBeGreaterThan(0);
 
-    const testCustomWorkshop = `ws-dynamic-${Date.now()}`;
+    const testCustomWorkshop = `test-ws-dynamic-${Date.now()}`;
     await dbService.setActiveWorkshopId(testCustomWorkshop);
 
     const resolved = await dbService.getEffectiveWorkshopId();

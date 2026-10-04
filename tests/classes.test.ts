@@ -38,7 +38,7 @@ describe("Clases y Profesores Agénticos", () => {
 
 
   it("debe guardar y recuperar las entregas de un estudiante", async () => {
-    const ws = trackWorkshop(`ws-test-classes-${Date.now()}`);
+    const ws = trackWorkshop(`test-classes-${Date.now()}`);
     await dbService.ensureHousesInitialized(ws);
 
     const studentId = "student_hermione";
@@ -63,7 +63,7 @@ describe("Clases y Profesores Agénticos", () => {
   });
 
   it("debe sumar puntos de casa y reflejarlos en las puntuaciones", async () => {
-    const ws = trackWorkshop(`ws-test-points-${Date.now()}`);
+    const ws = trackWorkshop(`test-points-${Date.now()}`);
     await dbService.ensureHousesInitialized(ws);
 
     const initialScores = await dbService.getHouseScores(ws);

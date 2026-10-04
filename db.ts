@@ -659,7 +659,7 @@ class DatabaseService {
       const docRefs = await this.firestore.collection("workshops").listDocuments();
       const deleted: string[] = [];
       for (const docRef of docRefs) {
-        if (docRef.id.startsWith("test-") || docRef.id.startsWith("ws-")) {
+        if (docRef.id.startsWith("test-") || docRef.id.startsWith("test_")) {
           await this.firestore.recursiveDelete(docRef);
           deleted.push(docRef.id);
         }
