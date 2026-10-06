@@ -363,11 +363,11 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "  ]\n" +
       "}\n" +
       "```\n\n" +
-      "• 2. Código Python 3 (.py): Vuestro archivo o script con las funciones de cálculo migradas y corregidas (calcular_tasa_camara y procesar_lote). Utiliza únicamente la biblioteca estándar de Python (ej. decimal, math, json).\n\n" +
-      "• 3. Tests Python 3 (.py): Vuestra batería de pruebas unitarias ejecutadas directamente sobre el entorno. IMPORTANTE: No importes 'pytest' ni módulos externos/locales; utiliza aserciones nativas 'assert' llamando directamente a las funciones de tu script.\n\n" +
+      "• 2. Código Python 3 (.py): Vuestro archivo o script respetando el esqueleto pre-rellenado (debe definir calcular_tasa_camara y procesar_lote con la lógica de COBOL migrada). Utiliza únicamente la biblioteca estándar de Python (ej. decimal, math, json).\n\n" +
+      "• 3. Tests Python 3 (.py): Vuestra batería de pruebas unitarias respetando el formato del esqueleto (funciones test_*() con aserciones assert nativas). No es necesario importar tu script ni dependencias externas: las funciones de tu código están disponibles directamente en memoria.\n\n" +
       "⚠️ REGLAS DEL ENTORNO DE EVALUACIÓN:\n" +
-      "• Sin librerías externas: El evaluador no admite dependencias de terceros (como pytest). Utiliza únicamente módulos de la biblioteca estándar de Python.\n" +
-      "• Aserciones nativas en memoria: Tus tests se ejecutan en el mismo espacio de nombres de tu script. No uses 'from modulo import ...' ni 'import pytest', sino sentencias 'assert' directas.\n" +
+      "• Respetar la estructura del esqueleto: El código debe implementar calcular_tasa_camara(camara) y procesar_lote(lote), y los tests deben usar funciones test_*() con aserciones 'assert' nativas.\n" +
+      "• Aserciones nativas en memoria: Tus tests se ejecutan en el mismo espacio de tu script. No requieres 'from modulo import ...' ni 'import pytest'.\n" +
       "• Solo cámaras afectadas: No listes el lote entero en la auditoría; incluir cámaras que no sufrieron anomalías contables en el COBOL original penalizará la revisión.\n\n" +
       "5. Calificaciones del T.I.M.O.:\n\n" +
       "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): Todo perfecto. Código con las anomalías resueltas, batería de tests unitarios completa (casos estándar y límite) e informe de auditoría exacto.\n" +

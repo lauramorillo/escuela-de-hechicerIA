@@ -30,7 +30,7 @@ interface TransfigurationFormProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-const DEFAULT_JSON_TEMPLATE = `{
+export const DEFAULT_JSON_TEMPLATE = `{
   "variable_cobol_afectada": "WS-NOMBRE-VARIABLE",
   "camaras_afectadas": [
     {
@@ -39,6 +39,18 @@ const DEFAULT_JSON_TEMPLATE = `{
     }
   ]
 }`;
+
+export const DEFAULT_PYTHON_SKELETON = `def calcular_tasa_camara(camara: dict) -> float:
+    ### CÓDIGO TRANSFIGURADO DE COBOL / TU CÁLCULO DE TASA ###
+    pass
+
+def procesar_lote(lote: list) -> list:
+    return [calcular_tasa_camara(c) for c in lote]`;
+
+export const DEFAULT_TESTS_SKELETON = `def test_algo():
+    # Las funciones de tu código están disponibles directamente en memoria
+    camara = {"vaultId": 100, "tier": "B", "ownerType": "S", "cursesCount": 0, "galleons": 10, "sickles": 0, "knuts": 0}
+    assert calcular_tasa_camara(camara) is not None`;
 
 export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
   jsonAuditText,
@@ -154,7 +166,7 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
             </label>
           </div>
           <p className="text-xs sm:text-sm text-stone-300 mb-2">
-            Script funcional que defina las funciones <code className="text-amber-300 font-mono">calcular_tasa_camara(camara)</code> y <code className="text-amber-300 font-mono">procesar_lote(lote)</code> con la corrección contable.
+            Respeta la estructura del esqueleto: define las funciones <code className="text-amber-300 font-mono">calcular_tasa_camara(camara)</code> y <code className="text-amber-300 font-mono">procesar_lote(lote)</code> con la lógica migrada de COBOL.
           </p>
           <div className="mb-2.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] text-amber-200/90 flex items-center gap-2">
             <span>🔒 <strong>Solo biblioteca estándar:</strong> Puedes usar <code className="font-mono text-amber-300">decimal</code>, <code className="font-mono text-amber-300">math</code> o <code className="font-mono text-amber-300">json</code>. No se admiten dependencias externas.</span>
@@ -170,11 +182,11 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
                 type="button"
                 onClick={() => {
                   setPythonFileName("");
-                  setPythonFileContent("");
+                  setPythonFileContent(DEFAULT_PYTHON_SKELETON);
                 }}
                 className="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer"
               >
-                Quitar archivo
+                Quitar archivo (restaurar esqueleto)
               </button>
             </div>
           )}
@@ -184,7 +196,7 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
             rows={8}
             value={pythonFileContent}
             onChange={(e) => setPythonFileContent(e.target.value)}
-            placeholder={`# Pega aquí tu código Python 3:\nfrom decimal import Decimal\n\ndef calcular_tasa_camara(camara):\n    pass\n\ndef procesar_lote(lote):\n    return [calcular_tasa_camara(c) for c in lote]`}
+            placeholder={DEFAULT_PYTHON_SKELETON}
             disabled={submitting}
             className="w-full p-3.5 rounded-lg font-mono text-sm sm:text-base leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#101014] border border-[#452818] focus:border-amber-500 text-stone-100 placeholder:text-stone-700"
           />
@@ -210,10 +222,10 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
             </label>
           </div>
           <p className="text-xs sm:text-sm text-stone-300 mb-2">
-            Batería de pruebas unitarias (<code className="text-amber-300 font-mono">assert</code> o funciones <code className="text-amber-300 font-mono">test_*()</code>) que verifiquen el cálculo en condiciones ordinarias y límite.
+            Respeta el formato del esqueleto con funciones <code className="text-amber-300 font-mono">test_*()</code> y aserciones nativas <code className="text-amber-300 font-mono">assert</code> que verifiquen el cálculo.
           </p>
           <div className="mb-2.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-[12px] text-indigo-200/90 flex items-center gap-2">
-            <span>⚡ <strong>Aserciones nativas en memoria:</strong> Utiliza <code className="font-mono text-indigo-300">assert</code> llamando directamente a tus funciones. <strong>No importes pytest</strong> ni módulos externos/locales (<code className="font-mono text-indigo-300">from ... import ...</code>); los tests se ejecutan en el mismo espacio que tu código.</span>
+            <span>⚡ <strong>Aserciones en memoria:</strong> Las funciones de tu código están disponibles directamente en este espacio. No necesitas hacer imports ni usar pytest.</span>
           </div>
 
           {testsFileName && (
@@ -226,11 +238,11 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
                 type="button"
                 onClick={() => {
                   setTestsFileName("");
-                  setTestsFileContent("");
+                  setTestsFileContent(DEFAULT_TESTS_SKELETON);
                 }}
                 className="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer"
               >
-                Quitar archivo
+                Quitar archivo (restaurar esqueleto)
               </button>
             </div>
           )}
@@ -240,16 +252,7 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
             rows={8}
             value={testsFileContent}
             onChange={(e) => setTestsFileContent(e.target.value)}
-            placeholder={`# Tests Python 3: aserciones nativas directas (sin pytest ni imports externos)
-def test_camara_estandar():
-    # Invoca directamente las funciones de tu script
-    camara = {"vaultId": 394, "tier": "B", "ownerType": "S", "cursesCount": 0, "galleons": 12, "sickles": 8, "knuts": 20}
-    tarifa = calcular_tasa_camara(camara)
-    assert tarifa == 354.20
-
-def test_condiciones_limite_y_anomalia():
-    # Verifica cámaras con altos patrimonios o casos límite
-    pass`}
+            placeholder={DEFAULT_TESTS_SKELETON}
             disabled={submitting}
             className="w-full p-3.5 rounded-lg font-mono text-sm sm:text-base leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#101014] border border-[#452818] focus:border-amber-500 text-stone-100 placeholder:text-stone-700"
           />

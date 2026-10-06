@@ -20,7 +20,7 @@ import type { ClassItem, SubmissionItem } from "./ClassesHub";
 import { PROFESSOR_AVATARS, playProclamationAudio, type EvaluationResponse } from "./class-detail/types";
 import { AssignmentViewer } from "./class-detail/AssignmentViewer";
 import { EvaluationResultCard } from "./class-detail/EvaluationResultCard";
-import { TransfigurationForm } from "./class-detail/TransfigurationForm";
+import { TransfigurationForm, DEFAULT_PYTHON_SKELETON, DEFAULT_TESTS_SKELETON } from "./class-detail/TransfigurationForm";
 import { BattleForm } from "./class-detail/BattleForm";
 import { DefenseView } from "./class-detail/DefenseView";
 
@@ -48,9 +48,9 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   const [answerText, setAnswerText] = useState("");
   const [jsonAuditText, setJsonAuditText] = useState("");
   const [pythonFileName, setPythonFileName] = useState("");
-  const [pythonFileContent, setPythonFileContent] = useState("");
+  const [pythonFileContent, setPythonFileContent] = useState(DEFAULT_PYTHON_SKELETON);
   const [testsFileName, setTestsFileName] = useState("");
-  const [testsFileContent, setTestsFileContent] = useState("");
+  const [testsFileContent, setTestsFileContent] = useState(DEFAULT_TESTS_SKELETON);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
