@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Sparkles, ArrowLeft, Award, CheckCircle2, AlertCircle, Wand2, Shield, Eye, Flame, Map, Swords } from "lucide-react";
+import { StudentBadge } from "./StudentBadge";
 
 export interface ClassAttachment {
   id: string;
@@ -174,31 +175,8 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
           </button>
 
           <div className="flex items-center gap-3">
-            {/* Insignia de la Casa */}
-            <div
-              className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-xl backdrop-blur-md"
-              style={{
-                backgroundColor: `${theme.main}cc`,
-                borderColor: theme.accent,
-              }}
-            >
-              <span className="text-lg">{theme.emblem}</span>
-              <span className="font-bold text-xs sm:text-sm tracking-wider uppercase text-amber-100">
-                {theme.name}
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span className="text-xs sm:text-sm font-semibold text-amber-200">
-                {houseScores[normalizedHouse] ?? 0} pts
-              </span>
-            </div>
-
-            {/* Puntos acumulados en el taller */}
-            {totalPointsEarned > 0 && (
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-full bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs font-semibold">
-                <Flame className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span>+{totalPointsEarned} aportados</span>
-              </div>
-            )}
+            {/* Globo identificador de Casa y Alumno */}
+            <StudentBadge studentHouse={studentHouse} studentId={studentId} />
           </div>
         </div>
 
@@ -335,13 +313,8 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                   </p>
                 </div>
 
-                {/* Pie de tarjeta: feedback previo o botón para entrar */}
+                {/* Pie de tarjeta: botón para entrar o reintentar */}
                 <div className="relative z-10 mt-4 pt-4 border-t border-stone-800/80">
-                  {isCompleted && (
-                    <p className="text-xs italic text-stone-400 line-clamp-2 mb-3 bg-black/40 p-2 rounded-lg border border-amber-950">
-                      "{submission.feedback}"
-                    </p>
-                  )}
                   <button
                     onClick={() => onSelectClass(cls.id)}
                     className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:from-amber-500 hover:to-yellow-400 text-black shadow-lg hover:shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all duration-300 cursor-pointer"

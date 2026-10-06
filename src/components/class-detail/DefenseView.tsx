@@ -13,10 +13,12 @@ import {
 import type { ClassItem, SubmissionItem, SubExercise } from "../ClassesHub";
 import { MaraudersMapBackground } from "../MaraudersMapBackground";
 import { EvaluationResultCard } from "./EvaluationResultCard";
+import { StudentBadge } from "../StudentBadge";
 
 interface DefenseViewProps {
   classInfo: ClassItem | null;
   studentHouse: string;
+  studentId?: string;
   submission: SubmissionItem | null;
   isPassed: boolean;
   isEditing: boolean;
@@ -34,6 +36,7 @@ interface DefenseViewProps {
 export const DefenseView: React.FC<DefenseViewProps> = ({
   classInfo,
   studentHouse,
+  studentId,
   submission,
   isPassed,
   isEditing,
@@ -89,10 +92,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
             <span>Volver a los Desafíos</span>
           </button>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#dfcaa0] border-2 border-[#703f19]/60 text-xs font-bold text-[#301a0c] shadow-sm">
-            <Sparkles className="w-3.5 h-3.5 text-[#854518]" />
-            <span>Casa: {studentHouse}</span>
-          </div>
+          <StudentBadge studentHouse={studentHouse} studentId={studentId} />
         </div>
 
         {/* Cartel Canónico de los Merodeadores */}

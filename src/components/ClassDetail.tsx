@@ -23,6 +23,7 @@ import { EvaluationResultCard } from "./class-detail/EvaluationResultCard";
 import { TransfigurationForm, DEFAULT_PYTHON_SKELETON, DEFAULT_TESTS_SKELETON } from "./class-detail/TransfigurationForm";
 import { BattleForm } from "./class-detail/BattleForm";
 import { DefenseView } from "./class-detail/DefenseView";
+import { StudentBadge } from "./StudentBadge";
 
 interface ClassDetailProps {
   classId: string;
@@ -255,6 +256,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
       <DefenseView
         classInfo={classInfo}
         studentHouse={studentHouse}
+        studentId={studentId}
         submission={submission}
         isPassed={isPassed}
         isEditing={isEditing}
@@ -338,18 +340,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
             <span>Volver a los Desafíos</span>
           </button>
 
-          <div
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold shadow-sm ${
-              isTransfiguration
-                ? "bg-amber-950/80 border-amber-500/40 text-amber-300"
-                : isBattle
-                ? "bg-rose-950/80 border-rose-500/50 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.2)]"
-                : "bg-indigo-950/80 border-indigo-500/40 text-indigo-300"
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: "8s" }} />
-            <span>Casa: {studentHouse}</span>
-          </div>
+          <StudentBadge studentHouse={studentHouse} studentId={studentId} />
         </div>
 
         {/* Panel de radar táctico (Solo Batalla) */}

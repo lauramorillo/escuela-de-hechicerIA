@@ -8,6 +8,7 @@ import { FilesetResolver, FaceLandmarker } from '@mediapipe/tasks-vision';
 import { ClassesHub } from './components/ClassesHub.tsx';
 import { ClassDetail } from './components/ClassDetail.tsx';
 import { GatekeeperScreen } from './components/GatekeeperScreen.tsx';
+import { StudentBadge } from './components/StudentBadge.tsx';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -857,27 +858,30 @@ export default function App() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/30 pointer-events-none" />
 
-            {/* Cabecera superior con estandartes */}
-            <div className="relative z-30 w-full flex items-center justify-between">
+            {/* Cabecera superior con estandartes y globo de alumno */}
+            <div className="relative z-30 w-full flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-magic-gold/30 text-magic-gold text-xs sm:text-sm tracking-wider uppercase font-semibold">
                 <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
                 Escuela de Hechicer<span className="text-purple-400">IA</span>
               </div>
 
-              <div className="flex items-center gap-2">
-                {['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff'].map((house) => (
-                  <div
-                    key={house}
-                    className={cn(
-                      "w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 flex items-center justify-center font-bold text-sm sm:text-base transition-all duration-700",
-                      result.house === house
-                        ? cn(getHouseBadgeBg(house), "scale-115 shadow-[0_0_25px_rgba(255,255,255,0.5)]")
-                        : "border-white/20 opacity-40 bg-black/50 text-stone-400"
-                    )}
-                  >
-                    {house[0]}
-                  </div>
-                ))}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <StudentBadge studentHouse={result.house} studentId={result.studentId} />
+                <div className="hidden md:flex items-center gap-1.5">
+                  {['Gryffindor', 'Slytherin', 'Ravenclaw', 'Hufflepuff'].map((house) => (
+                    <div
+                      key={house}
+                      className={cn(
+                        "w-8 h-8 rounded-full border flex items-center justify-center font-bold text-xs transition-all duration-700",
+                        result.house === house
+                          ? cn(getHouseBadgeBg(house), "scale-110 shadow-[0_0_15px_rgba(255,255,255,0.5)]")
+                          : "border-white/20 opacity-30 bg-black/50 text-stone-400"
+                      )}
+                    >
+                      {house[0]}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
