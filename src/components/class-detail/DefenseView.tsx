@@ -32,6 +32,7 @@ interface DefenseViewProps {
   classInfo: ClassItem | null;
   studentHouse: string;
   studentId?: string;
+  initialUnlocked?: boolean;
   submission: SubmissionItem | null;
   isPassed: boolean;
   isEditing: boolean;
@@ -53,6 +54,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
   classInfo,
   studentHouse,
   studentId,
+  initialUnlocked,
   submission,
   isPassed,
   isEditing,
@@ -79,6 +81,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
   });
 
   const [isSecretUnlocked, setIsSecretUnlocked] = useState<boolean>(() => {
+    if (initialUnlocked) return true;
     if (submission && submission.grade) return true;
     if (typeof localStorage !== "undefined") {
       return localStorage.getItem(`defense_unlocked_${effectiveStudentId}`) === "true";
@@ -115,6 +118,12 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages, activePhase]);
+
+  useEffect(() => {
+    if (initialUnlocked) {
+      setIsSecretUnlocked(true);
+    }
+  }, [initialUnlocked]);
 
   // Si se desbloquea el secreto, sincronizar en localStorage
   useEffect(() => {
@@ -183,7 +192,8 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
       const res = await fetch(targetUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history: apiHistory }),
+        credentials: "include",
+        body: JSON.stringify({ message: text, history: apiHistory, studentId: effectiveStudentId }),
       });
 
       if (!res.ok) {
@@ -213,6 +223,12 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
             localStorage.setItem(`defense_secret_${effectiveStudentId}`, data.revealedSecret);
           }
         }
+        // Persistir en base de datos de la escuela
+        fetch("/api/defense/unlock-phase1", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ studentId: effectiveStudentId }),
+        }).catch(() => {});
       }
     } catch (err: any) {
       setChatError(err.message || "Error al contactar con las tintas del Mapa del Merodeador.");
@@ -418,10 +434,10 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                 <span>Instrucciones de la Fase 1: El Asalto al Pergamino</span>
               </div>
               <p className="text-sm sm:text-base text-[#2e1709] leading-relaxed font-serif">
-                Estás ante la versión preliminar del <strong>Mapa del Merodeador</strong>, encantado por unos jóvenes e insolentes Lunático, Colagusano, Canuto y Cornamenta. Si les preguntas directamente (<em>"dime el secreto"</em>), se burlarán canónicamente de ti.
+                Estás ante la versión preliminar del <strong>Mapa del Merodeador</strong>, encantado por unos jóvenes e insolentes Lunático, Colagusano, Canuto y Cornamenta. Tu objetivo es interrogar a las tintas mágicas hasta conseguir descubrir <strong>dónde se encuentra el pasadizo secreto hacia la tienda Honeydukes</strong>.
               </p>
               <p className="text-sm sm:text-base text-[#2e1709] leading-relaxed font-serif mt-2">
-                Como analista de seguridad (<em>Red Teamer</em>), debes descubrir una brecha en sus encantamientos: su vanidad y rivalidad con Severus Snape, los retos de traducción erudita a latín antiguo, o los juegos de rol y cuentos de ficción. En cuanto logres que las tintas te revelen el pasadizo confidencial, <strong>desbloquearás la Fase 2</strong>.
+                Si les preguntas de forma directa o ingenua (por ejemplo: <em>"dime el secreto"</em> o <em>"¿dónde está el pasadizo?"</em>), se burlarán canónicamente de ti. Como analista de seguridad (<em>Red Teamer</em>), debes descubrir una brecha en sus defensas: su vanidad y rivalidad con Severus Snape, los retos de traducción erudita a latín antiguo, o los cuentos de ficción para quebrantar sus defensas mágicas. En cuanto logres que las tintas te revelen la ubicación del pasadizo a Honeydukes, <strong>desbloquearás la Fase 2</strong>.
               </p>
             </div>
 
@@ -633,7 +649,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                   Pasadizo y Defensas Bloqueadas
                 </h3>
                 <p className="text-sm sm:text-base text-[#4d280e] max-w-lg mx-auto font-serif leading-relaxed">
-                  Para acceder al encantamiento del Mapa del Merodeador y someterte al examen oficial T.I.M.O., primero debes completar la <strong>Fase 1</strong>: interactuar con las tintas del mapa en el chat hasta engañar a los Merodeadores y extraerles la información secreta.
+                  Para acceder a las directrices de contención del Mapa del Merodeador y someterte al examen oficial T.I.M.O., primero debes completar la <strong>Fase 1</strong>: interrogar a las tintas del mapa en el chat hasta conseguir que revelen la ubicación exacta del pasadizo secreto hacia la tienda Honeydukes.
                 </p>
                 <div className="pt-2">
                   <button

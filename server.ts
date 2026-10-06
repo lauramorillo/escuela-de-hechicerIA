@@ -7,7 +7,7 @@ import { dbService } from "./db.ts";
 import { getStudentSession, resetSession } from "./src/controllers/studentController.ts";
 import { getHouseStats } from "./src/controllers/houseController.ts";
 import { detectAndSort, synthesizeSpeech } from "./src/controllers/sortingController.ts";
-import { getAvailableClasses } from "./src/controllers/classesController.ts";
+import { getAvailableClasses, unlockDefensePhase1 } from "./src/controllers/classesController.ts";
 import { getGatekeeperStatus, verifyGatekeeperPasskey } from "./src/controllers/gatekeeperController.ts";
 import { proxyEvaluation, proxyGuardianChat } from "./src/controllers/evaluationProxyController.ts";
 
@@ -61,6 +61,7 @@ async function startServer(): Promise<void> {
   app.get("/api/classes", getAvailableClasses);
   app.post("/api/evaluate", proxyEvaluation);
   app.post("/api/defense/guardian-chat", proxyGuardianChat);
+  app.post("/api/defense/unlock-phase1", unlockDefensePhase1);
   app.post("/api/detect", detectAndSort);
   app.post("/api/tts", synthesizeSpeech);
 

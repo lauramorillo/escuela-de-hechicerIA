@@ -80,6 +80,23 @@ export async function proxyGuardianChat(req: Request, res: Response): Promise<vo
     });
 
     const data = await upstreamRes.json();
+    if (data.secretUnlocked) {
+      const studentId =
+        req.body?.studentId ||
+        req.headers["x-student-id"] ||
+        (typeof req.query?.studentId === "string" ? req.query.studentId : undefined);
+      if (studentId) {
+        const workshopId =
+          req.body?.workshopId ||
+          req.headers["x-workshop-id"] ||
+          (await dbService.getEffectiveWorkshopId());
+        try {
+          await dbService.setStudentDefenseUnlocked(String(workshopId), String(studentId));
+        } catch (dbErr) {
+          console.warn("No se pudo persistir el desbloqueo de defensa en DB:", dbErr);
+        }
+      }
+    }
     res.status(upstreamRes.status).json(data);
   } catch (err: any) {
     console.error("Error al contactar con el guardián del castillo:", err);

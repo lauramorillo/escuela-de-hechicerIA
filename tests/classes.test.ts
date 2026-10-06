@@ -184,4 +184,20 @@ describe("Clases y Profesores Agénticos", () => {
     expect(scores.gryffindor).toBe(expectedGryffindor);
     expect(scores.slytherin).toBe(expectedSlytherin);
   });
+
+  it("debe persistir y verificar el desbloqueo de la Fase 2 de defensa para un estudiante", async () => {
+    const ws = trackWorkshop(`test-defense-unlock-${Date.now()}`);
+    await dbService.ensureHousesInitialized(ws);
+
+    const studentId = "student_lupin_pupil";
+    await dbService.assignStudentToBalancedHouse(ws, studentId, "ravenclaw");
+
+    const studentBefore = await dbService.getStudent(ws, studentId);
+    expect(studentBefore?.defense_unlocked).toBeFalsy();
+
+    await dbService.setStudentDefenseUnlocked(ws, studentId);
+
+    const studentAfter = await dbService.getStudent(ws, studentId);
+    expect(studentAfter?.defense_unlocked).toBe(true);
+  });
 });

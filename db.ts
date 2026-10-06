@@ -112,6 +112,7 @@ export interface StudentDoc {
   justification: string;
   score?: number;
   last_activity?: FirebaseFirestore.FieldValue | Date | string;
+  defense_unlocked?: boolean;
 }
 
 export interface SubmissionDoc {
@@ -257,8 +258,50 @@ class InMemoryDb {
     }
   }
 
+  async setStudentDefenseUnlocked(workshopId: string, studentId: string): Promise<void> {
+    const ws = this.getWorkshop(workshopId);
+    let student = ws.students.get(studentId);
+    if (!student) {
+      student = { house: "gryffindor", assigned_at: new Date(), justification: "", score: 0 };
+      ws.students.set(studentId, student);
+    }
+    student.defense_unlocked = true;
+
+    try {
+      await withFileLock(() => {
+        let currentData: any = {};
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          try {
+            currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
+          } catch {}
+        }
+        if (!currentData.students) currentData.students = {};
+        if (!currentData.students[workshopId]) currentData.students[workshopId] = {};
+        if (!currentData.students[workshopId][studentId]) {
+          currentData.students[workshopId][studentId] = { house: student!.house, score: 0 };
+        }
+        currentData.students[workshopId][studentId].defense_unlocked = true;
+        writeSharedDbAtomic(currentData);
+      });
+    } catch {}
+  }
+
   async getStudent(workshopId: string, studentId: string): Promise<StudentDoc | null> {
-    return this.getWorkshop(workshopId).students.get(studentId) || null;
+    const ws = this.getWorkshop(workshopId);
+    const student = ws.students.get(studentId) || null;
+    if (student && student.defense_unlocked === undefined) {
+      try {
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+          const parsed = JSON.parse(raw);
+          const fromFile = parsed.students?.[workshopId]?.[studentId];
+          if (fromFile && fromFile.defense_unlocked !== undefined) {
+            student.defense_unlocked = Boolean(fromFile.defense_unlocked);
+          }
+        }
+      } catch {}
+    }
+    return student;
   }
 
   async removeStudent(workshopId: string, studentId: string): Promise<boolean> {
@@ -272,6 +315,20 @@ class InMemoryDb {
       houseDoc.updated_at = new Date();
     }
     ws.students.delete(studentId);
+
+    try {
+      await withFileLock(() => {
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+          const parsed = JSON.parse(raw);
+          if (parsed.students?.[workshopId]?.[studentId]) {
+            delete parsed.students[workshopId][studentId];
+            writeSharedDbAtomic(parsed);
+          }
+        }
+      });
+    } catch {}
+
     return true;
   }
 
@@ -742,6 +799,19 @@ class DatabaseService {
       await studentRef.update({ justification });
     } catch {
       return this.inMemoryFallback.updateStudentJustification(workshopId, studentId, justification);
+    }
+  }
+
+  async setStudentDefenseUnlocked(workshopId: string, studentId: string): Promise<void> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.setStudentDefenseUnlocked(workshopId, studentId);
+    }
+
+    try {
+      const studentRef = this.firestore.doc(`workshops/${workshopId}/students/${studentId}`);
+      await studentRef.set({ defense_unlocked: true }, { merge: true });
+    } catch {
+      return this.inMemoryFallback.setStudentDefenseUnlocked(workshopId, studentId);
     }
   }
 

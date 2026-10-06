@@ -21,6 +21,7 @@ export async function getStudentSession(req: Request, res: Response): Promise<vo
     house: houseName,
     phrase,
     workshopId,
+    defenseUnlocked: Boolean(student?.defense_unlocked),
   });
 }
 

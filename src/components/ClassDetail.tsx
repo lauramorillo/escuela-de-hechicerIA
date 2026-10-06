@@ -59,6 +59,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedSubExerciseId, setSelectedSubExerciseId] = useState<string>("defense_attack");
   const [revealedHints, setRevealedHints] = useState<Record<number, boolean>>({});
+  const [serverDefenseUnlocked, setServerDefenseUnlocked] = useState(false);
 
   const isPassed = Boolean(submission && ["E", "S", "A"].includes(submission.grade));
   const isMaxGrade = submission?.grade === "E";
@@ -95,6 +96,9 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
       if (!res.ok) return;
 
       const data = await res.json();
+      if (data.student?.defenseUnlocked) {
+        setServerDefenseUnlocked(true);
+      }
       const found = (data.classes || []).find((c: ClassItem) => c.id === classId);
       setClassInfo(found || null);
 
@@ -266,6 +270,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
         classInfo={classInfo}
         studentHouse={studentHouse}
         studentId={studentId}
+        initialUnlocked={serverDefenseUnlocked}
         submission={submission}
         isPassed={isPassed}
         isEditing={isEditing}
