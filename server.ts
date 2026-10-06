@@ -11,6 +11,10 @@ import { getAvailableClasses } from "./src/controllers/classesController.ts";
 import { getGatekeeperStatus, verifyGatekeeperPasskey } from "./src/controllers/gatekeeperController.ts";
 import { proxyEvaluation } from "./src/controllers/evaluationProxyController.ts";
 
+process.on("unhandledRejection", (reason) => {
+  console.warn("⚠️ Unhandled Rejection detectada:", reason);
+});
+
 const PORT = Number(process.env.PORT) || 3000;
 
 async function setupClient(app: express.Express): Promise<void> {
@@ -36,6 +40,18 @@ async function startServer(): Promise<void> {
   await dbService.testConnection();
   const workshopId = await dbService.getEffectiveWorkshopId();
   await dbService.ensureHousesInitialized(workshopId);
+
+  // Middleware CORS para llamadas locales y externas
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-student-id, x-student-house, x-workshop-id");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+    if (req.method === "OPTIONS") {
+      res.sendStatus(200);
+      return;
+    }
+    next();
+  });
 
   app.get("/api/gatekeeper/status", getGatekeeperStatus);
   app.post("/api/gatekeeper/verify", verifyGatekeeperPasskey);

@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { Firestore, FieldValue, type DocumentReference, type DocumentSnapshot, type Transaction } from "@google-cloud/firestore";
 
 const SHARED_LOCAL_DB_FILE = "/tmp/taller_escuela_hechiceria_db.json";
@@ -290,6 +291,34 @@ class InMemoryDb {
   }
 }
 
+export function hasGcpCredentials(): boolean {
+  if (process.env.USE_FIRESTORE === "false" || process.env.USE_LOCAL_FALLBACK === "true") {
+    return false;
+  }
+  if ((process.env.NODE_ENV === "test" || process.env.VITEST) && process.env.USE_REAL_FIRESTORE !== "true") {
+    return false;
+  }
+  if (process.env.K_SERVICE || process.env.CLOUD_RUN_JOB || process.env.GAE_SERVICE) {
+    return true;
+  }
+  const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (keyPath && fs.existsSync(keyPath)) {
+    return true;
+  }
+  const home = process.env.HOME || process.env.USERPROFILE || "";
+  if (home) {
+    const macAdc = path.join(home, "Library/Application Support/gcloud/application_default_credentials.json");
+    const linuxAdc = path.join(home, ".config/gcloud/application_default_credentials.json");
+    if (fs.existsSync(macAdc) || fs.existsSync(linuxAdc)) {
+      return true;
+    }
+  }
+  if (process.env.USE_REAL_FIRESTORE === "true") {
+    return true;
+  }
+  return false;
+}
+
 class DatabaseService {
   private firestore: Firestore | null = null;
   private inMemoryFallback = new InMemoryDb();
@@ -297,8 +326,7 @@ class DatabaseService {
   private memoryActiveWorkshopId: string | null = null;
 
   constructor() {
-    // Aislar tests unitarios en memoria para no contaminar la base de datos de producción
-    if ((process.env.NODE_ENV === "test" || process.env.VITEST) && process.env.USE_REAL_FIRESTORE !== "true") {
+    if (!hasGcpCredentials()) {
       this.isUsingFallback = true;
       return;
     }
@@ -317,7 +345,8 @@ class DatabaseService {
       await this.firestore.collection("workshops").limit(1).get();
       this.isUsingFallback = false;
       return true;
-    } catch {
+    } catch (err) {
+      console.warn("⚠️ No se pudo conectar a Firestore, cambiando a almacenamiento local:", err);
       this.isUsingFallback = true;
       return false;
     }
@@ -348,7 +377,7 @@ class DatabaseService {
     const envWorkshop = process.env.ACTIVE_WORKSHOP_ID?.trim();
     if (envWorkshop) return envWorkshop;
 
-    return DEFAULT_WORKSHOP_ID;
+    return this.isUsingFallback ? "dev-test" : DEFAULT_WORKSHOP_ID;
   }
 
   async setActiveWorkshopId(workshopId: string): Promise<void> {

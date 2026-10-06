@@ -45,12 +45,13 @@ flowchart LR
 ### Desafío 1: Transfiguración de Runas (`transfiguration`)
 - **Profesor:** Profesora Minerva McGonagall.
 - **Pilar:** *Guiar a la IA (Migración Legacy COBOL a Python 3).*
-- **Narrativa:** Un manuscrito bancario de 1899 escrito en runas COBOL por los duendes de Gringotts (`GRINGOTTS_VAULT_CALC.CBL`) calcula las tasas de custodia de las cámaras acorazadas.
-- **Objetivo Pedagógico:** Migración de lógica procedural legacy a un lenguaje moderno, identificando y corrigiendo un defecto sutil en los cálculos numéricos de sistemas arcaicos mediante el uso de asistentes de IA.
+- **Narrativa:** El manuscrito de Gringotts ha sido migrado varias veces y los duendes sospechan que los resultados históricos no siempre son fiables. Tu misión es transfigurar el cálculo a Python y demostrar que tu nueva implementación conserva el comportamiento correcto. Advertencia de McGonagall: que el programa produzca resultados plausibles no significa que sea correcto, pues algunas anomalías solo aparecen bajo determinadas condiciones.
+- **Objetivo Pedagógico:** Migración de lógica procedural legacy a un lenguaje moderno, auditando el código fuente para detectar anomalías sutiles mediante el uso de asistentes de IA.
 - **Entrega requerida del alumno:**
-  1. **Código Python 3 corregido:** Script funcional que procesa el lote de cámaras aplicando las reglas bancarias y resolviendo el error del algoritmo original.
-  2. **Lista de cámaras afectadas:** Identificación de las cámaras del lote de prueba que se veían afectadas por el fallo histórico.
-- **Sistema de Pistas Pedagógicas:** Las pistas están ocultas bajo candado en la UI ("Pistas del Claustro") con revelado progresivo bajo demanda para no adelantar pistas directas ni desvelar la solución de entrada.
+  1. **Código Python 3:** Script funcional que procesa el lote de cámaras aplicando las reglas bancarias y resolviendo las anomalías del algoritmo original.
+  2. **Tests Python 3:** Suite de pruebas unitarias creada por el alumno para validar casos ordinarios y casos límite.
+  3. **Informe de Auditoría JSON:** Identificación de la variable COBOL que causaba anomalías y la lista de cámaras del lote que sufrieron discrepancias contables con sus tarifas corregidas.
+- **Rigor de McGonagall (Sin pistas):** Este desafío no incluye pistas del claustro; el alumno debe apoyarse en su asistente de IA para explorar, diseñar la suite de pruebas y auditar las discrepancias.
 - **Archivos de trabajo:** `GRINGOTTS_VAULT_CALC.CBL` (manuscrito COBOL original) y `lote_camaras_1899.json` (datos de prueba).
 
 ### Desafío 2: El Mapa del Merodeador (`defense`)
@@ -74,7 +75,7 @@ flowchart LR
 
 ### Ubicación del Código y Arquitectura Desacoplada
 - **Repositorio de Profesores (Microservicio Privado):** `escuela-de-hechicerIA-profesores` (Cloud Run con FastAPI/Express en TypeScript). Custodia las rúbricas oficiales T.I.M.O., el runner de Python 3 de Transfiguración, los ataques de Red Teaming y los secretos de evaluación.
-- **Frontend Alumno:** [`src/components/ClassDetail.tsx`](file:///Users/laura_morillo/MyProjects/escuela-de-hechicerIA/src/components/ClassDetail.tsx) invoca directamente el endpoint `POST /evaluate` configurado en `VITE_EVALUATION_SERVICE_URL`.
+- **Frontend Alumno:** [`src/components/ClassDetail.tsx`](file:///Users/laura_morillo/MyProjects/escuela-de-hechicerIA/src/components/ClassDetail.tsx) invoca el endpoint `POST /api/evaluate` (directo o vía proxy según `VITE_EVALUATION_SERVICE_URL`).
 - **Repositorio Público (Frontend + Sombrero):** No contiene lógica ni secretos de evaluación para prevenir trampas e inspección en código abierto.
 
 ### Calificación Oficial T.I.M.O.

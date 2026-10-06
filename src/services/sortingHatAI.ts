@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import textToSpeech from "@google-cloud/text-to-speech";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
+import { hasGcpCredentials } from "../../db.js";
 
 export interface DeliberationResult {
   detected: boolean;
@@ -23,20 +24,45 @@ const TTS_PROMPT =
   "Actúa como el Sombrero Seleccionador de Hogwarts de Harry Potter: habla con un tono sabio, misterioso, antiguo y solemne. Al final proclama con energía, orgullo y grandeza la casa asignada.";
 
 const isVertex = Boolean(process.env.GOOGLE_CLOUD_PROJECT);
-const ttsClient = new textToSpeech.v1beta1.TextToSpeechClient();
+let ttsClient: TextToSpeechClient | null = null;
 
-function createAIClient(): GoogleGenAI {
-  if (isVertex) {
-    return new GoogleGenAI({
-      vertexai: true,
-      project: process.env.GOOGLE_CLOUD_PROJECT,
-      location: process.env.GOOGLE_CLOUD_LOCATION || "europe-west1",
-    });
+function getTTSClient(): TextToSpeechClient | null {
+  if (!hasGcpCredentials()) {
+    return null;
   }
-  return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (!ttsClient) {
+    try {
+      ttsClient = new TextToSpeechClient();
+    } catch (err) {
+      console.warn("⚠️ TextToSpeechClient no disponible en este entorno:", err);
+      return null;
+    }
+  }
+  return ttsClient;
 }
 
-const ai = createAIClient();
+function createAIClient(): GoogleGenAI | null {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  if (apiKey) {
+    try {
+      return new GoogleGenAI({ apiKey });
+    } catch {
+      return null;
+    }
+  }
+  if (isVertex && process.env.GOOGLE_CLOUD_PROJECT && hasGcpCredentials()) {
+    try {
+      return new GoogleGenAI({
+        vertexai: true,
+        project: process.env.GOOGLE_CLOUD_PROJECT,
+        location: process.env.GOOGLE_CLOUD_LOCATION || "europe-west1",
+      });
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 export function getDefaultVerdict(house: string): string {
   return DEFAULT_VERDICTS[house] || `¡Tu casa es ${house}!`;
@@ -66,6 +92,18 @@ const RESPONSE_SCHEMA = {
 };
 
 export async function deliberateHouse(base64Image: string, targetHouse: string): Promise<DeliberationResult> {
+  const fallbackResult: DeliberationResult = {
+    detected: true,
+    confidence: 0.9,
+    house: targetHouse,
+    phrase: getDefaultVerdict(targetHouse),
+  };
+
+  const ai = createAIClient();
+  if (!ai) {
+    return fallbackResult;
+  }
+
   const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
 
@@ -95,18 +133,17 @@ export async function deliberateHouse(base64Image: string, targetHouse: string):
       phrase: parsed.phrase || getDefaultVerdict(targetHouse),
     };
   } catch {
-    return {
-      detected: true,
-      confidence: 0.9,
-      house: targetHouse,
-      phrase: getDefaultVerdict(targetHouse),
-    };
+    return fallbackResult;
   }
 }
 
 export async function synthesizeHatVoice(text: string): Promise<string> {
+  const client = getTTSClient();
+  if (!client) {
+    throw new Error("Text-to-Speech no está disponible en este entorno sin credenciales de Google Cloud.");
+  }
   const voiceName = process.env.TTS_VOICE || "Charon";
-  const [response] = await ttsClient.synthesizeSpeech({
+  const [response] = await client.synthesizeSpeech({
     audioConfig: {
       audioEncoding: "LINEAR16",
       pitch: 0,

@@ -6,7 +6,7 @@ export async function proxyEvaluation(req: Request, res: Response): Promise<void
     process.env.EVALUATION_SERVICE_URL ||
     process.env.VITE_EVALUATION_SERVICE_URL ||
     "http://localhost:8080";
-  const targetUrl = `${remoteServiceUrl.replace(/\/$/, "")}/evaluate`;
+  const targetUrl = `${remoteServiceUrl.replace(/\/$/, "")}/api/evaluate`;
 
   try {
     const upstreamRes = await fetch(targetUrl, {

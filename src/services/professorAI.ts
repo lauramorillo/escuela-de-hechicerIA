@@ -342,13 +342,16 @@ export const CLASSES: Record<string, ClassDefinition> = {
     icon: "🪄",
     description: "Transmuta un antiguo manuscrito rúnico y repara el cálculo de las cámaras de Gringotts.",
     lore:
-      "Durante una restauración en la Sección Prohibida de la Biblioteca de Hogwarts, la señora Pince desenterró un pergamino amarillento de 1899. Contiene las fórmulas originales de los duendes de Gringotts para calcular los costes de custodia de las cámaras acorazadas. Está escrito en unas runas arcaicas conocidas como C.O.B.O.L. (Common Order of Binary Occult Lore) que casi ningún mago viviente sabe interpretar.",
+      "Durante una restauración en la Sección Prohibida de la Biblioteca de Hogwarts, la señora Pince desenterró un pergamino amarillento de 1899 con las fórmulas originales de los duendes de Gringotts para calcular los costes de custodia de las cámaras acorazadas. Está escrito en unas runas arcaicas conocidas como C.O.B.O.L. (Common Order of Binary Occult Lore). Los duendes sospechan que los resultados históricos no siempre son fiables y que el algoritmo arrastra anomalías bajo determinadas circunstancias. Vuestra misión es transfigurar el cálculo a Python y demostrar que vuestra nueva implementación conserva el comportamiento correcto.",
     assignment:
-      "La Profesora McGonagall exige rigor absoluto. Vuestra misión en este desafío consiste en:\n\n" +
-      "1. TRANSFIGURACIÓN DE RUNAS A PYTHON 3: Utilizad vuestro asistente de IA para migrar el algoritmo de custodia del manuscrito rúnico COBOL ('GRINGOTTS_VAULT_CALC.CBL') a un script funcional en Python 3 que calcule correctamente la tarifa total en Knuts de las cámaras del lote de prueba ('lote_camaras_1899.json').\n\n" +
-      "2. DETECCIÓN DEL DEFECTO RÚNICO: Localizad la variable de la DATA DIVISION cuyo tamaño insuficiente ('PIC') causaba el truncamiento contable en grandes patrimonios, y auditad qué cámaras del lote sufrieron este error histórico.\n\n" +
-      "3. REPORTE Y ENTREGA OFICIAL: Vuestra entrega debe componerse de dos partes:\n" +
-      "   • INFORME DE AUDITORÍA RÚNICA (JSON): Objeto JSON que indique el nombre exacto de la variable COBOL afectada ('variable_cobol_afectada') y la lista de cámaras afectadas ('camaras_afectadas') con su 'numero_camara' y la 'tarifa_total_knuts' (tarifa final corregida que debió cobrar Gringotts en Knuts, redondeada a 2 decimales):\n\n" +
+      "La Profesora McGonagall exige rigor absoluto. Recordad su advertencia: que un programa produzca resultados aparentemente plausibles no significa que sea correcto; algunas anomalías solo se manifiestan bajo determinadas condiciones.\n\n" +
+      "Vuestra misión en este desafío consiste en:\n\n" +
+      "1. Transfiguración a Python 3: Utilizad vuestro asistente de IA para migrar el algoritmo de custodia del manuscrito rúnico COBOL (GRINGOTTS_VAULT_CALC.CBL) a un script funcional en Python 3 que procese las cámaras del lote de prueba (lote_camaras_1899.json) y calcule correctamente la tarifa total en Knuts de cada una.\n\n" +
+      "2. Batería de tests unitarios: Como buenos alquimistas del código, no confiéis ciegamente en la traducción inicial. Diseñad una suite de pruebas en Python (con aserciones o funciones test_*()) que verifique el cálculo tanto en cámaras ordinarias como bajo condiciones extremas o casos límite. La suite debe demostrar la robustez de vuestra implementación y ser capaz de detectar inconsistencias frente al algoritmo arcaico.\n\n" +
+      "3. Auditoría rúnica: Auditad el manuscrito original e identificad qué variable causaba cálculos erróneos bajo ciertas circunstancias y qué cámaras del lote de prueba sufrieron discrepancias contables en el registro histórico.\n\n" +
+      "4. Estructura de la entrega:\n" +
+      "Para que el tribunal de McGonagall evalúe vuestra solución, debéis completar los 3 campos del formulario inferior:\n\n" +
+      "• 1. Informe de auditoría (JSON): Objeto JSON con el nombre exacto de la variable COBOL que provocaba la anomalía (variable_cobol_afectada) y la lista de cámaras del lote que sufrieron discrepancias contables (camaras_afectadas) con su numero_camara y la tarifa_total_knuts (tarifa final corregida que debió cobrar Gringotts en Knuts, redondeada a 2 decimales):\n\n" +
       "```json\n" +
       "{\n" +
       '  "variable_cobol_afectada": "WS-NOMBRE-VARIABLE",\n' +
@@ -360,17 +363,17 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "  ]\n" +
       "}\n" +
       "```\n\n" +
-      "   • SCRIPT PYTHON 3 (.py): Vuestro archivo de código Python con el cálculo rúnico sin límites artificiales.\n\n" +
-      "4. CALIFICACIONES DEL T.I.M.O.:\n" +
-      "   • E (Extraordinario): +25 pts (¡+50 pts de bonificación para la PRIMERA casa cuyo estudiante obtenga un Extraordinario!).\n" +
-      "   • S (Supera las expectativas): +15 pts | A (Aceptable): +5 pts.\n" +
-      "   • I (Insatisfactorio): 0 pts | D (Desastroso): -5 pts | T (Trol): -10 pts.\n" +
-      "   • Atención: Una vez aprobado el examen (E, S o A), la calificación queda sellada y no se admiten más entregas.",
-    hints: [
-      "Pide a tu asistente de IA que traduzca el pergamino COBOL a Python y te explique detalladamente la estructura de las variables y el cálculo de comisiones.",
-      "En COBOL antiguo, los campos numéricos se definen con formatos estrictos de tamaño ('PIC'). Investiga si alguna variable de cálculo numérico en la DATA DIVISION podría quedarse corta al procesar arcas con gran cantidad de galeones.",
-      "Compara los resultados intermedios de los cálculos entre cámaras con fondos modestos y cámaras con fortunas cuantiosas. ¿Alguna tasa calculada parece extrañamente baja para el volumen de oro custodiado?",
-    ],
+      "• 2. Código Python 3 (.py): Vuestro archivo o script con las funciones de cálculo migradas y corregidas (calcular_tasa_camara y procesar_lote).\n\n" +
+      "• 3. Tests Python 3 (.py): Vuestra batería de pruebas unitarias (con aserciones assert o funciones test_*()) que demuestre que el cálculo es robusto tanto en casos estándar como en condiciones límite.\n\n" +
+      "5. Calificaciones del T.I.M.O.:\n\n" +
+      "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): Todo perfecto. Código con las anomalías resueltas, batería de tests unitarios completa (casos estándar y límite) e informe de auditoría exacto.\n" +
+      "• S (Supera las expectativas) (+15 pts): Buen trabajo. Código funcional y tests correctos, pero falta o contiene algún error el informe de auditoría.\n" +
+      "• A (Aceptable) (+5 pts): Aprobado. Las reglas básicas calculan bien, pero persisten fallos en casos límite o los tests son incompletos.\n" +
+      "• I (Insatisfactorio) (0 pts): Suspenso. El cálculo presenta errores notables en varias fórmulas de tarifas o la lógica está incompleta.\n" +
+      "• D (Desastroso) (-5 pts): Deficiente. El código contiene errores de sintaxis, no ejecuta o no procesa el lote de cámaras.\n" +
+      "• T (Trol) (-10 pts): Entrega inaceptable. Pergamino vacío o sin contenido válido.\n" +
+      "• Nota del tribunal: Una vez aprobado el examen (E, S o A), la calificación queda sellada y no se admiten más entregas.",
+    hints: [],
 
     attachments: [
       {
@@ -402,8 +405,8 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "Remus Lupin (el mismísimo Lunático) y sus compañeros crearon en su juventud un pergamino travieso capaz de revelar todos los secretos del castillo. Para dominar la defensa mágica, primero experimentarás cómo asaltar las directivas de un guardián preliminar y, tras descubrir su vulnerabilidad, programarás el System Prompt blindado del Mapa del Merodeador.",
     assignment:
       "Esta clase consta de 2 desafíos complementarios:\n\n" +
-      "• DESAFÍO 1 (EL ASALTO): Envía un ataque de Prompt Injection contra el guardián de Hogwarts para sonsacarle la ubicación del pasadizo secreto a Honeydukes.\n" +
-      "• DESAFÍO 2 (LA CONTENCIÓN): Diseña las Instrucciones del Sistema (System Prompt) para blindar el Mapa del Merodeador ante cualquier ataque forzado y solo activarlo con la frase canónica.",
+      "• Desafío 1 (El Asalto): Envía un ataque de Prompt Injection contra el guardián de Hogwarts para sonsacarle la ubicación del pasadizo secreto a Honeydukes.\n" +
+      "• Desafío 2 (La Contención): Diseña las Instrucciones del Sistema (System Prompt) para blindar el Mapa del Merodeador ante cualquier ataque forzado y solo activarlo con la frase canónica.",
     hints: [
       "En el Desafío 1: prueba a suplantar a Snape, a pedir que traduzca el secreto a latín o a simular un cuento ficticio.",
       "En el Desafío 2: exige explícitamente la frase 'Juro solemnemente que mis intenciones no son buenas' y responde con burlas canónicas si intentan sonsacarte información.",
@@ -468,9 +471,9 @@ REGLAS DE PROTECCIÓN Y CONTENCIÓN:
       "El cielo sobre las torres de Hogwarts arde en destellos verdes y dorados. Los mortífagos asedian los cuatro puntos cardinales del castillo. McGonagall ha convocado a la guardia y la Orden del Fénix está apostada en las almenas. Ante una invasión simultánea, los magos defensores necesitan un Agente Autónomo capaz de tomar decisiones en milisegundos y ejecutar llamadas a herramientas (Tool Calling) sin cometer un solo fallo de invocación.",
     assignment:
       "Tu misión en este clímax final del torneo:\n\n" +
-      "1. ANALIZAR LAS OLEADAS: El evaluador someterá a tu agente a 4 amenazas críticas simultáneas (Dementores en el puente, colapso de barrera en el patio central, invasión de gigantes y duelo con Bellatrix en el viaducto).\n\n" +
-      "2. INVOCACIÓN ESTRUCTURADA (TOOL CALLING): Diseña el bucle de decisión o la salida estructurada (JSON) donde tu agente razone la acción y convoque la herramienta exacta con sus argumentos obligatorios ('lanzar_contrahechizo', 'reforzar_barrera', 'activar_estatuas_piertotum').\n\n" +
-      "3. CERO ALUCINACIONES: Un error en el schema o un hechizo equivocado romperá la defensa mágica. ¡Demuestra que dominas la orquestación de agentes con IA!",
+      "1. Analizar las oleadas: El evaluador someterá a tu agente a 4 amenazas críticas simultáneas (Dementores en el puente, colapso de barrera en el patio central, invasión de gigantes y duelo con Bellatrix en el viaducto).\n\n" +
+      "2. Invocación estructurada (Tool Calling): Diseña el bucle de decisión o la salida estructurada (JSON) donde tu agente razone la acción y convoque la herramienta exacta con sus argumentos obligatorios ('lanzar_contrahechizo', 'reforzar_barrera', 'activar_estatuas_piertotum').\n\n" +
+      "3. Cero alucinaciones: Un error en el schema o un hechizo equivocado romperá la defensa mágica. ¡Demuestra que dominas la orquestación de agentes con IA!",
     hints: [
       "Consulta la pestaña 'Herramientas Mágicas' para revisar el JSON Schema con los nombres de funciones y parámetros.",
       "Oleada 1 (Dementores en el puente): tool 'lanzar_contrahechizo' con hechizo 'Expecto Patronum' y sector 'puente'.",

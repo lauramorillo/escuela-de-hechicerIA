@@ -89,6 +89,10 @@ export default function App() {
             workshopId: data.workshopId,
           });
 
+          if (data.studentId) localStorage.setItem('sorting_hat_student_id', data.studentId);
+          if (data.house) localStorage.setItem('sorting_hat_house', data.house);
+          if (data.workshopId) localStorage.setItem('sorting_hat_workshop_id', data.workshopId);
+
           // Cargar foto capturada previamente si está en caché local, o arte de fondo
           const savedPhoto =
             (data.studentId && localStorage.getItem(`sorting_hat_photo_${data.studentId}`)) ||
@@ -573,7 +577,10 @@ export default function App() {
           try {
             if (data.studentId) {
               localStorage.setItem(`sorting_hat_photo_${data.studentId}`, imageSrc);
+              localStorage.setItem('sorting_hat_student_id', data.studentId);
             }
+            if (data.house) localStorage.setItem('sorting_hat_house', data.house);
+            if (data.workshopId) localStorage.setItem('sorting_hat_workshop_id', data.workshopId);
             localStorage.setItem('sorting_hat_last_photo', imageSrc);
           } catch (e) {}
         }
