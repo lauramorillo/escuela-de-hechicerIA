@@ -60,6 +60,8 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
   const [revealedHints, setRevealedHints] = useState<Record<number, boolean>>({});
 
   const isPassed = Boolean(submission && ["E", "S", "A"].includes(submission.grade));
+  const isMaxGrade = submission?.grade === "E";
+  const canRetry = !submission || !isMaxGrade;
   const professorData = PROFESSOR_AVATARS[classId] || PROFESSOR_AVATARS.transfiguration;
 
   useEffect(() => {
@@ -210,6 +212,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
         advice: data.advice,
         audioPhrase: data.audioPhrase,
         audio: data.audio,
+        testResults: data.testResults,
       };
 
       const effectiveTotalPoints =
@@ -228,13 +231,17 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
         advice: evaluation.advice,
         audio_phrase: evaluation.audioPhrase,
         audio: evaluation.audio,
+        test_results: evaluation.testResults || data.testResults,
+        attempt_count: evaluation.attemptCount || data.attemptCount,
+        retry_penalty: evaluation.retryPenalty || data.retryPenalty,
       });
       setIsEditing(false);
 
       playProclamationAudio(
         evaluation.audio,
         evaluation.audioPhrase || `¡${effectiveTotalPoints} puntos para ${studentHouse}!`,
-        effectiveTotalPoints
+        effectiveTotalPoints,
+        classId
       );
     } catch (err: any) {
       setErrorMessage(err.message || "Ocurrió un error inesperado al contactar con el profesor.");
@@ -646,12 +653,13 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
               onRetry={() => setIsEditing(true)}
               theme="dark"
               isTransfiguration={isTransfiguration}
+              classId={classId}
             />
           )}
         </AnimatePresence>
 
         {/* Formulario de Entrega */}
-        {(!submission || (isEditing && !isPassed)) && (
+        {(!submission || (isEditing && canRetry)) && (
           isTransfiguration ? (
             <TransfigurationForm
               jsonAuditText={jsonAuditText}
@@ -667,6 +675,9 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
               submitting={submitting}
               errorMessage={errorMessage}
               hasPreviousSubmission={Boolean(submission)}
+              attemptNumber={(submission?.attempt_count || 1) + 1}
+              retryPenalty={(submission?.attempt_count || 1) * 2}
+              currentBestScore={submission?.total_awarded_points ?? submission?.points ?? 0}
               onCancelEdit={() => setIsEditing(false)}
               onSubmit={handleSubmit}
             />

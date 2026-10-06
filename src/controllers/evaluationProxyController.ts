@@ -28,23 +28,31 @@ export async function proxyEvaluation(req: Request, res: Response): Promise<void
     const classId = req.body.classId;
 
     if (studentId && classId && data.grade) {
-      await dbService.saveSubmission(workshopId, studentId, {
-        class_id: classId,
-        answer: req.body.answer || "",
-        grade: data.grade,
-        grade_label: data.gradeLabel,
-        points: data.points,
-        bonus_points: data.bonusPoints,
-        total_awarded_points: data.totalAwardedPoints,
-        first_house_bonus: data.firstHouseBonus,
-        feedback: data.feedback,
-        advice: data.advice,
-        audio_phrase: data.audioPhrase,
-        audio: data.audio,
-        test_results: data.testResults,
-      });
+      const pointsToApply = data.pointsDelta !== undefined ? data.pointsDelta : (data.totalAwardedPoints ?? data.points);
 
-      const pointsToApply = data.totalAwardedPoints ?? data.points;
+      await dbService.saveSubmission(
+        workshopId,
+        studentId,
+        {
+          class_id: classId,
+          answer: req.body.answer || "",
+          grade: data.grade,
+          grade_label: data.gradeLabel,
+          points: data.points,
+          bonus_points: data.bonusPoints,
+          total_awarded_points: data.totalAwardedPoints,
+          first_house_bonus: data.firstHouseBonus,
+          feedback: data.feedback,
+          advice: data.advice,
+          audio_phrase: data.audioPhrase,
+          audio: data.audio,
+          test_results: data.testResults,
+          attempt_count: data.attemptCount,
+          retry_penalty: data.retryPenalty,
+        },
+        pointsToApply
+      );
+
       if (pointsToApply) {
         await dbService.addHousePoints(workshopId, house, pointsToApply);
       }

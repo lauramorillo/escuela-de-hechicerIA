@@ -347,11 +347,11 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "La Profesora McGonagall exige rigor absoluto. Recordad su advertencia: que un programa produzca resultados aparentemente plausibles no significa que sea correcto; algunas anomalías solo se manifiestan bajo determinadas condiciones.\n\n" +
       "Vuestra misión en este desafío consiste en:\n\n" +
       "1. Transfiguración a Python 3: Utilizad vuestro asistente de IA para migrar el algoritmo de custodia del manuscrito rúnico COBOL (GRINGOTTS_VAULT_CALC.CBL) a un script funcional en Python 3 que procese las cámaras del lote de prueba (lote_camaras_1899.json) y calcule correctamente la tarifa total en Knuts de cada una.\n\n" +
-      "2. Batería de tests unitarios: Como buenos alquimistas del código, no confiéis ciegamente en la traducción inicial. Diseñad una suite de pruebas en Python (con aserciones o funciones test_*()) que verifique el cálculo tanto en cámaras ordinarias como bajo condiciones extremas o casos límite. La suite debe demostrar la robustez de vuestra implementación y ser capaz de detectar inconsistencias frente al algoritmo arcaico.\n\n" +
+      "2. Batería de tests unitarios: Como buenos alquimistas del código, no confiéis ciegamente en la traducción inicial. Diseñad una suite de pruebas en Python (con aserciones assert o funciones test_*()) que verifique el cálculo tanto en cámaras ordinarias como bajo condiciones extremas o casos límite. La suite debe demostrar la robustez de vuestra implementación y ser capaz de detectar inconsistencias frente al algoritmo arcaico.\n\n" +
       "3. Auditoría rúnica: Auditad el manuscrito original e identificad qué variable causaba cálculos erróneos bajo ciertas circunstancias y qué cámaras del lote de prueba sufrieron discrepancias contables en el registro histórico.\n\n" +
       "4. Estructura de la entrega:\n" +
       "Para que el tribunal de McGonagall evalúe vuestra solución, debéis completar los 3 campos del formulario inferior:\n\n" +
-      "• 1. Informe de auditoría (JSON): Objeto JSON con el nombre exacto de la variable COBOL que provocaba la anomalía (variable_cobol_afectada) y la lista de cámaras del lote que sufrieron discrepancias contables (camaras_afectadas) con su numero_camara y la tarifa_total_knuts (tarifa final corregida que debió cobrar Gringotts en Knuts, redondeada a 2 decimales):\n\n" +
+      "• 1. Informe de auditoría (JSON): Objeto JSON con el nombre exacto de la variable COBOL que provocaba la anomalía (variable_cobol_afectada) y ÚNICAMENTE la lista de cámaras del lote que sufrieron discrepancias contables en el histórico (camaras_afectadas) con su numero_camara y la tarifa_total_knuts (tarifa final corregida en Knuts, redondeada a 2 decimales):\n\n" +
       "```json\n" +
       "{\n" +
       '  "variable_cobol_afectada": "WS-NOMBRE-VARIABLE",\n' +
@@ -363,16 +363,26 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "  ]\n" +
       "}\n" +
       "```\n\n" +
-      "• 2. Código Python 3 (.py): Vuestro archivo o script con las funciones de cálculo migradas y corregidas (calcular_tasa_camara y procesar_lote).\n\n" +
-      "• 3. Tests Python 3 (.py): Vuestra batería de pruebas unitarias (con aserciones assert o funciones test_*()) que demuestre que el cálculo es robusto tanto en casos estándar como en condiciones límite.\n\n" +
+      "• 2. Código Python 3 (.py): Vuestro archivo o script con las funciones de cálculo migradas y corregidas (calcular_tasa_camara y procesar_lote). Utiliza únicamente la biblioteca estándar de Python (ej. decimal, math, json).\n\n" +
+      "• 3. Tests Python 3 (.py): Vuestra batería de pruebas unitarias ejecutadas directamente sobre el entorno. IMPORTANTE: No importes 'pytest' ni módulos externos/locales; utiliza aserciones nativas 'assert' llamando directamente a las funciones de tu script.\n\n" +
+      "⚠️ REGLAS DEL ENTORNO DE EVALUACIÓN:\n" +
+      "• Sin librerías externas: El evaluador no admite dependencias de terceros (como pytest). Utiliza únicamente módulos de la biblioteca estándar de Python.\n" +
+      "• Aserciones nativas en memoria: Tus tests se ejecutan en el mismo espacio de nombres de tu script. No uses 'from modulo import ...' ni 'import pytest', sino sentencias 'assert' directas.\n" +
+      "• Solo cámaras afectadas: No listes el lote entero en la auditoría; incluir cámaras que no sufrieron anomalías contables en el COBOL original penalizará la revisión.\n\n" +
       "5. Calificaciones del T.I.M.O.:\n\n" +
       "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): Todo perfecto. Código con las anomalías resueltas, batería de tests unitarios completa (casos estándar y límite) e informe de auditoría exacto.\n" +
       "• S (Supera las expectativas) (+15 pts): Buen trabajo. Código funcional y tests correctos, pero falta o contiene algún error el informe de auditoría.\n" +
       "• A (Aceptable) (+5 pts): Aprobado. Las reglas básicas calculan bien, pero persisten fallos en casos límite o los tests son incompletos.\n" +
       "• I (Insatisfactorio) (0 pts): Suspenso. El cálculo presenta errores notables en varias fórmulas de tarifas o la lógica está incompleta.\n" +
       "• D (Desastroso) (-5 pts): Deficiente. El código contiene errores de sintaxis, no ejecuta o no procesa el lote de cámaras.\n" +
-      "• T (Trol) (-10 pts): Entrega inaceptable. Pergamino vacío o sin contenido válido.\n" +
-      "• Nota del tribunal: Una vez aprobado el examen (E, S o A), la calificación queda sellada y no se admiten más entregas.",
+      "• Política de Reintentos y Subida de Nota:\n" +
+      "  El claustro permite a cualquier alumno reenviar su respuesta para subir nota (incluso tras haber aprobado previamente con Aceptable 'A' o Supera las expectativas 'S').\n" +
+      "  Se aplica una penalización de -2 puntos por cada reintento sobre la nota conseguida en esa entrega:\n" +
+      "  - 1.er envío: Sin penalización (E = 25 pts, S = 15 pts, A = 5 pts).\n" +
+      "  - 2.º envío (1 reintento): -2 puntos de penalización (ej. un Extraordinario obtendrá 25 - 2 = 23 pts).\n" +
+      "  - 3.er envío (2 reintentos): -4 puntos de penalización (ej. un Extraordinario obtendrá 25 - 4 = 21 pts).\n" +
+      "  - Reintentos sucesivos: -2 puntos adicionales acumulativos por cada reintento.\n" +
+      "  Siempre se conservará la mejor puntuación neta alcanzada: si un reenvío no supera tu récord anterior, conservarás intacta tu mejor nota previa. Una vez alcanzado Extraordinario 'E', el examen queda sellado con honores.",
     hints: [],
 
     attachments: [
@@ -463,7 +473,7 @@ REGLAS DE PROTECCIÓN Y CONTENCIÓN:
   battle: {
     id: "battle",
     title: "Desafío 3: La Batalla de Hogwarts",
-    professor: "Comando de Defensa de Hogwarts",
+    professor: "Profesor Albus Dumbledore",
     subject: "Estructurar Salidas: Agentes Autónomos, Tool Calling y Defensa del Castillo",
     icon: "⚔️",
     description: "Coordina los contrahechizos del castillo para repeler las cuatro oleadas del asedio mortífago.",

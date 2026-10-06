@@ -52,6 +52,13 @@ export interface SubmissionItem {
   advice: string;
   audio_phrase?: string;
   audio?: string | null;
+  test_results?: {
+    total: number;
+    passed: number;
+    details: string[];
+  };
+  attempt_count?: number;
+  retry_penalty?: number;
 }
 
 interface ClassesHubProps {

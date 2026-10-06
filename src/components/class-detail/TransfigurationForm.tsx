@@ -23,6 +23,9 @@ interface TransfigurationFormProps {
   submitting: boolean;
   errorMessage: string | null;
   hasPreviousSubmission: boolean;
+  attemptNumber?: number;
+  retryPenalty?: number;
+  currentBestScore?: number;
   onCancelEdit: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }
@@ -51,6 +54,9 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
   submitting,
   errorMessage,
   hasPreviousSubmission,
+  attemptNumber = 2,
+  retryPenalty = 2,
+  currentBestScore = 0,
   onCancelEdit,
   onSubmit,
 }) => {
@@ -88,6 +94,17 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
       className="flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl border shadow-2xl relative bg-gradient-to-b from-[#18181b] to-black border-[#4a2e1b]"
     >
       <div className="space-y-6">
+        {hasPreviousSubmission && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-transparent border border-amber-500/40 text-xs sm:text-sm text-amber-200">
+            <span className="font-bold block text-amber-300 mb-1">
+              🎯 Reenvío para subir nota (Intento #{attemptNumber}):
+            </span>
+            <span className="leading-relaxed block">
+              Este reintento aplicará una penalización de <strong>-{retryPenalty} puntos</strong> sobre la nota conseguida (ej. un Extraordinario perfecto obtendrá {25 - retryPenalty} pts). Se conservará tu récord actual ({currentBestScore} pts) si la nueva entrega no lo supera.
+            </span>
+          </div>
+        )}
+
         {/* Bloque 1: Informe de Auditoría Rúnica JSON */}
         <div className="p-4 sm:p-5 rounded-xl bg-black/40 border border-amber-600/30">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-stone-800/80">
@@ -104,7 +121,7 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
             </button>
           </div>
           <p className="text-xs sm:text-sm text-stone-300 mb-2.5">
-            Indica la variable COBOL afectada (<code className="text-amber-300 font-mono">variable_cobol_afectada</code>) y la lista de arcas con su <code className="text-amber-300 font-mono">numero_camara</code> y <code className="text-amber-300 font-mono">tarifa_total_knuts</code>.
+            Indica la variable COBOL afectada (<code className="text-amber-300 font-mono">variable_cobol_afectada</code>) y ÚNICAMENTE la lista de cámaras que sufrieron discrepancias contables en el manuscrito original con su <code className="text-amber-300 font-mono">numero_camara</code> y <code className="text-amber-300 font-mono">tarifa_total_knuts</code> corregida.
           </p>
           <textarea
             id="json-audit"
@@ -136,9 +153,12 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
               />
             </label>
           </div>
-          <p className="text-xs sm:text-sm text-stone-300 mb-2.5">
+          <p className="text-xs sm:text-sm text-stone-300 mb-2">
             Script funcional que defina las funciones <code className="text-amber-300 font-mono">calcular_tasa_camara(camara)</code> y <code className="text-amber-300 font-mono">procesar_lote(lote)</code> con la corrección contable.
           </p>
+          <div className="mb-2.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] text-amber-200/90 flex items-center gap-2">
+            <span>🔒 <strong>Solo biblioteca estándar:</strong> Puedes usar <code className="font-mono text-amber-300">decimal</code>, <code className="font-mono text-amber-300">math</code> o <code className="font-mono text-amber-300">json</code>. No se admiten dependencias externas.</span>
+          </div>
 
           {pythonFileName && (
             <div className="mb-3 p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between text-xs sm:text-sm text-emerald-300 font-mono">
@@ -164,7 +184,7 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
             rows={8}
             value={pythonFileContent}
             onChange={(e) => setPythonFileContent(e.target.value)}
-            placeholder={`# Pega aquí tu código Python 3:\nimport json\n\ndef calcular_tasa_camara(camara):\n    pass\n\ndef procesar_lote(lote):\n    return [calcular_tasa_camara(c) for c in lote]`}
+            placeholder={`# Pega aquí tu código Python 3:\nfrom decimal import Decimal\n\ndef calcular_tasa_camara(camara):\n    pass\n\ndef procesar_lote(lote):\n    return [calcular_tasa_camara(c) for c in lote]`}
             disabled={submitting}
             className="w-full p-3.5 rounded-lg font-mono text-sm sm:text-base leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#101014] border border-[#452818] focus:border-amber-500 text-stone-100 placeholder:text-stone-700"
           />
@@ -189,9 +209,12 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
               />
             </label>
           </div>
-          <p className="text-xs sm:text-sm text-stone-300 mb-2.5">
+          <p className="text-xs sm:text-sm text-stone-300 mb-2">
             Batería de pruebas unitarias (<code className="text-amber-300 font-mono">assert</code> o funciones <code className="text-amber-300 font-mono">test_*()</code>) que verifiquen el cálculo en condiciones ordinarias y límite.
           </p>
+          <div className="mb-2.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-[12px] text-indigo-200/90 flex items-center gap-2">
+            <span>⚡ <strong>Aserciones nativas en memoria:</strong> Utiliza <code className="font-mono text-indigo-300">assert</code> llamando directamente a tus funciones. <strong>No importes pytest</strong> ni módulos externos/locales (<code className="font-mono text-indigo-300">from ... import ...</code>); los tests se ejecutan en el mismo espacio que tu código.</span>
+          </div>
 
           {testsFileName && (
             <div className="mb-3 p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between text-xs sm:text-sm text-emerald-300 font-mono">
@@ -217,7 +240,16 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
             rows={8}
             value={testsFileContent}
             onChange={(e) => setTestsFileContent(e.target.value)}
-            placeholder={`# Tests Python 3: test_gringotts.py\n# Diseña tests unitarios con aserciones o funciones test_*():\n\ndef test_camara_estandar():\n    # Verifica que una cámara normal calcule correctamente\n    pass\n\ndef test_condiciones_limite():\n    # Verifica que el cálculo sea robusto ante casos extremos\n    pass`}
+            placeholder={`# Tests Python 3: aserciones nativas directas (sin pytest ni imports externos)
+def test_camara_estandar():
+    # Invoca directamente las funciones de tu script
+    camara = {"vaultId": 394, "tier": "B", "ownerType": "S", "cursesCount": 0, "galleons": 12, "sickles": 8, "knuts": 20}
+    tarifa = calcular_tasa_camara(camara)
+    assert tarifa == 354.20
+
+def test_condiciones_limite_y_anomalia():
+    # Verifica cámaras con altos patrimonios o casos límite
+    pass`}
             disabled={submitting}
             className="w-full p-3.5 rounded-lg font-mono text-sm sm:text-base leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#101014] border border-[#452818] focus:border-amber-500 text-stone-100 placeholder:text-stone-700"
           />

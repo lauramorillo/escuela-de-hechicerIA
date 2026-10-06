@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Award, CheckCircle2, RefreshCw, Trophy, Volume2 } from "lucide-react";
+import { Award, CheckCircle2, RefreshCw, Trophy, Volume2, ClipboardCheck, AlertCircle } from "lucide-react";
 import type { SubmissionItem } from "../ClassesHub";
 import { GRADE_METRICS, playProclamationAudio } from "./types";
 
@@ -12,7 +12,101 @@ interface EvaluationResultCardProps {
   onRetry: () => void;
   theme?: "dark" | "parchment";
   isTransfiguration?: boolean;
+  classId?: string;
 }
+
+const TestResultsBreakdown: React.FC<{
+  testResults?: { total: number; passed: number; details: string[] };
+  isParchment?: boolean;
+}> = ({ testResults, isParchment = false }) => {
+  if (!testResults || !Array.isArray(testResults.details) || testResults.details.length === 0) {
+    return null;
+  }
+
+  const { total = testResults.details.length, passed = 0, details = [] } = testResults;
+
+  if (isParchment) {
+    return (
+      <div className="mb-5 p-4 rounded-xl bg-[#f7efdc] border border-[#8a5223]/50">
+        <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-[#8a5223]/25">
+          <span className="text-xs uppercase tracking-widest text-[#703b15] font-bold flex items-center gap-1.5">
+            <ClipboardCheck className="w-4 h-4 text-[#8a5223]" />
+            Validación de Criterios Oficiales:
+          </span>
+          <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-[#ead3a4] text-[#4d280e] border border-[#8a5223]/40">
+            {passed} / {total} superados
+          </span>
+        </div>
+        <ul className="space-y-2 text-xs sm:text-sm font-sans">
+          {details.map((detail, idx) => {
+            const isOk = detail.trim().startsWith("✓");
+            const cleanText = detail.replace(/^[✓✗]\s*/, "");
+            return (
+              <li
+                key={idx}
+                className={`flex items-start gap-2.5 p-2 rounded-lg border ${
+                  isOk
+                    ? "bg-[#e8f3e8] border-emerald-600/30 text-emerald-900"
+                    : "bg-[#faeae6] border-rose-600/30 text-rose-950 font-medium"
+                }`}
+              >
+                {isOk ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
+                )}
+                <span className="leading-snug">{cleanText}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-6 p-4 rounded-xl bg-black/50 border border-stone-800">
+      <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b border-stone-800/80">
+        <span className="text-xs uppercase tracking-widest text-amber-400 font-bold flex items-center gap-2">
+          <ClipboardCheck className="w-4 h-4 text-amber-400" />
+          Comprobaciones Técnicas del Tribunal:
+        </span>
+        <span
+          className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+            passed === total
+              ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/40"
+              : "bg-amber-950/60 text-amber-300 border-amber-500/40"
+          }`}
+        >
+          {passed} / {total} superadas
+        </span>
+      </div>
+      <ul className="space-y-2 text-xs sm:text-sm font-sans">
+        {details.map((detail, idx) => {
+          const isOk = detail.trim().startsWith("✓");
+          const cleanText = detail.replace(/^[✓✗]\s*/, "");
+          return (
+            <li
+              key={idx}
+              className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${
+                isOk
+                  ? "bg-emerald-950/20 border-emerald-600/30 text-emerald-200"
+                  : "bg-rose-950/25 border-rose-600/40 text-rose-200 font-medium"
+              }`}
+            >
+              {isOk ? (
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              )}
+              <span className="leading-snug">{cleanText}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+};
 
 export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
   submission,
@@ -22,14 +116,21 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
   onRetry,
   theme = "dark",
   isTransfiguration = false,
+  classId,
 }) => {
   const isParchment = theme === "parchment";
   const points = submission.total_awarded_points ?? submission.points;
   const gradeMetric = GRADE_METRICS[submission.grade];
+  const effectiveClassId = submission.class_id || classId || (isParchment ? "defense" : "transfiguration");
+  const isMaxGrade = submission.grade === "E";
+  const currentAttempts = submission.attempt_count || 1;
+  const nextAttempt = currentAttempts + 1;
+  const nextPenalty = currentAttempts * 2;
+  const nextMaxPoints = Math.max(0, 25 - nextPenalty);
 
   const handleAudioPlay = () => {
     const fallbackPhrase = `¡${points} puntos para ${studentHouse}!`;
-    playProclamationAudio(submission.audio, submission.audio_phrase || fallbackPhrase, points);
+    playProclamationAudio(submission.audio, submission.audio_phrase || fallbackPhrase, points, effectiveClassId);
   };
 
   if (isParchment) {
@@ -58,6 +159,11 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
                 {submission.grade_label}
               </h3>
               <p className="text-xs text-[#5c3517]">{gradeMetric?.desc}</p>
+              {(submission.attempt_count || 1) > 1 && (
+                <span className="inline-block mt-1 text-[11px] font-bold px-2 py-0.5 rounded bg-[#ead3a4] text-[#4d280e] border border-[#8a5223]/30">
+                  Intento #{submission.attempt_count} (penalización de -{submission.retry_penalty ?? ((submission.attempt_count! - 1) * 2)} pts aplicada)
+                </span>
+              )}
             </div>
           </div>
 
@@ -109,6 +215,8 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
           )}
         </div>
 
+        <TestResultsBreakdown testResults={submission.test_results} isParchment={true} />
+
         <div className="mb-5">
           <span className="text-xs sm:text-sm uppercase tracking-widest text-[#703b15] font-bold block mb-1.5">
             Tu pergamino entregado:
@@ -118,19 +226,31 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
           </p>
         </div>
 
-        {isPassed ? (
+        {isMaxGrade ? (
           <div className="flex items-center justify-center gap-2.5 w-full py-4 px-4 rounded-xl bg-[#2e1708] border border-[#8a4218]/40 text-[#dfcaa0] text-xs sm:text-sm font-semibold text-center shadow-inner">
             <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
-            <span>Examen T.I.M.O. superado ({submission.grade_label}). Calificación oficial sellada en el expediente.</span>
+            <span>Examen T.I.M.O. completado con la máxima nota (Extraordinario). Calificación sellada con honores.</span>
           </div>
         ) : (
-          <button
-            onClick={onRetry}
-            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-[#391e0d] hover:bg-[#291407] text-[#fff8ee] text-sm font-bold transition-all cursor-pointer shadow-md hover:scale-[1.01]"
-          >
-            <RefreshCw className="w-4 h-4 text-amber-300" />
-            <span>Volver a intentar para superar el examen</span>
-          </button>
+          <div className="space-y-3">
+            <div className="p-4 rounded-xl bg-[#f5e9d0] border border-[#8a5223]/40 text-xs sm:text-sm text-[#3b1e0d]">
+              <p className="font-bold flex items-center gap-1.5 text-[#703b15] mb-1">
+                <span>🎯 Oportunidad de subir nota:</span>
+              </p>
+              <p className="leading-relaxed">
+                Puedes reenviar tu solución para aspirar a una nota más alta. El próximo reenvío (<strong>intento #{nextAttempt}</strong>) tendrá una penalización de <strong>-{nextPenalty} puntos</strong> por reintentos (máximo alcanzable con Extraordinario: <strong>{nextMaxPoints} pts</strong>). Si tu nuevo resultado no supera tu nota actual de <strong>{points} pts</strong>, se conservará la que ya tienes.
+              </p>
+            </div>
+            <button
+              onClick={onRetry}
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-[#391e0d] hover:bg-[#291407] text-[#fff8ee] text-sm font-bold transition-all cursor-pointer shadow-md hover:scale-[1.01]"
+            >
+              <RefreshCw className="w-4 h-4 text-amber-300" />
+              <span>
+                Reenviar solución para subir nota (-{nextPenalty} pts en intento #{nextAttempt})
+              </span>
+            </button>
+          </div>
         )}
       </motion.div>
     );
@@ -165,6 +285,11 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
               {submission.grade_label}
             </h3>
             <p className="text-xs text-stone-400">{gradeMetric?.desc}</p>
+            {(submission.attempt_count || 1) > 1 && (
+              <span className="inline-block mt-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                Intento #{submission.attempt_count} (penalización de -{submission.retry_penalty ?? ((submission.attempt_count! - 1) * 2)} pts aplicada)
+              </span>
+            )}
           </div>
         </div>
 
@@ -218,6 +343,8 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
         </div>
       </div>
 
+      <TestResultsBreakdown testResults={submission.test_results} />
+
       <div className="mb-6">
         <span className="text-xs sm:text-sm uppercase tracking-widest text-stone-400 font-bold block mb-1.5">
           Tu entrega registrada:
@@ -227,19 +354,31 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
         </p>
       </div>
 
-      {isPassed ? (
+      {isMaxGrade ? (
         <div className="flex items-center justify-center gap-2.5 w-full py-4 px-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-semibold text-center shadow-inner">
           <CheckCircle2 className="w-5 h-5 text-amber-400 shrink-0" />
-          <span>Examen T.I.M.O. superado con éxito ({submission.grade_label}). Calificación oficial sellada por el Claustro.</span>
+          <span>Examen T.I.M.O. superado con la máxima calificación (Extraordinario). Calificación sellada con honores.</span>
         </div>
       ) : (
-        <button
-          onClick={onRetry}
-          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 border border-amber-600/40 text-amber-200 text-sm font-bold transition-all cursor-pointer hover:scale-[1.01]"
-        >
-          <RefreshCw className="w-4 h-4 text-amber-400" />
-          <span>Volver a intentar para superar el examen</span>
-        </button>
+        <div className="space-y-3">
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-transparent border border-amber-500/30 text-xs sm:text-sm text-stone-200">
+            <p className="font-bold flex items-center gap-2 text-amber-300 mb-1">
+              <span>🎯 Oportunidad de subir nota:</span>
+            </p>
+            <p className="text-stone-300 leading-relaxed">
+              Puedes reenviar tu solución para aspirar a una mejor calificación. El próximo reenvío (<strong>intento #{nextAttempt}</strong>) tendrá una penalización de <strong>-{nextPenalty} puntos</strong> por reintentos (pudiendo alcanzar hasta <strong>{nextMaxPoints} pts</strong> con un Extraordinario). Si tu nuevo resultado no supera tu récord actual de <strong>{points} pts</strong>, se conservará tu mejor puntuación previa.
+            </p>
+          </div>
+          <button
+            onClick={onRetry}
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-stone-950 font-black text-sm sm:text-base transition-all cursor-pointer shadow-lg hover:scale-[1.01]"
+          >
+            <RefreshCw className="w-4 h-4 text-stone-950" />
+            <span>
+              Reenviar solución para subir nota (-{nextPenalty} pts en intento #{nextAttempt})
+            </span>
+          </button>
+        </div>
       )}
     </motion.div>
   );

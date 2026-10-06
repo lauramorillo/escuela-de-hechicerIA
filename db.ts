@@ -43,6 +43,8 @@ export interface SubmissionDoc {
   audio_phrase?: string;
   audio?: string | null;
   test_results?: any;
+  attempt_count?: number;
+  retry_penalty?: number;
   evaluated_at?: FirebaseFirestore.FieldValue | Date | string;
 }
 
@@ -205,7 +207,7 @@ class InMemoryDb {
     return scores;
   }
 
-  async saveSubmission(workshopId: string, studentId: string, submission: SubmissionDoc): Promise<void> {
+  async saveSubmission(workshopId: string, studentId: string, submission: SubmissionDoc, _pointsDelta = 0): Promise<void> {
     const ws = this.getWorkshop(workshopId);
     if (!ws.submissions.has(studentId)) {
       ws.submissions.set(studentId, new Map());
@@ -719,9 +721,9 @@ class DatabaseService {
     }
   }
 
-  async saveSubmission(workshopId: string, studentId: string, submission: SubmissionDoc): Promise<void> {
+  async saveSubmission(workshopId: string, studentId: string, submission: SubmissionDoc, pointsDelta = 0): Promise<void> {
     if (this.isUsingFallback || !this.firestore) {
-      return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission);
+      return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission, pointsDelta);
     }
     try {
       const subRef = this.firestore.doc(`workshops/${workshopId}/students/${studentId}/submissions/${submission.class_id}`);
@@ -732,7 +734,7 @@ class DatabaseService {
 
       // Actualizar el expediente del alumno con su puntuación acumulada
       const studentRef = this.firestore.doc(`workshops/${workshopId}/students/${studentId}`);
-      const pointsToAdd = submission.total_awarded_points ?? submission.points ?? 0;
+      const pointsToAdd = pointsDelta !== 0 ? pointsDelta : (submission.total_awarded_points ?? submission.points ?? 0);
       await studentRef.set(
         {
           score: FieldValue.increment(pointsToAdd),
@@ -741,7 +743,7 @@ class DatabaseService {
         { merge: true }
       );
     } catch {
-      return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission);
+      return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission, pointsDelta);
     }
   }
 

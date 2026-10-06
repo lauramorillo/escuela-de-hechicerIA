@@ -47,6 +47,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
   onBack,
   onSubmit,
 }) => {
+  const canRetry = !submission || submission.grade !== "E";
   const currentSubExercise: SubExercise | undefined =
     classInfo?.subExercises?.find((s) => s.id === selectedSubExerciseId) ||
     classInfo?.subExercises?.[0];
@@ -229,17 +230,28 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
               isPassed={isPassed}
               onRetry={() => setIsEditing(true)}
               theme="parchment"
+              classId="defense"
             />
           )}
         </AnimatePresence>
 
         {/* Formulario de Entrega */}
-        {(!submission || (isEditing && !isPassed)) && (
+        {(!submission || (isEditing && canRetry)) && (
           <form
             onSubmit={onSubmit}
             className="flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl bg-[#fffbf2] border-3 border-[#6b3813] shadow-[0_10px_35px_rgba(70,35,10,0.2)] relative"
           >
             <div>
+              {submission && (
+                <div className="mb-4 p-3.5 rounded-xl bg-[#ead4a8] border border-[#8a4218]/40 text-xs sm:text-sm text-[#351a0a]">
+                  <strong className="block text-[#703b15] mb-1">
+                    🎯 Reenvío para subir nota (Intento #{(submission.attempt_count || 1) + 1}):
+                  </strong>
+                  <span>
+                    Este reintento aplicará una penalización de <strong>-{(submission.attempt_count || 1) * 2} puntos</strong> sobre la nota conseguida. Si la nueva entrega no supera tu nota actual de <strong>{submission.total_awarded_points ?? submission.points} pts</strong>, se conservará la previa.
+                  </span>
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <label
                   htmlFor="magic-answer"

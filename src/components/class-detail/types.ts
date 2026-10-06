@@ -11,6 +11,16 @@ export interface EvaluationResponse {
   advice: string;
   audioPhrase?: string;
   audio?: string | null;
+  testResults?: {
+    total: number;
+    passed: number;
+    details: string[];
+  };
+  attemptCount?: number;
+  retryPenalty?: number;
+  pointsDelta?: number;
+  basePoints?: number;
+  isNewBest?: boolean;
 }
 
 export const PROFESSOR_AVATARS: Record<string, { icon: string; titleColor: string; quote: string }> = {
@@ -25,14 +35,14 @@ export const PROFESSOR_AVATARS: Record<string, { icon: string; titleColor: strin
     quote: "Los señores Lunático, Colagusano, Canuto y Cornamenta te enseñarán a contener la magia.",
   },
   battle: {
-    icon: "⚔️",
-    titleColor: "text-rose-400",
-    quote: "¡Hogwarts está amenazada! Convocad los contrahechizos, defended las almenas y proteged el castillo.",
+    icon: "🧙‍♂️",
+    titleColor: "text-purple-300",
+    quote: "La felicidad se puede hallar hasta en los más oscuros momentos, si somos capaces de usar bien la luz.",
   },
   divination: {
-    icon: "⚔️",
-    titleColor: "text-rose-400",
-    quote: "¡Hogwarts está amenazada! Convocad los contrahechizos, defended las almenas y proteged el castillo.",
+    icon: "🧙‍♂️",
+    titleColor: "text-purple-300",
+    quote: "La felicidad se puede hallar hasta en los más oscuros momentos, si somos capaces de usar bien la luz.",
   },
 };
 
@@ -75,7 +85,12 @@ export const GRADE_METRICS: Record<string, { label: string; badge: string; color
   },
 };
 
-export function playProclamationAudio(audioBase64?: string | null, phrase?: string, points = 0): void {
+export function playProclamationAudio(
+  audioBase64?: string | null,
+  phrase?: string,
+  points = 0,
+  classId = "transfiguration"
+): void {
   if (audioBase64) {
     try {
       const snd = new Audio(`data:audio/wav;base64,${audioBase64}`);
@@ -91,16 +106,36 @@ export function playProclamationAudio(audioBase64?: string | null, phrase?: stri
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(phrase);
       utterance.lang = "es-ES";
-      if (points > 0) {
-        utterance.pitch = 1.3;
-        utterance.rate = 1.05;
-      } else if (points < 0) {
-        utterance.pitch = 0.8;
-        utterance.rate = 0.95;
+
+      const voices = window.speechSynthesis.getVoices();
+      const spanishVoices = voices.filter((v) => v.lang.startsWith("es"));
+
+      if (classId === "transfiguration") {
+        // Profesora McGonagall: mujer solemne y rigurosa
+        const femaleVoice = spanishVoices.find((v) =>
+          /female|mujer|monica|helena|lucia|paulina|laura/i.test(v.name)
+        );
+        if (femaleVoice) utterance.voice = femaleVoice;
+        utterance.pitch = points > 0 ? 1.25 : points < 0 ? 0.95 : 1.1;
+        utterance.rate = 0.96;
+      } else if (classId === "defense") {
+        // Profesor Remus Lupin: hombre más nervioso y apresurado ante el peligro
+        const maleVoice = spanishVoices.find((v) =>
+          /male|hombre|jorge|pablo|enrique|diego|carlos/i.test(v.name)
+        );
+        if (maleVoice) utterance.voice = maleVoice;
+        utterance.pitch = points > 0 ? 1.15 : points < 0 ? 0.9 : 1.05;
+        utterance.rate = 1.18;
       } else {
-        utterance.pitch = 1.0;
-        utterance.rate = 1.0;
+        // Profesor Albus Dumbledore: hombre anciano solemne, majestuoso, grave y pausado
+        const maleVoice = spanishVoices.find((v) =>
+          /male|hombre|jorge|enrique|diego|carlos/i.test(v.name)
+        );
+        if (maleVoice) utterance.voice = maleVoice;
+        utterance.pitch = points > 0 ? 0.85 : 0.72;
+        utterance.rate = 0.88;
       }
+
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.warn("Error en SpeechSynthesis:", e);
