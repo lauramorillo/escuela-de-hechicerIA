@@ -122,10 +122,12 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
         if (!line) return null;
 
         const isIndented = /^\s{2,}|\t/.test(rawLine);
-        const isHeader = line.includes("⚠️") || (!rawLine.trimStart().startsWith("•") && !rawLine.trimStart().startsWith("-") && line.endsWith(":"));
-
         const cleanLine = line.replace(/^[•\-]\s*/, "").trim();
         if (!cleanLine) return null;
+
+        const isHeader = line.includes("⚠️") ||
+          cleanLine.toLowerCase().startsWith("política de reintentos") ||
+          (!rawLine.trimStart().startsWith("•") && !rawLine.trimStart().startsWith("-") && line.endsWith(":"));
 
         const gradeMatch = cleanLine.match(/^([ESADTI])\s*\(([^)]+)\)\s*(?:\(([^)]+)\))?:\s*(.*)$/);
         if (gradeMatch) {
@@ -155,7 +157,7 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
 
         if (isHeader) {
           return (
-            <div key={idx} className="pt-2.5 pb-1 font-bold text-amber-300 text-base sm:text-lg flex items-center gap-2">
+            <div key={idx} className="pt-3 pb-1 font-bold text-amber-300 text-base sm:text-lg flex items-center gap-2">
               <span>{cleanLine}</span>
             </div>
           );
@@ -204,7 +206,7 @@ export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment }
               if (numberedHeaderMatch) {
                 const title = numberedHeaderMatch[1];
                 const rest = numberedHeaderMatch[2]?.trim();
-                const hasBullets = rest && (rest.startsWith("• ") || rest.startsWith("- ") || rest.includes("\n• ") || rest.includes("\n- "));
+                const hasBullets = rest && (rest.startsWith("• ") || rest.startsWith("- ") || rest.includes("\n• ") || rest.includes("\n- ") || /(\n\s*[•\-])/.test(rest) || rest.includes("⚠️"));
 
                 return (
                   <div key={paraIdx} className="pt-2">
@@ -225,7 +227,9 @@ export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment }
                 );
               }
 
-              if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.includes("\n• ") || trimmed.includes("\n- ")) {
+              const hasBulletsInPara = trimmed.startsWith("• ") || trimmed.startsWith("- ") || /(\n\s*[•\-])/.test(trimmed) || trimmed.includes("⚠️");
+
+              if (hasBulletsInPara) {
                 return <BulletList key={paraIdx} content={trimmed} keyPrefix={paraIdx} />;
               }
 
