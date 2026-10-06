@@ -3,6 +3,91 @@ import path from "path";
 import { Firestore, FieldValue, type DocumentReference, type DocumentSnapshot, type Transaction } from "@google-cloud/firestore";
 
 const SHARED_LOCAL_DB_FILE = "/tmp/taller_escuela_hechiceria_db.json";
+const SHARED_LOCAL_DB_LOCK = "/tmp/taller_escuela_hechiceria_db.lock";
+
+/**
+ * Adquiere un bloqueo de archivo exclusivo usando mkdir atómico (estándar POSIX).
+ * Garantiza sincronización segura entre múltiples procesos y contenedores Docker que comparten /tmp.
+ */
+async function withFileLock<T>(fn: () => Promise<T> | T): Promise<T> {
+  const maxWaitMs = 10000;
+  const start = Date.now();
+  let acquired = false;
+
+  while (!acquired) {
+    try {
+      fs.mkdirSync(SHARED_LOCAL_DB_LOCK);
+      acquired = true;
+    } catch (err: any) {
+      if (err.code === "EEXIST") {
+        try {
+          const stats = fs.statSync(SHARED_LOCAL_DB_LOCK);
+          if (Date.now() - stats.mtimeMs > 10000) {
+            fs.rmdirSync(SHARED_LOCAL_DB_LOCK);
+          }
+        } catch {}
+
+        if (Date.now() - start > maxWaitMs) {
+          try {
+            fs.rmdirSync(SHARED_LOCAL_DB_LOCK);
+          } catch {}
+          fs.mkdirSync(SHARED_LOCAL_DB_LOCK);
+          acquired = true;
+          break;
+        }
+
+        const jitter = Math.floor(Math.random() * 20) + 15;
+        await new Promise((resolve) => setTimeout(resolve, jitter));
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  try {
+    return await fn();
+  } finally {
+    try {
+      fs.rmdirSync(SHARED_LOCAL_DB_LOCK);
+    } catch {}
+  }
+}
+
+function writeSharedDbAtomic(data: any) {
+  const tmpPath = `${SHARED_LOCAL_DB_FILE}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf-8");
+  fs.renameSync(tmpPath, SHARED_LOCAL_DB_FILE);
+}
+
+export function computeHouseScoresFromData(
+  students: Record<string, { house: string; score?: number }>,
+  submissions: Record<string, Record<string, { total_awarded_points?: number; points?: number; house?: string }>>
+): Record<HouseId, number> {
+  const scores: Record<HouseId, number> = { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 };
+  const studentHouses: Record<string, HouseId> = {};
+
+  for (const [sId, sDoc] of Object.entries(students || {})) {
+    if (sDoc?.house) {
+      studentHouses[sId] = sDoc.house.toLowerCase() as HouseId;
+    }
+  }
+
+  for (const [sId, classMap] of Object.entries(submissions || {})) {
+    let studentHouse = studentHouses[sId];
+    for (const [_, sub] of Object.entries(classMap || {})) {
+      if (!studentHouse && sub?.house) {
+        studentHouse = sub.house.toLowerCase() as HouseId;
+        studentHouses[sId] = studentHouse;
+      }
+      const pts = sub?.total_awarded_points ?? sub?.points ?? 0;
+      if (studentHouse && scores[studentHouse] !== undefined) {
+        scores[studentHouse] += pts;
+      }
+    }
+  }
+
+  return scores;
+}
 
 export const HOUSES = ["gryffindor", "slytherin", "ravenclaw", "hufflepuff"] as const;
 export type HouseId = typeof HOUSES[number];
@@ -140,7 +225,22 @@ class InMemoryDb {
     houseDoc.members_count += 1;
     houseDoc.updated_at = new Date();
 
-    ws.students.set(studentId, { house, assigned_at: new Date(), justification: "" });
+    ws.students.set(studentId, { house, assigned_at: new Date(), justification: "", score: 0 });
+
+    try {
+      await withFileLock(() => {
+        let currentData: any = {};
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          try {
+            currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
+          } catch {}
+        }
+        if (!currentData.students) currentData.students = {};
+        if (!currentData.students[workshopId]) currentData.students[workshopId] = {};
+        currentData.students[workshopId][studentId] = { house, score: 0 };
+        writeSharedDbAtomic(currentData);
+      });
+    } catch {}
 
     return {
       studentId,
@@ -193,19 +293,33 @@ class InMemoryDb {
 
     try {
       if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
-        const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
-        const parsed = JSON.parse(raw);
-        const fileScores = parsed.scores?.[workshopId];
-        if (fileScores) {
-          for (const h of HOUSES) {
-            const fsScore = fileScores[h] ?? 0;
-            scores[h] = fsScore;
-            const houseDoc = ws.houses.get(h);
-            if (houseDoc) {
-              houseDoc.score = fsScore;
+        await withFileLock(() => {
+          const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+          const parsed = JSON.parse(raw);
+          const hasSubmissions = parsed.submissions?.[workshopId] && Object.keys(parsed.submissions[workshopId]).length > 0;
+
+          if (hasSubmissions) {
+            const computedScores = computeHouseScoresFromData(
+              parsed.students?.[workshopId] || {},
+              parsed.submissions[workshopId]
+            );
+            for (const h of HOUSES) {
+              scores[h] = computedScores[h] ?? 0;
+              const houseDoc = ws.houses.get(h);
+              if (houseDoc) {
+                houseDoc.score = scores[h];
+              }
+            }
+          } else if (parsed.scores?.[workshopId]) {
+            for (const h of HOUSES) {
+              scores[h] = parsed.scores[workshopId][h] ?? 0;
+              const houseDoc = ws.houses.get(h);
+              if (houseDoc) {
+                houseDoc.score = scores[h];
+              }
             }
           }
-        }
+        });
       }
     } catch {}
 
@@ -223,15 +337,48 @@ class InMemoryDb {
     });
 
     try {
-      let currentData: any = {};
-      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
-        currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
-      }
-      if (!currentData.submissions) currentData.submissions = {};
-      if (!currentData.submissions[workshopId]) currentData.submissions[workshopId] = {};
-      if (!currentData.submissions[workshopId][studentId]) currentData.submissions[workshopId][studentId] = {};
-      currentData.submissions[workshopId][studentId][submission.class_id] = submission;
-      fs.writeFileSync(SHARED_LOCAL_DB_FILE, JSON.stringify(currentData, null, 2), "utf-8");
+      await withFileLock(() => {
+        let currentData: any = {};
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          try {
+            currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
+          } catch {}
+        }
+        if (!currentData.submissions) currentData.submissions = {};
+        if (!currentData.submissions[workshopId]) currentData.submissions[workshopId] = {};
+        if (!currentData.submissions[workshopId][studentId]) currentData.submissions[workshopId][studentId] = {};
+
+        const existingHouse = ws.students.get(studentId)?.house || currentData.students?.[workshopId]?.[studentId]?.house;
+        const subHouse = (submission as any).house || existingHouse || "gryffindor";
+
+        currentData.submissions[workshopId][studentId][submission.class_id] = {
+          ...submission,
+          house: subHouse,
+        };
+
+        if (!currentData.students) currentData.students = {};
+        if (!currentData.students[workshopId]) currentData.students[workshopId] = {};
+        currentData.students[workshopId][studentId] = {
+          house: subHouse,
+        };
+
+        // Recalcular puntuación total de las casas como la suma de los puntos de sus alumnos
+        if (!currentData.scores) currentData.scores = {};
+        currentData.scores[workshopId] = computeHouseScoresFromData(
+          currentData.students[workshopId],
+          currentData.submissions[workshopId]
+        );
+
+        writeSharedDbAtomic(currentData);
+
+        // Sincronizar en memoria
+        for (const h of HOUSES) {
+          const houseDoc = ws.houses.get(h);
+          if (houseDoc) {
+            houseDoc.score = currentData.scores[workshopId][h] ?? 0;
+          }
+        }
+      });
     } catch {}
   }
 
@@ -278,16 +425,20 @@ class InMemoryDb {
     }
 
     try {
-      let currentData: any = {};
-      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
-        currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
-      }
-      if (!currentData.scores) currentData.scores = {};
-      if (!currentData.scores[workshopId]) {
-        currentData.scores[workshopId] = { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 };
-      }
-      currentData.scores[workshopId][houseId] = (currentData.scores[workshopId][houseId] || 0) + points;
-      fs.writeFileSync(SHARED_LOCAL_DB_FILE, JSON.stringify(currentData, null, 2), "utf-8");
+      await withFileLock(() => {
+        let currentData: any = {};
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          try {
+            currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
+          } catch {}
+        }
+        if (!currentData.scores) currentData.scores = {};
+        if (!currentData.scores[workshopId]) {
+          currentData.scores[workshopId] = { gryffindor: 0, slytherin: 0, ravenclaw: 0, hufflepuff: 0 };
+        }
+        currentData.scores[workshopId][houseId] = (currentData.scores[workshopId][houseId] || 0) + points;
+        writeSharedDbAtomic(currentData);
+      });
     } catch {}
 
     return newScore;
@@ -731,22 +882,47 @@ class DatabaseService {
       return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission, pointsDelta);
     }
     try {
+      const studentHouse = ((submission as any).house || "gryffindor").toLowerCase() as HouseId;
       const subRef = this.firestore.doc(`workshops/${workshopId}/students/${studentId}/submissions/${submission.class_id}`);
       await subRef.set({
         ...submission,
+        house: studentHouse,
         evaluated_at: FieldValue.serverTimestamp(),
       });
 
-      // Actualizar el expediente del alumno con su puntuación acumulada
+      // Recalcular la puntuación total del alumno sumando todas sus materias
+      const subsSnap = await this.firestore.collection(`workshops/${workshopId}/students/${studentId}/submissions`).get();
+      let studentTotalScore = 0;
+      subsSnap.forEach((doc) => {
+        const d = doc.data() as SubmissionDoc;
+        studentTotalScore += (d.total_awarded_points ?? d.points ?? 0);
+      });
+
       const studentRef = this.firestore.doc(`workshops/${workshopId}/students/${studentId}`);
-      const pointsToAdd = pointsDelta !== 0 ? pointsDelta : (submission.total_awarded_points ?? submission.points ?? 0);
+      const prevStudentSnap = await studentRef.get();
+      const prevScore = prevStudentSnap.exists ? (prevStudentSnap.data()?.score ?? 0) : 0;
+      const effectiveHouse = (prevStudentSnap.exists && prevStudentSnap.data()?.house) || studentHouse;
+      const deltaToApply = studentTotalScore - prevScore;
+
       await studentRef.set(
         {
-          score: FieldValue.increment(pointsToAdd),
+          house: effectiveHouse,
+          score: studentTotalScore,
           last_activity: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
+
+      if (deltaToApply !== 0) {
+        const houseRef = this.firestore.doc(`workshops/${workshopId}/houses/${effectiveHouse}`);
+        await houseRef.set(
+          {
+            score: FieldValue.increment(deltaToApply),
+            updated_at: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
     } catch {
       return this.inMemoryFallback.saveSubmission(workshopId, studentId, submission, pointsDelta);
     }

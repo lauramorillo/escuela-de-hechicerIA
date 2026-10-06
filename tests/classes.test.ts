@@ -80,4 +80,108 @@ describe("Clases y Profesores Agénticos", () => {
     expect(allScores.slytherin).toBe(0);
   });
 
+  it("debe calcular la puntuación de la casa estrictamente como la suma de puntos de sus alumnos en reintentos", async () => {
+    const ws = trackWorkshop(`test-sum-${Date.now()}`);
+    await dbService.ensureHousesInitialized(ws);
+
+    const student1 = "student_ron";
+    await dbService.assignStudentToBalancedHouse(ws, student1, "gryffindor");
+
+    // Envío incorrecto con -5 puntos (Trol)
+    await dbService.saveSubmission(ws, student1, {
+      class_id: "transfiguration",
+      grade: "T",
+      grade_label: "Trol",
+      points: -5,
+      total_awarded_points: -5,
+      feedback: "Incorrecto",
+      advice: "Practica más",
+      house: "gryffindor",
+    } as any);
+
+    let scores = await dbService.getHouseScores(ws);
+    expect(scores.gryffindor).toBe(-5);
+
+    // Reenvío corregido con 23 puntos (25 base - 2 penalización acumulada)
+    await dbService.saveSubmission(ws, student1, {
+      class_id: "transfiguration",
+      grade: "E",
+      grade_label: "Extraordinario",
+      points: 23,
+      total_awarded_points: 23,
+      attempt_count: 2,
+      retry_penalty: 2,
+      feedback: "Corregido",
+      advice: "Bien",
+      house: "gryffindor",
+    } as any);
+
+    scores = await dbService.getHouseScores(ws);
+    // Debe ser exactamente 23 puntos (la suma de los alumnos de Gryffindor), NO 28 (+delta) ni 46 (doble suma)
+    expect(scores.gryffindor).toBe(23);
+
+    // Segundo alumno de Gryffindor con 15 puntos
+    const student2 = "student_hermione_2";
+    await dbService.assignStudentToBalancedHouse(ws, student2, "gryffindor");
+    await dbService.saveSubmission(ws, student2, {
+      class_id: "transfiguration",
+      grade: "S",
+      grade_label: "Supera las expectativas",
+      points: 15,
+      total_awarded_points: 15,
+      feedback: "Notable",
+      advice: "Bien",
+      house: "gryffindor",
+    } as any);
+
+    scores = await dbService.getHouseScores(ws);
+    // 23 + 15 = 38 puntos
+    expect(scores.gryffindor).toBe(38);
+  });
+
+  it("debe garantizar la sincronización concurrente con múltiples alumnos enviando resultados simultáneamente", async () => {
+    const ws = trackWorkshop(`test-concurrent-${Date.now()}`);
+    await dbService.ensureHousesInitialized(ws);
+
+    const submissionsCount = 20;
+    const promises: Promise<void>[] = [];
+
+    for (let i = 0; i < submissionsCount; i++) {
+      const studentId = `concurrent_student_${i}`;
+      const house = i % 2 === 0 ? "gryffindor" : "slytherin";
+      const points = (i + 1) * 2; // Valores deterministas
+
+      promises.push((async () => {
+        await dbService.assignStudentToBalancedHouse(ws, studentId, house);
+        await dbService.saveSubmission(ws, studentId, {
+          class_id: "transfiguration",
+          grade: "A",
+          grade_label: "Aceptable",
+          points,
+          total_awarded_points: points,
+          feedback: `Envío ${i}`,
+          advice: "Ánimo",
+          house,
+        } as any);
+      })());
+    }
+
+    await Promise.all(promises);
+
+    const scores = await dbService.getHouseScores(ws);
+
+    let expectedGryffindor = 0;
+    let expectedSlytherin = 0;
+    for (let i = 0; i < submissionsCount; i++) {
+      const points = (i + 1) * 2;
+      if (i % 2 === 0) {
+        expectedGryffindor += points;
+      } else {
+        expectedSlytherin += points;
+      }
+    }
+
+    expect(scores.gryffindor).toBe(expectedGryffindor);
+    expect(scores.slytherin).toBe(expectedSlytherin);
+  });
 });

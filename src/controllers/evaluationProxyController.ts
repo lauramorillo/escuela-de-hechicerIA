@@ -49,13 +49,10 @@ export async function proxyEvaluation(req: Request, res: Response): Promise<void
           test_results: data.testResults,
           attempt_count: data.attemptCount,
           retry_penalty: data.retryPenalty,
-        },
+          house,
+        } as any,
         pointsToApply
       );
-
-      if (pointsToApply) {
-        await dbService.addHousePoints(workshopId, house, pointsToApply);
-      }
     }
 
     res.status(upstreamRes.status).json(data);

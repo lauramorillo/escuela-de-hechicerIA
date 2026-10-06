@@ -112,9 +112,13 @@ export function playProclamationAudio(
 
       if (classId === "transfiguration") {
         // Profesora McGonagall: mujer solemne y rigurosa
-        const femaleVoice = spanishVoices.find((v) =>
-          /female|mujer|monica|helena|lucia|paulina|laura/i.test(v.name)
-        );
+        const femaleVoice =
+          spanishVoices.find((v) =>
+            /female|mujer|monica|helena|lucia|paulina|laura|soledad|victoria|ines|rosa|elvira|dalia|carmen/i.test(v.name)
+          ) ||
+          spanishVoices.find((v) =>
+            !/male|hombre|jorge|pablo|enrique|diego|carlos/i.test(v.name)
+          );
         if (femaleVoice) utterance.voice = femaleVoice;
         utterance.pitch = points > 0 ? 1.25 : points < 0 ? 0.95 : 1.1;
         utterance.rate = 0.96;
