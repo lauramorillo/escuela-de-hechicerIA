@@ -102,11 +102,20 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
       if (prev) {
         setSubmission(prev);
         setAnswerText(prev.answer || "");
+        if (classId === "defense") {
+          setSelectedSubExerciseId("defense_guard");
+        }
         if (classId === "transfiguration" && prev.answer) {
           parseTransfigurationSubmission(prev.answer);
         }
       } else {
         setIsEditing(true);
+        if (classId === "defense") {
+          const guardSub = found?.subExercises?.find((s: any) => s.id === "defense_guard");
+          if (guardSub?.defaultTemplate) {
+            setAnswerText(guardSub.defaultTemplate);
+          }
+        }
       }
     } catch (err) {
       console.error("Error al cargar detalle de clase:", err);
@@ -187,7 +196,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
         studentId: effectiveStudentId,
         house: effectiveHouse.toLowerCase(),
         classId,
-        subExerciseId: isDefense ? selectedSubExerciseId : undefined,
+        subExerciseId: isDefense ? "defense_guard" : undefined,
         answer: finalAnswer,
       };
 

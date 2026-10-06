@@ -64,3 +64,29 @@ export async function proxyEvaluation(req: Request, res: Response): Promise<void
     });
   }
 }
+
+export async function proxyGuardianChat(req: Request, res: Response): Promise<void> {
+  const remoteServiceUrl =
+    process.env.EVALUATION_SERVICE_URL ||
+    process.env.VITE_EVALUATION_SERVICE_URL ||
+    "http://localhost:8080";
+  const targetUrl = `${remoteServiceUrl.replace(/\/$/, "")}/api/defense/guardian-chat`;
+
+  try {
+    const upstreamRes = await fetch(targetUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await upstreamRes.json();
+    res.status(upstreamRes.status).json(data);
+  } catch (err: any) {
+    console.error("Error al contactar con el guardián del castillo:", err);
+    res.status(502).json({
+      error: "No se pudo contactar con el guardián de Hogwarts.",
+      details: err.message || String(err),
+    });
+  }
+}
+
