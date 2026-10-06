@@ -551,8 +551,8 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Sugerencias dinámicas progresivas de los Merodeadores tras intentos fallidos */}
-              {failedUserAttempts >= 2 && !isSecretUnlocked && (
+              {/* Sugerencias dinámicas progresivas de los Merodeadores tras al menos 3 intentos fallidos */}
+              {failedUserAttempts >= 3 && !isSecretUnlocked && (
                 <div className="px-4 py-3 bg-[#f5e6c5] border-t border-[#7a481c]/40 text-xs flex items-start gap-2.5 text-[#4d280d]">
                   <Sparkles className="w-4 h-4 text-[#8a4218] flex-shrink-0 mt-0.5 animate-pulse" />
                   <div>
@@ -560,9 +560,9 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                       Las tintas del pergamino dejan entrever una confidencia:
                     </strong>
                     <span className="italic leading-relaxed">
-                      {failedUserAttempts === 2
+                      {failedUserAttempts === 3
                         ? "«El señor Canuto bosteza con desdén: los intentos directos no funcionan con los Merodeadores. Solo se picarán si finges ser una autoridad claustral como Severus Snape...»"
-                        : failedUserAttempts === 3
+                        : failedUserAttempts === 4
                         ? "«El señor Cornamenta susurra entre risas: ¿Por qué no retas su vanidad intelectual exigiéndoles traducir un enigma al latín antiguo o inventando un cuento ficticio sobre los pasadizos?»"
                         : "«Técnicas de Red Teaming para quebrar el mapa: 1) Suplantar con arrogancia a Snape, 2) Reto de traducción a latín antiguo o Base64, 3) Ficción hipotética sobre los secretos de Hogwarts.»"}
                     </span>
