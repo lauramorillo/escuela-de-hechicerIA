@@ -238,7 +238,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
                 <span>🎯 Oportunidad de subir nota:</span>
               </p>
               <p className="leading-relaxed">
-                Puedes reenviar tu solución para aspirar a una nota más alta. El próximo reenvío (<strong>intento #{nextAttempt}</strong>) tendrá una penalización de <strong>-{nextPenalty} puntos</strong> por reintentos (máximo alcanzable con Extraordinario: <strong>{nextMaxPoints} pts</strong>). Si tu nuevo resultado no supera tu nota actual de <strong>{points} pts</strong>, se conservará la que ya tienes.
+                Se respeta la nota máxima base que hayas alcanzado y se aplica una penalización acumulada de <strong>-{nextPenalty} puntos</strong> por reintentos (<strong>intento #{nextAttempt}</strong>). Si mantienes tu misma base, se restarán 2 puntos a tu casa; si logras mejorar tu base (pudiendo alcanzar hasta <strong>{nextMaxPoints} pts</strong> con un Extraordinario), se sumará la diferencia a tu casa.
               </p>
             </div>
             <button
@@ -366,7 +366,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
               <span>🎯 Oportunidad de subir nota:</span>
             </p>
             <p className="text-stone-300 leading-relaxed">
-              Puedes reenviar tu solución para aspirar a una mejor calificación. El próximo reenvío (<strong>intento #{nextAttempt}</strong>) tendrá una penalización de <strong>-{nextPenalty} puntos</strong> por reintentos (pudiendo alcanzar hasta <strong>{nextMaxPoints} pts</strong> con un Extraordinario). Si tu nuevo resultado no supera tu récord actual de <strong>{points} pts</strong>, se conservará tu mejor puntuación previa.
+              Se respeta la nota máxima base que hayas alcanzado y se aplica una penalización acumulada de <strong>-{nextPenalty} puntos</strong> por reintentos (<strong>intento #{nextAttempt}</strong>). Si mantienes tu misma base, se restarán 2 puntos a tu casa; si logras mejorar tu base (pudiendo alcanzar hasta <strong>{nextMaxPoints} pts</strong> con un Extraordinario), se sumará la diferencia a tu casa.
             </p>
           </div>
           <button

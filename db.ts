@@ -198,7 +198,12 @@ class InMemoryDb {
         const fileScores = parsed.scores?.[workshopId];
         if (fileScores) {
           for (const h of HOUSES) {
-            scores[h] = Math.max(scores[h], fileScores[h] || 0);
+            const fsScore = fileScores[h] ?? 0;
+            scores[h] = fsScore;
+            const houseDoc = ws.houses.get(h);
+            if (houseDoc) {
+              houseDoc.score = fsScore;
+            }
           }
         }
       }

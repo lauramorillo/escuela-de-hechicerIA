@@ -377,12 +377,12 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "• D (Desastroso) (-5 pts): Deficiente. El código contiene errores de sintaxis, no ejecuta o no procesa el lote de cámaras.\n" +
       "• Política de Reintentos y Subida de Nota:\n" +
       "  El claustro permite a cualquier alumno reenviar su respuesta para subir nota (incluso tras haber aprobado previamente con Aceptable 'A' o Supera las expectativas 'S').\n" +
-      "  Se aplica una penalización de -2 puntos por cada reintento sobre la nota conseguida en esa entrega:\n" +
+      "  Se respeta la nota máxima base conseguida por el alumno, aplicando una penalización acumulada de -2 puntos por cada reintento:\n" +
       "  - 1.er envío: Sin penalización (E = 25 pts, S = 15 pts, A = 5 pts).\n" +
-      "  - 2.º envío (1 reintento): -2 puntos de penalización (ej. un Extraordinario obtendrá 25 - 2 = 23 pts).\n" +
-      "  - 3.er envío (2 reintentos): -4 puntos de penalización (ej. un Extraordinario obtendrá 25 - 4 = 21 pts).\n" +
+      "  - 2.º envío (1 reintento): -2 puntos sobre la base máxima (ej. un Extraordinario obtendrá 25 - 2 = 23 pts, sumando +8 pts para su casa si venía de 15; si mantiene 15 pts base, pasará a 13 pts restando 2 puntos a su casa).\n" +
+      "  - 3.er envío (2 reintentos): -4 puntos sobre la base máxima conseguida (ej. un Extraordinario obtendrá 25 - 4 = 21 pts).\n" +
       "  - Reintentos sucesivos: -2 puntos adicionales acumulativos por cada reintento.\n" +
-      "  Siempre se conservará la mejor puntuación neta alcanzada: si un reenvío no supera tu récord anterior, conservarás intacta tu mejor nota previa. Una vez alcanzado Extraordinario 'E', el examen queda sellado con honores.",
+      "  Una vez alcanzado Extraordinario 'E', el examen queda sellado con honores.",
     hints: [],
 
     attachments: [

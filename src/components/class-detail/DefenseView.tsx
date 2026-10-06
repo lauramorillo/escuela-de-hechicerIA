@@ -248,7 +248,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                     🎯 Reenvío para subir nota (Intento #{(submission.attempt_count || 1) + 1}):
                   </strong>
                   <span>
-                    Este reintento aplicará una penalización de <strong>-{(submission.attempt_count || 1) * 2} puntos</strong> sobre la nota conseguida. Si la nueva entrega no supera tu nota actual de <strong>{submission.total_awarded_points ?? submission.points} pts</strong>, se conservará la previa.
+                    Se respeta tu nota máxima base aplicando una penalización acumulada de <strong>-{(submission.attempt_count || 1) * 2} puntos</strong> (ej. Extraordinario obtendrá {Math.max(0, 25 - (submission.attempt_count || 1) * 2)} pts). Si mantienes tu misma base, se restarán 2 puntos a tu casa; si mejoras tu base, se sumará el incremento.
                   </span>
                 </div>
               )}

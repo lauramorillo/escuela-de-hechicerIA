@@ -112,7 +112,7 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
               🎯 Reenvío para subir nota (Intento #{attemptNumber}):
             </span>
             <span className="leading-relaxed block">
-              Este reintento aplicará una penalización de <strong>-{retryPenalty} puntos</strong> sobre la nota conseguida (ej. un Extraordinario perfecto obtendrá {25 - retryPenalty} pts). Se conservará tu récord actual ({currentBestScore} pts) si la nueva entrega no lo supera.
+              Este reintento aplicará una penalización acumulada de <strong>-{retryPenalty} puntos</strong> sobre tu nota máxima base (ej. un Extraordinario obtendrá {25 - retryPenalty} pts). Si mantienes tu misma nota base, se restarán 2 puntos a tu casa; si mejoras tu base, se sumará el incremento.
             </span>
           </div>
         )}
