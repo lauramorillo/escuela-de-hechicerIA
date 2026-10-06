@@ -121,6 +121,9 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
         const line = rawLine.trim();
         if (!line) return null;
 
+        const isIndented = /^\s{2,}|\t/.test(rawLine);
+        const isHeader = line.includes("⚠️") || (!rawLine.trimStart().startsWith("•") && !rawLine.trimStart().startsWith("-") && line.endsWith(":"));
+
         const cleanLine = line.replace(/^[•\-]\s*/, "").trim();
         if (!cleanLine) return null;
 
@@ -146,6 +149,23 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
             >
               <span className="font-bold text-amber-300 shrink-0">{noteMatch[1]}:</span>
               <span>{noteMatch[2]}</span>
+            </div>
+          );
+        }
+
+        if (isHeader) {
+          return (
+            <div key={idx} className="pt-2.5 pb-1 font-bold text-amber-300 text-base sm:text-lg flex items-center gap-2">
+              <span>{cleanLine}</span>
+            </div>
+          );
+        }
+
+        if (isIndented) {
+          return (
+            <div key={idx} className="flex items-start gap-2.5 text-base sm:text-lg text-stone-300 leading-relaxed pl-7 sm:pl-9">
+              <span className="text-amber-400/90 text-xs shrink-0 mt-1.5 font-bold">▸</span>
+              <span className="font-sans">{cleanLine}</span>
             </div>
           );
         }
