@@ -1,5 +1,5 @@
-import React from "react";
-import { Code2 } from "lucide-react";
+import React, { useState } from "react";
+import { Code2, Copy, Check } from "lucide-react";
 
 interface AssignmentViewerProps {
   assignment: string;
@@ -42,22 +42,42 @@ function splitContentIntoParts(text: string): ContentPart[] {
   return parts;
 }
 
-const CodeBlock: React.FC<{ lang?: string; content: string }> = ({ lang = "json", content }) => (
-  <div className="my-4 rounded-xl bg-[#0c0d12] border border-amber-600/40 overflow-hidden shadow-2xl">
-    <div className="flex items-center justify-between px-4 py-2.5 bg-stone-900/90 border-b border-stone-800 text-xs sm:text-sm text-amber-300 font-mono font-bold">
-      <span className="flex items-center gap-2">
-        <Code2 className="w-4 h-4 text-amber-400" />
-        <span>Formato de entrega ({lang.toUpperCase()})</span>
-      </span>
-      <span className="text-[11px] uppercase tracking-wider px-2.5 py-0.5 rounded bg-black/60 text-stone-300 border border-stone-700">
-        {lang}
-      </span>
+const CodeBlock: React.FC<{ lang?: string; content: string }> = ({ lang = "json", content }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  return (
+    <div className="my-4 rounded-xl bg-[#0c0d12] border border-amber-600/40 overflow-hidden shadow-2xl">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-stone-900/90 border-b border-stone-800 text-xs sm:text-sm text-amber-300 font-mono font-bold">
+        <span className="flex items-center gap-2">
+          <Code2 className="w-4 h-4 text-amber-400" />
+          <span>Formato de entrega ({lang.toUpperCase()})</span>
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] uppercase tracking-wider px-2.5 py-0.5 rounded bg-black/60 text-stone-300 border border-stone-700">
+            {lang}
+          </span>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-mono font-bold transition-all cursor-pointer hover:scale-105 active:scale-95 border border-amber-500/30"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copied ? "¡Copiado!" : "Copiar"}</span>
+          </button>
+        </div>
+      </div>
+      <pre className="p-4 sm:p-5 text-sm sm:text-base font-mono leading-relaxed text-amber-200 overflow-x-auto bg-[#0a0a0e]">
+        <code>{content}</code>
+      </pre>
     </div>
-    <pre className="p-4 sm:p-5 text-sm sm:text-base font-mono leading-relaxed text-amber-200 overflow-x-auto bg-[#0a0a0e]">
-      <code>{content}</code>
-    </pre>
-  </div>
-);
+  );
+};
 
 const TimoGradeCard: React.FC<{
   letter: string;
