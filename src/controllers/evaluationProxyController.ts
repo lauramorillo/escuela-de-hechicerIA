@@ -76,6 +76,7 @@ export async function proxyEvaluation(req: Request, res: Response): Promise<void
           test_results: data.testResults,
           attempt_count: data.attemptCount,
           retry_penalty: data.retryPenalty,
+          base_points: data.basePoints,
           house,
         } as any,
         pointsToApply

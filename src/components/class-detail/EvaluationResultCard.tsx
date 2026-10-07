@@ -252,10 +252,13 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
 }) => {
   const isParchment = theme === "parchment";
   const points = submission.total_awarded_points ?? submission.points;
+  const bonusPoints = submission.bonus_points ?? (submission.first_house_bonus ? 50 : 0);
+  const netExamPoints = submission.first_house_bonus ? points - bonusPoints : points;
   const gradeMetric = GRADE_METRICS[submission.grade];
   const effectiveClassId = submission.class_id || classId || (isParchment ? "defense" : "transfiguration");
   const isMaxGrade = submission.grade === "E";
   const currentAttempts = submission.attempt_count || 1;
+  const appliedRetryPenalty = submission.retry_penalty ?? ((currentAttempts - 1) * 2);
   const nextAttempt = currentAttempts + 1;
   const nextPenalty = currentAttempts * 2;
   const nextMaxPoints = Math.max(0, 25 - nextPenalty);
@@ -303,7 +306,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
             <Award className="w-5 h-5 text-[#7a441b]" />
             <span className="text-base sm:text-lg font-black text-[#2f180a]">
               {submission.first_house_bonus
-                ? `+75 pts (+25 E + 50 Primera Casa) para ${studentHouse}`
+                ? `+${points} pts (+${netExamPoints} E + ${bonusPoints} Primera Casa) para ${studentHouse}`
                 : `${points >= 0 ? `+${points}` : points} pts para ${studentHouse}`}
             </span>
           </div>
@@ -314,10 +317,12 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
             <Trophy className="w-6 h-6 text-[#9a4e12] shrink-0 animate-bounce" />
             <div>
               <span className="font-black uppercase tracking-wider block text-xs text-[#703b15]">
-                🏆 ¡PRIMERA CASA DEL TORNEO! (+75 PUNTOS)
+                🏆 ¡PRIMERA CASA DEL TORNEO! (+{points} PUNTOS)
               </span>
               <span className="text-xs sm:text-sm font-semibold text-[#3b1e0d]">
-                ¡Tu casa se adjudica 75 puntos en total (+25 por Extraordinario y +50 por ser la primera en lograrlo)!
+                {appliedRetryPenalty > 0
+                  ? `¡Tu casa se adjudica ${points} puntos en total (+${netExamPoints} por Extraordinario tras -${appliedRetryPenalty} pts de reintentos y +${bonusPoints} por ser la primera en lograrlo)!`
+                  : `¡Tu casa se adjudica ${points} puntos en total (+${netExamPoints} por Extraordinario y +${bonusPoints} por ser la primera en lograrlo)!`}
               </span>
             </div>
           </div>
@@ -429,7 +434,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
           <Award className="w-5 h-5 text-amber-400" />
           <span className="text-base sm:text-lg font-extrabold text-amber-300">
             {submission.first_house_bonus
-              ? `+75 pts (+25 E + 50 Primera Casa) para ${studentHouse}`
+              ? `+${points} pts (+${netExamPoints} E + ${bonusPoints} Primera Casa) para ${studentHouse}`
               : `${points >= 0 ? `+${points}` : points} pts para ${studentHouse}`}
           </span>
         </div>
@@ -440,10 +445,12 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
           <Trophy className="w-7 h-7 text-amber-300 shrink-0 animate-bounce" />
           <div>
             <span className="font-extrabold uppercase tracking-wider block text-xs text-amber-300">
-              🏆 ¡PRIMERA CASA DEL TORNEO! (+75 PUNTOS)
+              🏆 ¡PRIMERA CASA DEL TORNEO! (+{points} PUNTOS)
             </span>
             <span className="text-xs sm:text-sm font-semibold text-amber-100/90">
-              ¡Tu casa se adjudica 75 puntos en total (+25 por Extraordinario y +50 por ser la primera en conseguirlo)!
+              {appliedRetryPenalty > 0
+                ? `¡Tu casa se adjudica ${points} puntos en total (+${netExamPoints} por Extraordinario tras -${appliedRetryPenalty} pts de reintentos y +${bonusPoints} por ser la primera en conseguirlo)!`
+                : `¡Tu casa se adjudica ${points} puntos en total (+${netExamPoints} por Extraordinario y +${bonusPoints} por ser la primera en conseguirlo)!`}
             </span>
           </div>
         </div>
