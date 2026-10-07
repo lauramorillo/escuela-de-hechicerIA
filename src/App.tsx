@@ -47,8 +47,8 @@ export interface ParsedRoute {
 export function parseRoute(pathname: string): ParsedRoute {
   const clean = pathname.replace(/\/+$/, '') || '/';
 
-  // /classes/:classId o /clases/:classId
-  const classMatch = clean.match(/^\/(?:classes|clases)(?:\/([^/]+))?$/i);
+  // /classes/:classId o /classes
+  const classMatch = clean.match(/^\/classes(?:\/([^/]+))?$/i);
   if (classMatch) {
     const rawClassId = classMatch[1]?.toLowerCase();
     if (rawClassId && VALID_CLASS_IDS.has(rawClassId)) {
@@ -57,14 +57,9 @@ export function parseRoute(pathname: string): ParsedRoute {
     return { state: 'classes_hub', classId: null };
   }
 
-  // /result o /resultado
-  if (clean === '/result' || clean === '/resultado') {
+  // /result
+  if (clean === '/result') {
     return { state: 'result', classId: null };
-  }
-
-  // /sorting o /ceremonia
-  if (clean === '/sorting' || clean === '/ceremonia') {
-    return { state: 'welcome', classId: null };
   }
 
   return { state: 'welcome', classId: null };
@@ -73,7 +68,7 @@ export function parseRoute(pathname: string): ParsedRoute {
 export function getPathForState(state: AppState, classId: string | null): string {
   switch (state) {
     case 'class_detail':
-      return classId ? `/classes/${classId}` : '/classes';
+      return classId && VALID_CLASS_IDS.has(classId) ? `/classes/${classId}` : '/classes';
     case 'classes_hub':
       return '/classes';
     case 'result':
@@ -98,13 +93,16 @@ export default function App() {
     Boolean(localStorage.getItem('sorting_hat_student_id') || localStorage.getItem('sorting_hat_house'));
 
   const [appState, setAppState] = useState<AppState>(() => {
-    if (
-      hasLocalStudent &&
-      (initialRoute.state === 'class_detail' ||
+    if (hasLocalStudent) {
+      if (
+        initialRoute.state === 'class_detail' ||
         initialRoute.state === 'classes_hub' ||
-        initialRoute.state === 'result')
-    ) {
-      return initialRoute.state;
+        initialRoute.state === 'result'
+      ) {
+        return initialRoute.state;
+      }
+      // Alumno con casa asignada: nunca vuelve a la ceremonia del sombrero
+      return 'classes_hub';
     }
     return 'welcome';
   });
@@ -228,12 +226,14 @@ export default function App() {
             setSelectedClassId(null);
             setAppState('result');
             navigateTo('result', null, true);
-          } else if (window.location.pathname === '/') {
-            setAppState('result');
-            navigateTo('result', null, true);
+          } else {
+            // El alumno ya tiene casa asignada: no se le permite volver al sombrero
+            setSelectedClassId(null);
+            setAppState('classes_hub');
+            navigateTo('classes_hub', null, true);
           }
         } else {
-          // El usuario no tiene casa asignada: volver a la ceremonia
+          // El usuario no tiene casa asignada: obligar a pasar por la ceremonia
           const currentRoute = parseRoute(window.location.pathname);
           if (currentRoute.state !== 'welcome') {
             setAppState('welcome');
@@ -246,6 +246,13 @@ export default function App() {
       console.warn('No se pudo comprobar la sesión del alumno:', err);
     }
   }, [navigateTo]);
+
+  // Si el alumno ya tiene casa en almacenamiento local y entra en '/', redirigir a /classes
+  useEffect(() => {
+    if (hasLocalStudent && window.location.pathname === '/') {
+      window.history.replaceState({ state: 'classes_hub', classId: null }, '', '/classes');
+    }
+  }, [hasLocalStudent]);
 
   // Manejar historial del navegador (atrás / adelante)
   useEffect(() => {
@@ -267,8 +274,11 @@ export default function App() {
           setSelectedClassId(null);
           setAppState('result');
         } else {
+          // Si retrocede a '/' en el historial del navegador estando ya asignado:
+          // bloquear la vuelta al sombrero y mantenerlo en /classes
           setSelectedClassId(null);
-          setAppState('welcome');
+          setAppState('classes_hub');
+          window.history.replaceState({ state: 'classes_hub', classId: null }, '', '/classes');
         }
       } else {
         setSelectedClassId(null);
