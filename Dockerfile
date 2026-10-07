@@ -9,8 +9,6 @@ RUN npm ci
 
 # Copiar código fuente y compilar frontend (Vite) y backend (esbuild)
 COPY . .
-ARG VITE_EVALUATION_SERVICE_URL
-ENV VITE_EVALUATION_SERVICE_URL=$VITE_EVALUATION_SERVICE_URL
 RUN npm run build
 
 # Etapa 2: Imagen final de ejecución (mínima y segura)

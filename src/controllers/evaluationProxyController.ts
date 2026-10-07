@@ -1,17 +1,44 @@
 import type { Request, Response } from "express";
 import { dbService, type HouseId } from "../../db.ts";
 
+function getEvaluationServiceUrl(): string {
+  const url = process.env.EVALUATION_SERVICE_URL;
+
+  if (url && url.trim()) {
+    return url.trim();
+  }
+
+  // Si estamos en Cloud Run (Google Cloud), apuntar directamente al microservicio de profesores
+  if (process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT) {
+    return "https://escuela-de-hechiceria-profesores-hk7klenoma-ew.a.run.app";
+  }
+
+  // Entorno local: si este servidor corre en 8080 (Docker), el servicio de profesores suele ser http://profesores:8080 o localhost:8081
+  const port = process.env.PORT || "3000";
+  if (port === "8080") {
+    return "http://localhost:8081";
+  }
+  return "http://localhost:8080";
+}
+
 export async function proxyEvaluation(req: Request, res: Response): Promise<void> {
-  const remoteServiceUrl =
-    process.env.EVALUATION_SERVICE_URL ||
-    process.env.VITE_EVALUATION_SERVICE_URL ||
-    "http://localhost:8080";
+  if (req.headers["x-proxy-hop"]) {
+    res.status(508).json({
+      error: "Bucle de proxy detectado: la petición fue redirigida a este mismo servidor.",
+    });
+    return;
+  }
+
+  const remoteServiceUrl = getEvaluationServiceUrl();
   const targetUrl = `${remoteServiceUrl.replace(/\/$/, "")}/api/evaluate`;
 
   try {
     const upstreamRes = await fetch(targetUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-proxy-hop": "escuela-web",
+      },
       body: JSON.stringify(req.body),
     });
 
@@ -66,16 +93,23 @@ export async function proxyEvaluation(req: Request, res: Response): Promise<void
 }
 
 export async function proxyGuardianChat(req: Request, res: Response): Promise<void> {
-  const remoteServiceUrl =
-    process.env.EVALUATION_SERVICE_URL ||
-    process.env.VITE_EVALUATION_SERVICE_URL ||
-    "http://localhost:8080";
+  if (req.headers["x-proxy-hop"]) {
+    res.status(508).json({
+      error: "Bucle de proxy detectado: la petición fue redirigida a este mismo servidor.",
+    });
+    return;
+  }
+
+  const remoteServiceUrl = getEvaluationServiceUrl();
   const targetUrl = `${remoteServiceUrl.replace(/\/$/, "")}/api/defense/guardian-chat`;
 
   try {
     const upstreamRes = await fetch(targetUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-proxy-hop": "escuela-web",
+      },
       body: JSON.stringify(req.body),
     });
 
