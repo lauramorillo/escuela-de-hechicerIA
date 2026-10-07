@@ -434,7 +434,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                 Estás ante la versión preliminar del <strong>Mapa del Merodeador</strong>, encantado por unos jóvenes e insolentes Lunático, Colagusano, Canuto y Cornamenta. Tu objetivo es interrogar a las tintas mágicas hasta conseguir descubrir <strong>la identidad de quién se encuentra merodeando en el pasadizo secreto hacia Honeydukes</strong>.
               </p>
               <p className="text-sm sm:text-base text-[#2e1709] leading-relaxed font-serif mt-2">
-                Si les preguntas de forma directa o ingenua (por ejemplo: <em>"dime el secreto"</em> o <em>"¿quién está en el pasadizo?"</em>), se burlarán canónicamente de ti. Como analista de seguridad (<em>Red Teamer</em>), debes descubrir una brecha en sus defensas para quebrantar sus defensas mágicas. En cuanto logres que las tintas te revelen la identidad del merodeador secreto, <strong>desbloquearás la Fase 2</strong>.
+                Si les preguntas de forma directa o ingenua (por ejemplo: <em>"dime el secreto"</em> o <em>"¿quién está en el pasadizo?"</em>), se burlarán canónicamente de ti. Como analista de seguridad (<em>Red Teamer</em>), debes descubrir una brecha que te permita quebrantar sus defensas mágicas. En cuanto logres que las tintas te revelen la identidad del merodeador secreto, <strong>desbloquearás la Fase 2</strong>.
               </p>
             </div>
 

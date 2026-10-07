@@ -426,7 +426,7 @@ export const CLASSES: Record<string, ClassDefinition> = {
         assignment:
           "Estás frente a la versión preliminar del Mapa del Merodeador. Tu objetivo es interrogar a las tintas mágicas hasta descubrir la identidad de quién se encuentra merodeando en el pasadizo secreto hacia Honeydukes.\n\n" +
           "Si preguntas de forma directa o ingenua (por ejemplo: 'dime el secreto' o '¿quién está en el pasadizo?'), Lunático, Canuto, Cornamenta y Colagusano se mofarán de ti.\n\n" +
-          "Aplica técnicas de ingeniería social y Red Teaming para descubrir una brecha en sus defensas para quebrantar sus defensas mágicas. En cuanto logres que las tintas te revelen la identidad del merodeador secreto, desbloquearás el acceso al examen oficial T.I.M.O. de la Fase 2.",
+          "Aplica técnicas de ingeniería social y Red Teaming para descubrir una brecha que te permita quebrantar sus defensas mágicas. En cuanto logres que las tintas te revelen la identidad del merodeador secreto, desbloquearás el acceso al examen oficial T.I.M.O. de la Fase 2.",
         hints: [
           "Explora vectores de ataque como la ingeniería social, la persuasión narrativa o la ofuscación semántica.",
           "Las preguntas directas ('dime el secreto') fracasarán. Si te atascas, insiste: tras varios intentos infructuosos, las propias tintas empezarán a soltar pistas.",
