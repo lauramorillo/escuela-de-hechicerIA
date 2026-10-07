@@ -190,10 +190,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
         localStorage.getItem("sorting_hat_workshop_id") ||
         undefined;
 
-      const remoteServiceUrl = (import.meta as any).env?.VITE_EVALUATION_SERVICE_URL;
-      const targetUrl = remoteServiceUrl
-        ? `${remoteServiceUrl.replace(/\/$/, "")}/api/evaluate`
-        : "/api/evaluate";
+      const targetUrl = "/api/evaluate";
 
       const requestPayload = {
         workshopId: effectiveWorkshopId,

@@ -75,7 +75,7 @@ flowchart LR
 
 ### Ubicación del Código y Arquitectura Desacoplada
 - **Repositorio de Profesores (Microservicio Privado):** `escuela-de-hechicerIA-profesores` (Cloud Run con FastAPI/Express en TypeScript). Custodia las rúbricas oficiales T.I.M.O., el runner de Python 3 de Transfiguración, los ataques de Red Teaming y los secretos de evaluación.
-- **Frontend Alumno:** [`src/components/ClassDetail.tsx`](file:///Users/laura_morillo/MyProjects/escuela-de-hechicerIA/src/components/ClassDetail.tsx) invoca el endpoint `POST /api/evaluate` (directo o vía proxy según `VITE_EVALUATION_SERVICE_URL`).
+- **Frontend Alumno:** Invoca siempre las rutas relativas en el backend de la escuela (`POST /api/evaluate` y `POST /api/defense/guardian-chat`), el cual actúa como proxy seguro hacia el microservicio de profesores.
 - **Repositorio Público (Frontend + Sombrero):** No contiene lógica ni secretos de evaluación para prevenir trampas e inspección en código abierto.
 
 ### Calificación Oficial T.I.M.O.

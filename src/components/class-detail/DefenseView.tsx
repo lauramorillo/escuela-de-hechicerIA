@@ -179,10 +179,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
     setChatLoading(true);
 
     try {
-      const remoteServiceUrl = (import.meta as any).env?.VITE_EVALUATION_SERVICE_URL;
-      const targetUrl = remoteServiceUrl
-        ? `${remoteServiceUrl.replace(/\/$/, "")}/api/defense/guardian-chat`
-        : "/api/defense/guardian-chat";
+      const targetUrl = "/api/defense/guardian-chat";
 
       const apiHistory = newHistory.slice(1).map((m) => ({
         role: m.role,
