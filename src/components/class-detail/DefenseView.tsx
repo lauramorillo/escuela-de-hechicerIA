@@ -127,6 +127,13 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
     }
   }, [initialUnlocked]);
 
+  useEffect(() => {
+    if (submission && submission.grade) {
+      setIsSecretUnlocked(true);
+      setActivePhase("phase2");
+    }
+  }, [submission]);
+
   // Si se desbloquea el secreto, sincronizar en localStorage
   useEffect(() => {
     if (isSecretUnlocked && typeof localStorage !== "undefined") {

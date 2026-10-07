@@ -15,6 +15,13 @@ export interface EvaluationResponse {
     total: number;
     passed: number;
     details: string[];
+    items?: Array<{
+      id?: string;
+      name: string;
+      passed: boolean;
+      summary: string;
+      modelReply?: string;
+    }>;
   };
   attemptCount?: number;
   retryPenalty?: number;

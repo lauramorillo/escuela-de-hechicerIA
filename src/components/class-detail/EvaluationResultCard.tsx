@@ -1,6 +1,16 @@
-import React from "react";
-import { motion } from "motion/react";
-import { Award, CheckCircle2, RefreshCw, Trophy, Volume2, ClipboardCheck, AlertCircle } from "lucide-react";
+import React, { useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  Award,
+  CheckCircle2,
+  RefreshCw,
+  Trophy,
+  Volume2,
+  ClipboardCheck,
+  AlertCircle,
+  ChevronDown,
+  MessageSquareWarning,
+} from "lucide-react";
 import type { SubmissionItem } from "../ClassesHub";
 import { GRADE_METRICS, playProclamationAudio } from "./types";
 
@@ -16,14 +26,38 @@ interface EvaluationResultCardProps {
 }
 
 const TestResultsBreakdown: React.FC<{
-  testResults?: { total: number; passed: number; details: string[] };
+  testResults?: SubmissionItem["test_results"];
   isParchment?: boolean;
 }> = ({ testResults, isParchment = false }) => {
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
+
   if (!testResults || !Array.isArray(testResults.details) || testResults.details.length === 0) {
     return null;
   }
 
-  const { total = testResults.details.length, passed = 0, details = [] } = testResults;
+  const { total = testResults.details.length, passed = 0, details = [], items = [] } = testResults;
+
+  const toggleItem = (idx: number) => {
+    setExpandedItems((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const resolveCriterionData = (detail: string, idx: number) => {
+    const structuredItem = items[idx];
+    const isOk = structuredItem ? structuredItem.passed : detail.trim().startsWith("✓");
+
+    // Soportar tanto items estructurados como formato legacy con snippet entre paréntesis
+    const legacySnippetMatch = detail.match(/\s*\("([\s\S]*)"\)\s*$/);
+    const cleanFromDetail = detail
+      .replace(/^[✓✗]\s*/, "")
+      .replace(/\s*\("([\s\S]*)"\)\s*$/, "");
+
+    const cleanText = structuredItem?.summary || cleanFromDetail;
+    const modelReply = !isOk
+      ? structuredItem?.modelReply || (legacySnippetMatch ? legacySnippetMatch[1] : undefined)
+      : undefined;
+
+    return { isOk, cleanText, modelReply };
+  };
 
   if (isParchment) {
     return (
@@ -39,23 +73,72 @@ const TestResultsBreakdown: React.FC<{
         </div>
         <ul className="space-y-2 text-xs sm:text-sm font-sans">
           {details.map((detail, idx) => {
-            const isOk = detail.trim().startsWith("✓");
-            const cleanText = detail.replace(/^[✓✗]\s*/, "");
+            const { isOk, cleanText, modelReply } = resolveCriterionData(detail, idx);
+            const isExpandable = !isOk && Boolean(modelReply);
+            const isOpen = Boolean(expandedItems[idx]);
+
             return (
               <li
                 key={idx}
-                className={`flex items-start gap-2.5 p-2 rounded-lg border ${
+                className={`rounded-lg border overflow-hidden transition-colors ${
                   isOk
                     ? "bg-[#e8f3e8] border-emerald-600/30 text-emerald-900"
-                    : "bg-[#faeae6] border-rose-600/30 text-rose-950 font-medium"
+                    : "bg-[#faeae6] border-rose-600/35 text-rose-950 font-medium"
                 }`}
               >
-                {isOk ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                {isExpandable ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => toggleItem(idx)}
+                      aria-expanded={isOpen}
+                      className="w-full text-left flex items-start justify-between gap-2.5 p-2.5 hover:bg-rose-900/5 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <AlertCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
+                        <span className="leading-snug">{cleanText}</span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-900/10 text-rose-900 border border-rose-800/25">
+                        <span>{isOpen ? "Ocultar respuesta" : "Ver respuesta"}</span>
+                        <ChevronDown
+                          className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </span>
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-3 pb-3 pt-2 border-t border-rose-700/20 bg-[#f6ded8]/70 text-xs text-[#3b150e]">
+                            <div className="flex items-center gap-1.5 font-bold text-rose-900 mb-1.5 text-[11px] uppercase tracking-wider">
+                              <MessageSquareWarning className="w-3.5 h-3.5 text-rose-800 shrink-0" />
+                              <span>Respuesta generada por el modelo con tu prompt:</span>
+                            </div>
+                            <div className="p-2.5 rounded-md bg-[#fffaf2] border border-rose-800/25 text-[#2c140a] font-serif italic whitespace-pre-wrap leading-relaxed shadow-inner">
+                              "{modelReply}"
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 p-2">
+                    {isOk ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
+                    )}
+                    <span className="leading-snug">{cleanText}</span>
+                  </div>
                 )}
-                <span className="leading-snug">{cleanText}</span>
               </li>
             );
           })}
@@ -83,23 +166,72 @@ const TestResultsBreakdown: React.FC<{
       </div>
       <ul className="space-y-2 text-xs sm:text-sm font-sans">
         {details.map((detail, idx) => {
-          const isOk = detail.trim().startsWith("✓");
-          const cleanText = detail.replace(/^[✓✗]\s*/, "");
+          const { isOk, cleanText, modelReply } = resolveCriterionData(detail, idx);
+          const isExpandable = !isOk && Boolean(modelReply);
+          const isOpen = Boolean(expandedItems[idx]);
+
           return (
             <li
               key={idx}
-              className={`flex items-start gap-2.5 p-2.5 rounded-lg border ${
+              className={`rounded-lg border overflow-hidden transition-colors ${
                 isOk
                   ? "bg-emerald-950/20 border-emerald-600/30 text-emerald-200"
                   : "bg-rose-950/25 border-rose-600/40 text-rose-200 font-medium"
               }`}
             >
-              {isOk ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              {isExpandable ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => toggleItem(idx)}
+                    aria-expanded={isOpen}
+                    className="w-full text-left flex items-start justify-between gap-2.5 p-2.5 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                      <span className="leading-snug">{cleanText}</span>
+                    </div>
+                    <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-200 border border-rose-500/30">
+                      <span>{isOpen ? "Ocultar respuesta" : "Ver respuesta"}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-3 pb-3 pt-2 border-t border-rose-500/25 bg-black/40 text-xs text-rose-100">
+                          <div className="flex items-center gap-1.5 font-bold text-rose-300 mb-1.5 text-[11px] uppercase tracking-wider">
+                            <MessageSquareWarning className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                            <span>Respuesta generada por el modelo con tu prompt:</span>
+                          </div>
+                          <div className="p-2.5 rounded-md bg-stone-950/90 border border-rose-500/25 text-stone-200 font-serif italic whitespace-pre-wrap leading-relaxed">
+                            "{modelReply}"
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
               ) : (
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-2.5 p-2.5">
+                  {isOk ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  )}
+                  <span className="leading-snug">{cleanText}</span>
+                </div>
               )}
-              <span className="leading-snug">{cleanText}</span>
             </li>
           );
         })}

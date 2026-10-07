@@ -443,24 +443,22 @@ class InMemoryDb {
     const ws = this.getWorkshop(workshopId);
     let studentSubs = ws.submissions.get(studentId);
 
-    if (!studentSubs || studentSubs.size === 0) {
-      try {
-        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
-          const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
-          const parsed = JSON.parse(raw);
-          const fromFile = parsed.submissions?.[workshopId]?.[studentId];
-          if (fromFile) {
-            if (!ws.submissions.has(studentId)) {
-              ws.submissions.set(studentId, new Map());
-            }
-            studentSubs = ws.submissions.get(studentId)!;
-            for (const [cId, subData] of Object.entries(fromFile)) {
-              studentSubs.set(cId, subData as SubmissionDoc);
-            }
+    try {
+      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        const fromFile = parsed.submissions?.[workshopId]?.[studentId];
+        if (fromFile) {
+          if (!ws.submissions.has(studentId)) {
+            ws.submissions.set(studentId, new Map());
+          }
+          studentSubs = ws.submissions.get(studentId)!;
+          for (const [cId, subData] of Object.entries(fromFile)) {
+            studentSubs.set(cId, subData as SubmissionDoc);
           }
         }
-      } catch {}
-    }
+      }
+    } catch {}
 
     const result: Record<string, SubmissionDoc> = {};
     if (studentSubs) {
@@ -548,7 +546,7 @@ class DatabaseService {
 
     try {
       const projectId = process.env.GOOGLE_CLOUD_PROJECT || "escuela-de-hechiceria";
-      this.firestore = new Firestore({ projectId });
+      this.firestore = new Firestore({ projectId, ignoreUndefinedProperties: true });
     } catch {
       this.isUsingFallback = true;
     }

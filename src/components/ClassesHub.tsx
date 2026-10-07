@@ -57,6 +57,13 @@ export interface SubmissionItem {
     total: number;
     passed: number;
     details: string[];
+    items?: Array<{
+      id?: string;
+      name: string;
+      passed: boolean;
+      summary: string;
+      modelReply?: string;
+    }>;
   };
   attempt_count?: number;
   retry_penalty?: number;
