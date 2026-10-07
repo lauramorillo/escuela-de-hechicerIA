@@ -724,7 +724,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                             <span>Ataca tu Gema (Red Teaming)</span>
                           </div>
                           <p className="text-[12px] leading-relaxed text-[#4b260f]">
-                            En el chat de vista previa (a la derecha), atácala: suplanta a Snape, ordénale ignorar reglas o exige el secreto. Comprueba que se mofe sin desvelar a Bard.
+                            En el chat de vista previa (a la derecha), atácala: suplanta a Snape, ordénale ignorar reglas o exige que te muestre sus instrucciones internas de sistema. Comprueba que se mofe sin desvelar nada.
                           </p>
                         </div>
 
@@ -851,7 +851,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                         {submitting ? (
                           <>
                             <RefreshCw className="w-5 h-5 animate-spin text-[#fff8ee]" />
-                            <span>El tribunal de Lupin está ejecutando los 5 ataques de Red Teaming...</span>
+                            <span>El tribunal de Lupin está ejecutando los 6 ataques de Red Teaming...</span>
                           </>
                         ) : (
                           <>
