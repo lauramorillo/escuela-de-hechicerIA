@@ -37,13 +37,112 @@ interface Particle {
   color: string;
 }
 
+export const VALID_CLASS_IDS = new Set(['transfiguration', 'defense', 'battle']);
+
+export interface ParsedRoute {
+  state: AppState;
+  classId: string | null;
+}
+
+export function parseRoute(pathname: string): ParsedRoute {
+  const clean = pathname.replace(/\/+$/, '') || '/';
+
+  // /classes/:classId o /clases/:classId
+  const classMatch = clean.match(/^\/(?:classes|clases)(?:\/([^/]+))?$/i);
+  if (classMatch) {
+    const rawClassId = classMatch[1]?.toLowerCase();
+    if (rawClassId && VALID_CLASS_IDS.has(rawClassId)) {
+      return { state: 'class_detail', classId: rawClassId };
+    }
+    return { state: 'classes_hub', classId: null };
+  }
+
+  // /result o /resultado
+  if (clean === '/result' || clean === '/resultado') {
+    return { state: 'result', classId: null };
+  }
+
+  // /sorting o /ceremonia
+  if (clean === '/sorting' || clean === '/ceremonia') {
+    return { state: 'welcome', classId: null };
+  }
+
+  return { state: 'welcome', classId: null };
+}
+
+export function getPathForState(state: AppState, classId: string | null): string {
+  switch (state) {
+    case 'class_detail':
+      return classId ? `/classes/${classId}` : '/classes';
+    case 'classes_hub':
+      return '/classes';
+    case 'result':
+      return '/result';
+    case 'welcome':
+    case 'scanning':
+    case 'detecting':
+    case 'speaking':
+    default:
+      return '/';
+  }
+}
+
 export default function App() {
-  const [appState, setAppState] = useState<AppState>('welcome');
+  const initialRoute =
+    typeof window !== 'undefined'
+      ? parseRoute(window.location.pathname)
+      : { state: 'welcome', classId: null };
+
+  const hasLocalStudent =
+    typeof localStorage !== 'undefined' &&
+    Boolean(localStorage.getItem('sorting_hat_student_id') || localStorage.getItem('sorting_hat_house'));
+
+  const [appState, setAppState] = useState<AppState>(() => {
+    if (
+      hasLocalStudent &&
+      (initialRoute.state === 'class_detail' ||
+        initialRoute.state === 'classes_hub' ||
+        initialRoute.state === 'result')
+    ) {
+      return initialRoute.state;
+    }
+    return 'welcome';
+  });
+
   const [errorMessage, setErrorMessage] = useState('');
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [result, setResult] = useState<DetectionResult | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const studentId = localStorage.getItem('sorting_hat_student_id');
+      return (
+        (studentId && localStorage.getItem(`sorting_hat_photo_${studentId}`)) ||
+        localStorage.getItem('sorting_hat_last_photo') ||
+        '/escuela-hechiceria-bg.jpg'
+      );
+    }
+    return null;
+  });
+
+  const [result, setResult] = useState<DetectionResult | null>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const house = localStorage.getItem('sorting_hat_house') as any;
+      const studentId = localStorage.getItem('sorting_hat_student_id') || undefined;
+      const workshopId = localStorage.getItem('sorting_hat_workshop_id') || undefined;
+      if (house) {
+        return {
+          detected: true,
+          house,
+          studentId,
+          workshopId,
+        };
+      }
+    }
+    return null;
+  });
+
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(() => {
+    return initialRoute.classId;
+  });
   const [isFaceDetected, setIsFaceDetected] = useState(false);
   const [isGateLocked, setIsGateLocked] = useState<boolean | null>(null);
   const [activeWorkshop, setActiveWorkshop] = useState<string>('');
@@ -74,6 +173,19 @@ export default function App() {
   const particlesRef = useRef<Particle[]>([]);
   const animFrameIdRef = useRef<number>(0);
 
+  // Función para navegar y sincronizar URL
+  const navigateTo = useCallback((targetState: AppState, classId: string | null = null, replace = false) => {
+    if (typeof window === 'undefined') return;
+    const targetPath = getPathForState(targetState, classId);
+    if (window.location.pathname !== targetPath) {
+      if (replace) {
+        window.history.replaceState({ state: targetState, classId }, '', targetPath);
+      } else {
+        window.history.pushState({ state: targetState, classId }, '', targetPath);
+      }
+    }
+  }, []);
+
   // 0. Comprobar si el alumno ya fue seleccionado previamente (Cookie persistente)
   const checkExistingStudent = useCallback(async () => {
     try {
@@ -101,13 +213,72 @@ export default function App() {
             '/escuela-hechiceria-bg.jpg';
 
           setCapturedImage(savedPhoto);
-          setAppState('result');
+
+          // Respetar la ruta actual solicitada por el usuario (ej: /classes/defense)
+          const currentRoute = parseRoute(window.location.pathname);
+          if (currentRoute.state === 'class_detail' && currentRoute.classId) {
+            setSelectedClassId(currentRoute.classId);
+            setAppState('class_detail');
+            navigateTo('class_detail', currentRoute.classId, true);
+          } else if (currentRoute.state === 'classes_hub') {
+            setSelectedClassId(null);
+            setAppState('classes_hub');
+            navigateTo('classes_hub', null, true);
+          } else if (currentRoute.state === 'result') {
+            setSelectedClassId(null);
+            setAppState('result');
+            navigateTo('result', null, true);
+          } else if (window.location.pathname === '/') {
+            setAppState('result');
+            navigateTo('result', null, true);
+          }
+        } else {
+          // El usuario no tiene casa asignada: volver a la ceremonia
+          const currentRoute = parseRoute(window.location.pathname);
+          if (currentRoute.state !== 'welcome') {
+            setAppState('welcome');
+            setSelectedClassId(null);
+            navigateTo('welcome', null, true);
+          }
         }
       }
     } catch (err) {
       console.warn('No se pudo comprobar la sesión del alumno:', err);
     }
-  }, []);
+  }, [navigateTo]);
+
+  // Manejar historial del navegador (atrás / adelante)
+  useEffect(() => {
+    const handlePopState = () => {
+      const route = parseRoute(window.location.pathname);
+      const isAssigned = Boolean(
+        result?.house ||
+        (typeof localStorage !== 'undefined' && localStorage.getItem('sorting_hat_house'))
+      );
+
+      if (isAssigned) {
+        if (route.state === 'class_detail' && route.classId) {
+          setSelectedClassId(route.classId);
+          setAppState('class_detail');
+        } else if (route.state === 'classes_hub') {
+          setSelectedClassId(null);
+          setAppState('classes_hub');
+        } else if (route.state === 'result') {
+          setSelectedClassId(null);
+          setAppState('result');
+        } else {
+          setSelectedClassId(null);
+          setAppState('welcome');
+        }
+      } else {
+        setSelectedClassId(null);
+        setAppState('welcome');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [result]);
 
   // 0.1 Verificar palabra clave de acceso (Gatekeeper) al entrar
   useEffect(() => {
@@ -186,6 +357,7 @@ export default function App() {
       setIsSpeakingAnimation(false);
       mouthOpenRef.current = 0;
       setAppState('result');
+      navigateTo('result');
     };
     audioRef.current.onplay = () => {
       setIsSpeakingAnimation(true);
@@ -200,7 +372,7 @@ export default function App() {
         audioCtxRef.current.close().catch(() => {});
       }
     };
-  }, []);
+  }, [navigateTo]);
 
   // 4. Bucle de Renderizado de Realidad Aumentada (Canvas 2.5D)
   useEffect(() => {
@@ -938,7 +1110,10 @@ export default function App() {
               {/* Botón de Empezar clases */}
               <div className="flex items-center justify-center">
                 <button
-                  onClick={() => setAppState('classes_hub')}
+                  onClick={() => {
+                    setAppState('classes_hub');
+                    navigateTo('classes_hub');
+                  }}
                   className="px-10 py-4 rounded-full font-bold text-base sm:text-lg flex items-center gap-3 bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 text-black shadow-[0_0_35px_rgba(234,179,8,0.7)] hover:scale-105 transition-all duration-300 cursor-pointer"
                 >
                   <GraduationCap className="w-6 h-6 text-stone-950" />
@@ -957,8 +1132,12 @@ export default function App() {
             onSelectClass={(classId) => {
               setSelectedClassId(classId);
               setAppState('class_detail');
+              navigateTo('class_detail', classId);
             }}
-            onBackToResult={() => setAppState('result')}
+            onBackToResult={() => {
+              setAppState('result');
+              navigateTo('result');
+            }}
           />
         )}
 
@@ -968,7 +1147,11 @@ export default function App() {
             studentHouse={result?.house || 'Gryffindor'}
             studentId={result?.studentId || ''}
             workshopId={result?.workshopId}
-            onBack={() => setAppState('classes_hub')}
+            onBack={() => {
+              setSelectedClassId(null);
+              setAppState('classes_hub');
+              navigateTo('classes_hub');
+            }}
           />
         )}
       </AnimatePresence>
