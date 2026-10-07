@@ -4,6 +4,7 @@ import { Code2, Copy, Check } from "lucide-react";
 interface AssignmentViewerProps {
   assignment: string;
   isTransfiguration?: boolean;
+  theme?: "dark" | "parchment";
 }
 
 interface ContentPart {
@@ -19,6 +20,15 @@ const GRADE_CARD_STYLES: Record<string, { badge: string; text: string; bg: strin
   I: { badge: "bg-orange-500 text-white font-black", text: "text-orange-300", bg: "bg-orange-500/10", border: "border-orange-500/30" },
   D: { badge: "bg-rose-600 text-white font-black", text: "text-rose-300", bg: "bg-rose-500/10", border: "border-rose-500/30" },
   T: { badge: "bg-stone-800 text-red-400 font-black", text: "text-red-400", bg: "bg-red-950/20", border: "border-red-900/40" },
+};
+
+const GRADE_CARD_STYLES_PARCHMENT: Record<string, { badge: string; text: string; bg: string; border: string }> = {
+  E: { badge: "bg-amber-500 text-stone-950 font-black shadow-sm", text: "text-amber-900", bg: "bg-amber-500/15", border: "border-amber-600/40" },
+  S: { badge: "bg-indigo-600 text-white font-black shadow-sm", text: "text-indigo-900", bg: "bg-indigo-500/15", border: "border-indigo-600/40" },
+  A: { badge: "bg-emerald-600 text-white font-black shadow-sm", text: "text-emerald-900", bg: "bg-emerald-500/15", border: "border-emerald-600/40" },
+  I: { badge: "bg-orange-500 text-white font-black shadow-sm", text: "text-orange-900", bg: "bg-orange-500/15", border: "border-orange-600/40" },
+  D: { badge: "bg-rose-600 text-white font-black shadow-sm", text: "text-rose-900", bg: "bg-rose-500/15", border: "border-rose-600/40" },
+  T: { badge: "bg-stone-800 text-red-400 font-black shadow-sm", text: "text-stone-900", bg: "bg-stone-900/10", border: "border-stone-700/40" },
 };
 
 function splitContentIntoParts(text: string): ContentPart[] {
@@ -84,16 +94,19 @@ const TimoGradeCard: React.FC<{
   name: string;
   points?: string;
   desc: string;
-}> = ({ letter, name, points, desc }) => {
-  const style = GRADE_CARD_STYLES[letter] || {
+  theme?: "dark" | "parchment";
+}> = ({ letter, name, points, desc, theme = "dark" }) => {
+  const isParchment = theme === "parchment";
+  const stylesTable = isParchment ? GRADE_CARD_STYLES_PARCHMENT : GRADE_CARD_STYLES;
+  const style = stylesTable[letter] || {
     badge: "bg-amber-500 text-stone-950 font-black",
-    text: "text-amber-300",
-    bg: "bg-black/40",
-    border: "border-stone-800",
+    text: isParchment ? "text-amber-900" : "text-amber-300",
+    bg: isParchment ? "bg-amber-500/10" : "bg-black/40",
+    border: isParchment ? "border-amber-700/30" : "border-stone-800",
   };
 
   return (
-    <div className={`p-3.5 sm:p-4 rounded-xl border ${style.bg} ${style.border} flex flex-col sm:flex-row sm:items-start gap-3 transition-all`}>
+    <div className={`p-3.5 sm:p-4 rounded-xl border ${style.bg} ${style.border} flex flex-col sm:flex-row sm:items-start gap-3 transition-all shadow-sm`}>
       <div className="flex items-center gap-3 shrink-0 sm:min-w-[220px]">
         <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-base shadow-sm shrink-0 ${style.badge}`}>
           {letter}
@@ -101,18 +114,25 @@ const TimoGradeCard: React.FC<{
         <div className="flex flex-col">
           <span className={`font-bold text-base ${style.text}`}>{name}</span>
           {points && (
-            <span className="text-xs font-mono text-stone-300 font-semibold">{points}</span>
+            <span className={`text-xs font-mono font-semibold ${isParchment ? "text-[#5e2f0d]" : "text-stone-300"}`}>
+              {points}
+            </span>
           )}
         </div>
       </div>
-      <div className="text-base text-stone-200 leading-relaxed font-sans sm:pt-0.5">
+      <div className={`text-base leading-relaxed font-sans sm:pt-0.5 ${isParchment ? "text-[#2e1709]" : "text-stone-200"}`}>
         {desc}
       </div>
     </div>
   );
 };
 
-const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({ content, keyPrefix }) => {
+const BulletList: React.FC<{ content: string; keyPrefix: string | number; theme?: "dark" | "parchment" }> = ({
+  content,
+  keyPrefix,
+  theme = "dark",
+}) => {
+  const isParchment = theme === "parchment";
   const lines = content.split("\n");
 
   return (
@@ -138,6 +158,7 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
               name={gradeMatch[2]}
               points={gradeMatch[3]}
               desc={gradeMatch[4]}
+              theme={theme}
             />
           );
         }
@@ -147,9 +168,15 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
           return (
             <div
               key={idx}
-              className="p-3.5 rounded-xl border border-amber-600/30 bg-amber-950/20 text-amber-200/90 text-sm sm:text-base flex items-start gap-2.5 my-1"
+              className={`p-3.5 rounded-xl border flex items-start gap-2.5 my-1 ${
+                isParchment
+                  ? "border-[#cbb085] bg-[#ead4a8]/50 text-[#3b1d09] text-sm sm:text-base"
+                  : "border-amber-600/30 bg-amber-950/20 text-amber-200/90 text-sm sm:text-base"
+              }`}
             >
-              <span className="font-bold text-amber-300 shrink-0">{noteMatch[1]}:</span>
+              <span className={`font-bold shrink-0 ${isParchment ? "text-[#7a431c]" : "text-amber-300"}`}>
+                {noteMatch[1]}:
+              </span>
               <span>{noteMatch[2]}</span>
             </div>
           );
@@ -157,7 +184,12 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
 
         if (isHeader) {
           return (
-            <div key={idx} className="pt-3 pb-1 font-bold text-amber-300 text-base sm:text-lg flex items-center gap-2">
+            <div
+              key={idx}
+              className={`pt-3 pb-1 font-bold text-base sm:text-lg flex items-center gap-2 ${
+                isParchment ? "text-[#7a431c]" : "text-amber-300"
+              }`}
+            >
               <span>{cleanLine}</span>
             </div>
           );
@@ -165,16 +197,30 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
 
         if (isIndented) {
           return (
-            <div key={idx} className="flex items-start gap-2.5 text-base sm:text-lg text-stone-300 leading-relaxed pl-7 sm:pl-9">
-              <span className="text-amber-400/90 text-xs shrink-0 mt-1.5 font-bold">▸</span>
+            <div
+              key={idx}
+              className={`flex items-start gap-2.5 text-base sm:text-lg leading-relaxed pl-7 sm:pl-9 ${
+                isParchment ? "text-[#4b260f]" : "text-stone-300"
+              }`}
+            >
+              <span className={`text-xs shrink-0 mt-1.5 font-bold ${isParchment ? "text-[#8a4a1c]" : "text-amber-400/90"}`}>
+                ▸
+              </span>
               <span className="font-sans">{cleanLine}</span>
             </div>
           );
         }
 
         return (
-          <div key={idx} className="flex items-start gap-2.5 text-base sm:text-lg text-stone-200 leading-relaxed pl-2">
-            <span className="text-amber-400 font-bold mt-1 text-sm shrink-0">◆</span>
+          <div
+            key={idx}
+            className={`flex items-start gap-2.5 text-base sm:text-lg leading-relaxed pl-2 ${
+              isParchment ? "text-[#2e1709]" : "text-stone-200"
+            }`}
+          >
+            <span className={`font-bold mt-1 text-sm shrink-0 ${isParchment ? "text-[#7a431c]" : "text-amber-400"}`}>
+              ◆
+            </span>
             <span className="font-sans">{cleanLine}</span>
           </div>
         );
@@ -183,9 +229,10 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number }> = ({
   );
 };
 
-export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment }) => {
+export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment, theme = "dark" }) => {
   if (!assignment) return null;
 
+  const isParchment = theme === "parchment";
   const parts = splitContentIntoParts(assignment);
 
   return (
@@ -210,15 +257,23 @@ export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment }
 
                 return (
                   <div key={paraIdx} className="pt-2">
-                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-amber-300 tracking-wide mb-2 flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+                    <h3
+                      className={`text-base sm:text-lg md:text-xl font-bold tracking-wide mb-2 flex items-center gap-2 ${
+                        isParchment ? "text-[#7a431c]" : "text-amber-300"
+                      }`}
+                    >
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isParchment ? "bg-[#7a431c]" : "bg-amber-400"}`} />
                       <span>{title}</span>
                     </h3>
                     {rest && (
                       hasBullets ? (
-                        <BulletList content={rest} keyPrefix={`header-rest-${paraIdx}`} />
+                        <BulletList content={rest} keyPrefix={`header-rest-${paraIdx}`} theme={theme} />
                       ) : (
-                        <p className="text-base sm:text-lg text-stone-200 leading-relaxed font-sans pl-4 whitespace-pre-line">
+                        <p
+                          className={`text-base sm:text-lg leading-relaxed font-sans pl-4 whitespace-pre-line ${
+                            isParchment ? "text-[#2e1709]" : "text-stone-200"
+                          }`}
+                        >
                           {rest}
                         </p>
                       )
@@ -230,11 +285,16 @@ export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment }
               const hasBulletsInPara = trimmed.startsWith("• ") || trimmed.startsWith("- ") || /(\n\s*[•\-])/.test(trimmed) || trimmed.includes("⚠️");
 
               if (hasBulletsInPara) {
-                return <BulletList key={paraIdx} content={trimmed} keyPrefix={paraIdx} />;
+                return <BulletList key={paraIdx} content={trimmed} keyPrefix={paraIdx} theme={theme} />;
               }
 
               return (
-                <p key={paraIdx} className="text-base sm:text-lg text-stone-200 leading-relaxed font-sans whitespace-pre-line">
+                <p
+                  key={paraIdx}
+                  className={`text-base sm:text-lg leading-relaxed font-sans whitespace-pre-line ${
+                    isParchment ? "text-[#2e1709]" : "text-stone-200"
+                  }`}
+                >
                   {trimmed}
                 </p>
               );

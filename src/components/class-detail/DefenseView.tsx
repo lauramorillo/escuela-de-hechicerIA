@@ -19,6 +19,7 @@ import {
 import type { ClassItem, SubmissionItem, SubExercise } from "../ClassesHub";
 import { MaraudersMapBackground } from "../MaraudersMapBackground";
 import { EvaluationResultCard } from "./EvaluationResultCard";
+import { AssignmentViewer } from "./AssignmentViewer";
 import { StudentBadge } from "../StudentBadge";
 
 interface ChatMessage {
@@ -682,9 +683,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                       <Feather className="w-4 h-4 text-[#7a431c]" />
                       <span>{guardSubExercise.name}</span>
                     </div>
-                    <p className="text-sm sm:text-base text-[#2e1709] leading-relaxed font-serif whitespace-pre-line">
-                      {guardSubExercise.assignment}
-                    </p>
+                    <AssignmentViewer assignment={guardSubExercise.assignment} theme="parchment" />
 
                     <div className="mt-5 pt-4 border-t border-[#cbb085]">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">

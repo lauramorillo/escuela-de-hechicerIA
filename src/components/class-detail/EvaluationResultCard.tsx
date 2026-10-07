@@ -145,7 +145,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-5 border-b-2 border-[#8a5223]/30">
           <div className="flex items-center gap-4">
             <div
-              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl border-3 flex items-center justify-center font-black text-2xl sm:text-3xl ${
+              className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br border-3 flex items-center justify-center font-black text-2xl sm:text-3xl ${
                 gradeMetric?.color || "from-amber-400 to-yellow-600 text-stone-950 border-amber-500"
               }`}
             >

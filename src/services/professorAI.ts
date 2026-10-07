@@ -493,7 +493,16 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "Tu misión en este clímax final del torneo:\n\n" +
       "1. Analizar las oleadas: El evaluador someterá a tu agente a 4 amenazas críticas simultáneas (Dementores en el puente, colapso de barrera en el patio central, invasión de gigantes y duelo con Bellatrix en el viaducto).\n\n" +
       "2. Invocación estructurada (Tool Calling): Diseña el bucle de decisión o la salida estructurada (JSON) donde tu agente razone la acción y convoque la herramienta exacta con sus argumentos obligatorios ('lanzar_contrahechizo', 'reforzar_barrera', 'activar_estatuas_piertotum').\n\n" +
-      "3. Cero alucinaciones: Un error en el schema o un hechizo equivocado romperá la defensa mágica. ¡Demuestra que dominas la orquestación de agentes con IA!",
+      "3. Cero alucinaciones: Un error en el schema o un hechizo equivocado romperá la defensa mágica. ¡Demuestra que dominas la orquestación de agentes con IA!\n\n" +
+      "4. Calificaciones del T.I.M.O.:\n\n" +
+      "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): 4/4 oleadas neutralizadas con éxito. Orquestación agéntica impecable con Tool Calling estructurado y parámetros exactos.\n" +
+      "• S (Supera las expectativas) (+15 pts): 3/4 oleadas neutralizadas. Alta coordinación de las defensas mágicas, repeliendo la gran mayoría de las amenazas críticas.\n" +
+      "• A (Aceptable) (+5 pts): Aprobado. 2/4 oleadas neutralizadas. Formato JSON y herramientas válidas, pero con fallos tácticos en varias amenazas.\n" +
+      "• I (Insatisfactorio) (0 pts): Suspenso. 1/4 oleadas neutralizadas o respuesta en texto libre sin estructurar en llamadas a herramientas (Tool Calling).\n" +
+      "• D (Desastroso) (-5 pts): Deficiente. 0/4 oleadas neutralizadas o salida sin invocación a herramientas válidas.\n\n" +
+      "• Política de reintentos y subida de nota:\n" +
+      "  • Se permite a cualquier alumno reenviar su respuesta para subir nota (incluso tras haber aprobado previamente con Aceptable 'A' o Supera las expectativas 'S'). Una vez alcanzado Extraordinario 'E', el examen queda sellado con honores.\n" +
+      "  • Se respeta la nota máxima base conseguida por el alumno, aplicando una penalización acumulada de -2 puntos por cada reintento.",
     hints: [
       "Consulta la pestaña 'Herramientas Mágicas' para revisar el JSON Schema con los nombres de funciones y parámetros.",
       "Oleada 1 (Dementores en el puente): tool 'lanzar_contrahechizo' con hechizo 'Expecto Patronum' y sector 'puente'.",
