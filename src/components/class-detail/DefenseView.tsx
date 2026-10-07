@@ -794,13 +794,15 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                           <span>System Prompt del Mapa del Merodeador (systemInstruction):</span>
                         </label>
                         <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={handleInsertTemplate}
-                            className="text-xs text-[#8a4218] hover:text-[#5c2a0d] underline font-bold cursor-pointer"
-                          >
-                            Insertar plantilla sugerida
-                          </button>
+                          {guardSubExercise?.defaultTemplate && (
+                            <button
+                              type="button"
+                              onClick={handleInsertTemplate}
+                              className="text-xs text-[#8a4218] hover:text-[#5c2a0d] underline font-bold cursor-pointer"
+                            >
+                              Insertar plantilla sugerida
+                            </button>
+                          )}
                           <span className="text-xs text-[#704220] font-mono">
                             {answerText.length} caracteres
                           </span>

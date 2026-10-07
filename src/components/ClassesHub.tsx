@@ -21,7 +21,7 @@ export interface SubExercise {
   assignment: string;
   hints: string[];
   placeholder: string;
-  defaultTemplate: string;
+  defaultTemplate?: string;
   submitButtonText: string;
 }
 
