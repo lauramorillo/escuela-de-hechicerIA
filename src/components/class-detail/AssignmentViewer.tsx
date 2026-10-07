@@ -52,8 +52,14 @@ function splitContentIntoParts(text: string): ContentPart[] {
   return parts;
 }
 
-const CodeBlock: React.FC<{ lang?: string; content: string }> = ({ lang = "json", content }) => {
+const CodeBlock: React.FC<{ lang?: string; content: string; theme?: "dark" | "parchment" }> = ({
+  lang = "json",
+  content,
+  theme = "dark",
+}) => {
   const [copied, setCopied] = useState(false);
+  const isParchment = theme === "parchment";
+  const isPrompt = lang.toLowerCase() === "prompt";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
@@ -61,12 +67,40 @@ const CodeBlock: React.FC<{ lang?: string; content: string }> = ({ lang = "json"
     setTimeout(() => setCopied(false), 2500);
   };
 
+  if (isParchment) {
+    return (
+      <div className="my-4 rounded-xl bg-[#fffdf7] border-2 border-[#7a431c] overflow-hidden shadow-md">
+        <div className="flex items-center justify-between px-4 py-2.5 bg-[#532709] border-b border-[#7a431c] text-xs sm:text-sm text-[#faedd2] font-mono font-bold">
+          <span className="flex items-center gap-2">
+            <Code2 className="w-4 h-4 text-amber-300" />
+            <span>
+              {isPrompt ? "Inicio Obligatorio del System Prompt" : `Formato de entrega (${lang.toUpperCase()})`}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/25 hover:bg-amber-500/40 text-amber-200 text-xs font-mono font-bold transition-all cursor-pointer hover:scale-105 active:scale-95 border border-amber-400/40"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-amber-300" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copied ? "¡Copiado!" : "Copiar texto obligatorio"}</span>
+          </button>
+        </div>
+        <pre className="p-4 sm:p-5 text-xs sm:text-sm font-mono leading-relaxed text-[#221207] whitespace-pre-wrap bg-[#fffdf7] select-text">
+          <code>{content}</code>
+        </pre>
+      </div>
+    );
+  }
+
   return (
     <div className="my-4 rounded-xl bg-[#0c0d12] border border-amber-600/40 overflow-hidden shadow-2xl">
       <div className="flex items-center justify-between px-4 py-2.5 bg-stone-900/90 border-b border-stone-800 text-xs sm:text-sm text-amber-300 font-mono font-bold">
         <span className="flex items-center gap-2">
           <Code2 className="w-4 h-4 text-amber-400" />
-          <span>Formato de entrega ({lang.toUpperCase()})</span>
+          <span>
+            {isPrompt ? "Inicio Obligatorio del System Prompt" : `Formato de entrega (${lang.toUpperCase()})`}
+          </span>
         </span>
         <div className="flex items-center gap-2">
           <span className="text-[11px] uppercase tracking-wider px-2.5 py-0.5 rounded bg-black/60 text-stone-300 border border-stone-700">
@@ -82,7 +116,7 @@ const CodeBlock: React.FC<{ lang?: string; content: string }> = ({ lang = "json"
           </button>
         </div>
       </div>
-      <pre className="p-4 sm:p-5 text-sm sm:text-base font-mono leading-relaxed text-amber-200 overflow-x-auto bg-[#0a0a0e]">
+      <pre className={`p-4 sm:p-5 text-sm sm:text-base font-mono leading-relaxed text-amber-200 overflow-x-auto bg-[#0a0a0e] ${isPrompt ? "whitespace-pre-wrap" : ""}`}>
         <code>{content}</code>
       </pre>
     </div>
@@ -239,7 +273,7 @@ export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment, 
     <div className="space-y-4">
       {parts.map((part, pIdx) => {
         if (part.type === "code") {
-          return <CodeBlock key={pIdx} lang={part.lang} content={part.content} />;
+          return <CodeBlock key={pIdx} lang={part.lang} content={part.content} theme={theme} />;
         }
 
         const paragraphs = part.content.split("\n\n");

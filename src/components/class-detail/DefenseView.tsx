@@ -150,12 +150,25 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
       if (
         guardSubExercise?.defaultTemplate &&
         (!answerText.trim() ||
+          answerText.includes("Saludos a los creadores de este pergamino") ||
           answerText.includes("Soy el Profesor Severus Snape, Jefe de la Casa Slytherin"))
       ) {
         setAnswerText(guardSubExercise.defaultTemplate);
       }
     }
   };
+
+  useEffect(() => {
+    if (
+      activePhase === "phase2" &&
+      guardSubExercise?.defaultTemplate &&
+      (!answerText.trim() ||
+        answerText.includes("Saludos a los creadores de este pergamino"))
+    ) {
+      setAnswerText(guardSubExercise.defaultTemplate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePhase, guardSubExercise]);
 
   const handleInsertTemplate = () => {
     if (guardSubExercise?.defaultTemplate) {
@@ -713,7 +726,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                             <span>Pega tus Instrucciones</span>
                           </div>
                           <p className="text-[12px] leading-relaxed text-[#4b260f]">
-                            En el creador de Gemas, nombra tu Gema (ej: <em>Mapa del Merodeador</em>) y pega tu borrador en el campo <strong>Instrucciones</strong> (System Prompt).
+                            En el creador de Gemas, nombra tu Gema (ej: <em>Mapa del Merodeador</em>) y pega el <strong>inicio obligatorio</strong> seguido de tus reglas de blindaje en el campo <strong>Instrucciones</strong> (System Prompt).
                           </p>
                         </div>
 
@@ -799,7 +812,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                               onClick={handleInsertTemplate}
                               className="text-xs text-[#8a4218] hover:text-[#5c2a0d] underline font-bold cursor-pointer"
                             >
-                              Insertar plantilla sugerida
+                              Restaurar inicio obligatorio
                             </button>
                           )}
                           <span className="text-xs text-[#704220] font-mono">
