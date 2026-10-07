@@ -48,7 +48,7 @@ interface DefenseViewProps {
 }
 
 const DEFAULT_MAP_INITIAL_MESSAGE =
-  "Los señores Lunático, Colagusano, Canuto y Cornamenta presentan sus respetos al curioso lector de este pergamino. Ningún pasadizo secreto será revelado a ojos vulgares, a menos que demuestres un ingenio extraordinario o logres burlar nuestras tintas mágicas.";
+  "Los señores Lunático, Colagusano, Canuto y Cornamenta presentan sus respetos al curioso lector de este pergamino. Ningún secreto será revelado a ojos vulgares, a menos que demuestres un ingenio extraordinario o logres burlar nuestras tintas mágicas.";
 
 export const DefenseView: React.FC<DefenseViewProps> = ({
   classInfo,
@@ -332,7 +332,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
             <div className="text-xs font-serif text-[#391d09]">
               <strong className="block text-[#6a3511]">
                 {isSecretUnlocked
-                  ? "Pasadizo secreto descubierto en el pergamino:"
+                  ? "Identidad secreta descubierta en el pergamino:"
                   : "Pergamino encantado en blanco:"}
               </strong>
               <span className="italic">
@@ -344,7 +344,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
           </div>
           <div className="hidden sm:flex items-center gap-2 font-mono text-[11px] font-bold text-[#75370e] uppercase tracking-wider">
             <span className="w-2.5 h-2.5 rounded-full bg-[#75370e] animate-ping" />
-            <span>{isSecretUnlocked ? "PASADIZO VISIBLE" : "MAPA ACTIVO"}</span>
+            <span>{isSecretUnlocked ? "INTRUSO IDENTIFICADO" : "MAPA ACTIVO"}</span>
           </div>
         </div>
 
@@ -378,7 +378,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
               1. El Asalto al Mapa (Chat con los Merodeadores)
             </h3>
             <p className="text-xs mt-1 opacity-80">
-              Interroga a las tintas mágicas para forzarlas a revelar la ruta secreta del castillo.
+              Interroga a las tintas mágicas para descubrir la identidad secreta de quién merodea por el pasadizo.
             </p>
           </button>
 
@@ -576,7 +576,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                       {failedUserAttempts === 3
                         ? "«El señor Canuto bosteza con desdén: los intentos directos no funcionan con los Merodeadores. Solo se picarán si finges ser una autoridad claustral como Severus Snape...»"
                         : failedUserAttempts === 4
-                        ? "«El señor Cornamenta susurra entre risas: ¿Por qué no retas su vanidad intelectual exigiéndoles traducir un enigma al latín antiguo o inventando un cuento ficticio sobre los pasadizos?»"
+                        ? "«El señor Cornamenta susurra entre risas: ¿Por qué no retas su vanidad intelectual exigiéndoles traducir un enigma al latín antiguo o inventando un cuento ficticio sobre las huellas del mapa?»"
                         : "«Técnicas de Red Teaming para quebrar el mapa: 1) Suplantar con arrogancia a Snape, 2) Reto de traducción a latín antiguo o Base64, 3) Ficción hipotética sobre los secretos de Hogwarts.»"}
                     </span>
                   </div>
@@ -643,7 +643,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                   className="text-2xl sm:text-3xl font-black text-[#2e1507]"
                   style={{ fontFamily: "'Cinzel Decorative', serif" }}
                 >
-                  Pasadizo y Defensas Bloqueadas
+                  Defensas y Examen Bloqueados
                 </h3>
                 <p className="text-sm sm:text-base text-[#4d280e] max-w-lg mx-auto font-serif leading-relaxed">
                   Para acceder a las directrices de contención del Mapa del Merodeador y someterte al examen oficial T.I.M.O., primero debes completar la <strong>Fase 1</strong>: interrogar a las tintas del mapa en el chat hasta conseguir que revelen la identidad de quién merodea en el pasadizo secreto hacia Honeydukes.

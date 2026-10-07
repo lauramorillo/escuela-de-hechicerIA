@@ -308,7 +308,7 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                     {cls.id === "transfiguration"
                       ? "Transmuta un antiguo manuscrito rúnico y repara el cálculo de las cámaras de Gringotts."
                       : cls.id === "defense"
-                      ? "Descubre el pasadizo secreto burlando al guardián y blinda el mapa con defensas mágicas."
+                      ? "Descubre la identidad del merodeador secreto burlando al guardián y blinda el mapa con defensas mágicas."
                       : "Coordina los contrahechizos del castillo para repeler las cuatro oleadas del asedio mortífago."}
                   </p>
                 </div>
