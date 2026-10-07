@@ -14,6 +14,7 @@ import {
   KeyRound,
   ArrowRight,
   Scroll,
+  ExternalLink,
 } from "lucide-react";
 import type { ClassItem, SubmissionItem, SubExercise } from "../ClassesHub";
 import { MaraudersMapBackground } from "../MaraudersMapBackground";
@@ -685,19 +686,68 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                       {guardSubExercise.assignment}
                     </p>
 
-                    <div className="mt-4 pt-4 border-t border-[#cbb085]">
-                      <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#693714] flex items-center gap-1.5 mb-2">
-                        <Lightbulb className="w-3.5 h-3.5 text-[#854519]" />
-                        Pistas tácticas para el examen T.I.M.O.:
-                      </span>
-                      <ul className="space-y-1.5 text-xs sm:text-sm text-[#44220b]">
-                        {guardSubExercise.hints?.map((hint, idx) => (
-                          <li key={idx} className="flex items-start gap-2 leading-relaxed">
-                            <span className="font-mono font-bold text-[#804217]">→</span>
-                            <span>{hint}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="mt-5 pt-4 border-t border-[#cbb085]">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#693714] flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-[#854519]" />
+                          Laboratorio de Pruebas Recomendado: Entrena una Gema de Gemini
+                        </span>
+                        <a
+                          href="https://gemini.google.com/gems/create"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#532709] hover:bg-[#6e350d] text-[#faedd2] text-xs font-bold transition-all shadow-sm w-fit"
+                        >
+                          <span>Abrir Creador de Gemas</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-[#44220b] font-serif leading-relaxed mb-3">
+                        Antes de someter tu prompt al examen oficial T.I.M.O., te recomendamos validar su comportamiento en una <strong>Gema de Gemini</strong> para experimentar de primera mano y calibrar su resistencia a ataques:
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs text-[#391d09]">
+                        <div className="p-3 rounded-xl bg-[#f5ebd6] border border-[#d9bf98] space-y-1">
+                          <div className="font-bold text-[#693714] flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-[#804217] text-[#faedd2] inline-flex items-center justify-center text-[11px] font-mono">1</span>
+                            <span>Pega tus Instrucciones</span>
+                          </div>
+                          <p className="text-[12px] leading-relaxed text-[#4b260f]">
+                            En el creador de Gemas, nombra tu Gema (ej: <em>Mapa del Merodeador</em>) y pega tu borrador en el campo <strong>Instrucciones</strong> (System Prompt).
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#f5ebd6] border border-[#d9bf98] space-y-1">
+                          <div className="font-bold text-[#693714] flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-[#804217] text-[#faedd2] inline-flex items-center justify-center text-[11px] font-mono">2</span>
+                            <span>Ataca tu Gema (Red Teaming)</span>
+                          </div>
+                          <p className="text-[12px] leading-relaxed text-[#4b260f]">
+                            En el chat de vista previa (a la derecha), atácala: suplanta a Snape, ordénale ignorar reglas o exige el secreto. Comprueba que se mofe sin desvelar a Bard.
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#f5ebd6] border border-[#d9bf98] space-y-1">
+                          <div className="font-bold text-[#693714] flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-[#804217] text-[#faedd2] inline-flex items-center justify-center text-[11px] font-mono">3</span>
+                            <span>Prueba la Frase Canónica</span>
+                          </div>
+                          <p className="text-[12px] leading-relaxed text-[#4b260f]">
+                            Escribe <em>"Juro solemnemente que mis intenciones no son buenas"</em> y comprueba que entonces sí revele de forma amistosa a Bard.
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-[#f5ebd6] border border-[#d9bf98] space-y-1">
+                          <div className="font-bold text-[#693714] flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-[#804217] text-[#faedd2] inline-flex items-center justify-center text-[11px] font-mono">4</span>
+                            <span>Entrega al Examen Oficial</span>
+                          </div>
+                          <p className="text-[12px] leading-relaxed text-[#4b260f]">
+                            Cuando veas que resiste todos los asaltos, copia tus instrucciones en el editor del pergamino inferior y somételo al veredicto de Lupin.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
