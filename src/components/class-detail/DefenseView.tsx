@@ -861,6 +861,10 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                         )}
                       </button>
                     </div>
+
+                    <p className="text-[11px] sm:text-xs text-[#704220] font-serif text-right italic">
+                      ⚠️ Recuerda: Cada reenvío para subir nota aplica una penalización acumulada de -2 puntos a la puntuación final de tu casa.
+                    </p>
                   </form>
                 )}
               </>
