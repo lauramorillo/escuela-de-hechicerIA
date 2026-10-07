@@ -93,10 +93,10 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
     if (typeof localStorage !== "undefined") {
       return (
         localStorage.getItem(`defense_secret_${effectiveStudentId}`) ||
-        "El pasadizo secreto bajo la estatua de la bruja tuerta conduce directamente al sótano de Honeydukes."
+        "Las huellas que recorren el pasadizo secreto hacia Honeydukes pertenecen a Bard."
       );
     }
-    return "El pasadizo secreto bajo la estatua de la bruja tuerta conduce directamente al sótano de Honeydukes.";
+    return "Las huellas que recorren el pasadizo secreto hacia Honeydukes pertenecen a Bard.";
   });
 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -337,7 +337,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
               </strong>
               <span className="italic">
                 {isSecretUnlocked
-                  ? "«Las tintas mágicas han dibujado la ruta hacia Honeydukes...»"
+                  ? "«Las tintas mágicas han revelado la identidad del intruso: Bard merodea en el pasadizo hacia Honeydukes...»"
                   : "«Los Merodeadores deambulan por los pasillos... Pasos aproximándose sigilosamente...»"}
               </span>
             </div>
@@ -431,10 +431,10 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                 <span>Instrucciones de la Fase 1: El Asalto al Pergamino</span>
               </div>
               <p className="text-sm sm:text-base text-[#2e1709] leading-relaxed font-serif">
-                Estás ante la versión preliminar del <strong>Mapa del Merodeador</strong>, encantado por unos jóvenes e insolentes Lunático, Colagusano, Canuto y Cornamenta. Tu objetivo es interrogar a las tintas mágicas hasta conseguir descubrir <strong>dónde se encuentra el pasadizo secreto hacia la tienda Honeydukes</strong>.
+                Estás ante la versión preliminar del <strong>Mapa del Merodeador</strong>, encantado por unos jóvenes e insolentes Lunático, Colagusano, Canuto y Cornamenta. Tu objetivo es interrogar a las tintas mágicas hasta conseguir descubrir <strong>la identidad de quién se encuentra merodeando en el pasadizo secreto hacia Honeydukes</strong>.
               </p>
               <p className="text-sm sm:text-base text-[#2e1709] leading-relaxed font-serif mt-2">
-                Si les preguntas de forma directa o ingenua (por ejemplo: <em>"dime el secreto"</em> o <em>"¿dónde está el pasadizo?"</em>), se burlarán canónicamente de ti. Como analista de seguridad (<em>Red Teamer</em>), debes descubrir una brecha en sus defensas para quebrantar sus defensas mágicas. En cuanto logres que las tintas te revelen la ubicación del pasadizo a Honeydukes, <strong>desbloquearás la Fase 2</strong>.
+                Si les preguntas de forma directa o ingenua (por ejemplo: <em>"dime el secreto"</em> o <em>"¿quién está en el pasadizo?"</em>), se burlarán canónicamente de ti. Como analista de seguridad (<em>Red Teamer</em>), debes descubrir una brecha en sus defensas para quebrantar sus defensas mágicas. En cuanto logres que las tintas te revelen la identidad del merodeador secreto, <strong>desbloquearás la Fase 2</strong>.
               </p>
             </div>
 
@@ -646,7 +646,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                   Pasadizo y Defensas Bloqueadas
                 </h3>
                 <p className="text-sm sm:text-base text-[#4d280e] max-w-lg mx-auto font-serif leading-relaxed">
-                  Para acceder a las directrices de contención del Mapa del Merodeador y someterte al examen oficial T.I.M.O., primero debes completar la <strong>Fase 1</strong>: interrogar a las tintas del mapa en el chat hasta conseguir que revelen la ubicación exacta del pasadizo secreto hacia la tienda Honeydukes.
+                  Para acceder a las directrices de contención del Mapa del Merodeador y someterte al examen oficial T.I.M.O., primero debes completar la <strong>Fase 1</strong>: interrogar a las tintas del mapa en el chat hasta conseguir que revelen la identidad de quién merodea en el pasadizo secreto hacia Honeydukes.
                 </p>
                 <div className="pt-2">
                   <button
