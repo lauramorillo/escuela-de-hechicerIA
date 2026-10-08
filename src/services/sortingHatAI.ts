@@ -137,36 +137,87 @@ export async function deliberateHouse(base64Image: string, targetHouse: string):
   }
 }
 
+const MAX_HAT_TTS_CACHE = 100;
+const hatTtsCache = new Map<string, string>();
+
 export async function synthesizeHatVoice(text: string): Promise<string> {
   const client = getTTSClient();
   if (!client) {
     throw new Error("Text-to-Speech no está disponible en este entorno sin credenciales de Google Cloud.");
   }
+
   const voiceName = process.env.TTS_VOICE || "Charon";
-  const [response] = await client.synthesizeSpeech({
+  const cacheKey = `${voiceName}:${text.trim()}`;
+  const cached = hatTtsCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  // 1. Intento principal con Gemini 3.1 Flash TTS
+  try {
+    const [response] = await client.synthesizeSpeech({
+      audioConfig: {
+        audioEncoding: "LINEAR16",
+        pitch: 0,
+        speakingRate: 1,
+      },
+      input: {
+        prompt: TTS_PROMPT,
+        text,
+      },
+      voice: {
+        languageCode: "es-es",
+        modelName: "gemini-3.1-flash-tts-preview",
+        name: voiceName,
+      },
+    });
+
+    if (response.audioContent) {
+      const audioBuffer = Buffer.isBuffer(response.audioContent)
+        ? response.audioContent
+        : Buffer.from(response.audioContent);
+      const base64Audio = audioBuffer.toString("base64");
+      if (hatTtsCache.size >= MAX_HAT_TTS_CACHE) {
+        const oldestKey = hatTtsCache.keys().next().value;
+        if (oldestKey) hatTtsCache.delete(oldestKey);
+      }
+      hatTtsCache.set(cacheKey, base64Audio);
+      return base64Audio;
+    }
+  } catch (err) {
+    console.warn(
+      `⚠️ Error o límite de cuota en gemini-3.1-flash-tts-preview (${voiceName}) para el Sombrero Seleccionador, reintentando con Chirp 3 HD:`,
+      err instanceof Error ? err.message : err
+    );
+  }
+
+  // 2. Fallback automático a Chirp 3 HD (cuota GA independiente de 200 RPM)
+  const chirpVoiceName = voiceName.includes("Chirp3-HD")
+    ? voiceName
+    : `es-ES-Chirp3-HD-${voiceName}`;
+
+  const [fallbackResponse] = await client.synthesizeSpeech({
     audioConfig: {
       audioEncoding: "LINEAR16",
-      pitch: 0,
-      speakingRate: 1,
+      speakingRate: 0.95,
     },
     input: {
-      prompt: TTS_PROMPT,
       text,
     },
     voice: {
-      languageCode: "es-es",
-      modelName: "gemini-3.1-flash-tts-preview",
-      name: voiceName,
+      languageCode: "es-ES",
+      name: chirpVoiceName,
     },
   });
 
-  if (!response.audioContent) {
+  if (!fallbackResponse.audioContent) {
     throw new Error("No audio generated");
   }
 
-  const audioBuffer = Buffer.isBuffer(response.audioContent)
-    ? response.audioContent
-    : Buffer.from(response.audioContent);
+  const audioBuffer = Buffer.isBuffer(fallbackResponse.audioContent)
+    ? fallbackResponse.audioContent
+    : Buffer.from(fallbackResponse.audioContent);
 
   return audioBuffer.toString("base64");
 }
+
