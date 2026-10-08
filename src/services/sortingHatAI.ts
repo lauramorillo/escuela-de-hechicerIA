@@ -153,45 +153,49 @@ export async function synthesizeHatVoice(text: string): Promise<string> {
     return cached;
   }
 
-  // 1. Intento principal con Gemini 3.1 Flash TTS
-  try {
-    const [response] = await client.synthesizeSpeech({
-      audioConfig: {
-        audioEncoding: "LINEAR16",
-        pitch: 0,
-        speakingRate: 1,
-      },
-      input: {
-        prompt: TTS_PROMPT,
-        text,
-      },
-      voice: {
-        languageCode: "es-es",
-        modelName: "gemini-3.1-flash-tts-preview",
-        name: voiceName,
-      },
-    });
+  const geminiModels = ["gemini-3.1-flash-tts-preview", "gemini-2.5-flash-tts"];
 
-    if (response.audioContent) {
-      const audioBuffer = Buffer.isBuffer(response.audioContent)
-        ? response.audioContent
-        : Buffer.from(response.audioContent);
-      const base64Audio = audioBuffer.toString("base64");
-      if (hatTtsCache.size >= MAX_HAT_TTS_CACHE) {
-        const oldestKey = hatTtsCache.keys().next().value;
-        if (oldestKey) hatTtsCache.delete(oldestKey);
+  // 1. Intentos con Gemini TTS (1º gemini-3.1-flash-tts-preview, 2º gemini-2.5-flash-tts)
+  for (const modelName of geminiModels) {
+    try {
+      const [response] = await client.synthesizeSpeech({
+        audioConfig: {
+          audioEncoding: "LINEAR16",
+          pitch: 0,
+          speakingRate: 1,
+        },
+        input: {
+          prompt: TTS_PROMPT,
+          text,
+        },
+        voice: {
+          languageCode: "es-es",
+          modelName,
+          name: voiceName,
+        },
+      });
+
+      if (response.audioContent) {
+        const audioBuffer = Buffer.isBuffer(response.audioContent)
+          ? response.audioContent
+          : Buffer.from(response.audioContent);
+        const base64Audio = audioBuffer.toString("base64");
+        if (hatTtsCache.size >= MAX_HAT_TTS_CACHE) {
+          const oldestKey = hatTtsCache.keys().next().value;
+          if (oldestKey) hatTtsCache.delete(oldestKey);
+        }
+        hatTtsCache.set(cacheKey, base64Audio);
+        return base64Audio;
       }
-      hatTtsCache.set(cacheKey, base64Audio);
-      return base64Audio;
+    } catch (err) {
+      console.warn(
+        `⚠️ Error o límite de cuota en ${modelName} (${voiceName}) para el Sombrero Seleccionador, pasando al siguiente modelo de respaldo:`,
+        err instanceof Error ? err.message : err
+      );
     }
-  } catch (err) {
-    console.warn(
-      `⚠️ Error o límite de cuota en gemini-3.1-flash-tts-preview (${voiceName}) para el Sombrero Seleccionador, reintentando con Chirp 3 HD:`,
-      err instanceof Error ? err.message : err
-    );
   }
 
-  // 2. Fallback automático a Chirp 3 HD (cuota GA independiente de 200 RPM)
+  // 2. Último fallback a Chirp 3 HD si fallan ambos modelos de Gemini TTS
   const chirpVoiceName = voiceName.includes("Chirp3-HD")
     ? voiceName
     : `es-ES-Chirp3-HD-${voiceName}`;
@@ -220,4 +224,5 @@ export async function synthesizeHatVoice(text: string): Promise<string> {
 
   return audioBuffer.toString("base64");
 }
+
 
