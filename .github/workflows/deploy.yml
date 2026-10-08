@@ -13,8 +13,8 @@ env:
   REGION: europe-west1
   REPO_NAME: escuela-de-hechiceria-repo
   SERVICE_NAME: escuela-de-hechiceria
-  WIF_PROVIDER: ${{ secrets.WIF_PROVIDER || vars.WIF_PROVIDER }}
-  WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT || vars.WIF_SERVICE_ACCOUNT }}
+  WIF_PROVIDER: ${{ secrets.WIF_PROVIDER || vars.WIF_PROVIDER || 'projects/26384785007/locations/global/workloadIdentityPools/github-pool/providers/github-provider' }}
+  WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT || vars.WIF_SERVICE_ACCOUNT || 'github-deployer@escuela-de-hechiceria.iam.gserviceaccount.com' }}
 
 jobs:
   test:
@@ -56,6 +56,9 @@ jobs:
         with:
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
 
       - name: Configure Docker for Google Artifact Registry
         run: |
