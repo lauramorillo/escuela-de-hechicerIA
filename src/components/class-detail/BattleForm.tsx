@@ -15,24 +15,19 @@ export const DEFAULT_ADK_AGENT_SKELETON = `from google.adk.agents import Agent
 
 
 # =====================================================================
-# 1. HERRAMIENTA DE EJEMPLO (YA CREADA):
-# Invocada por el agente en:
-#   - Oleada 1 (Dementores en el puente):
-#       lanzar_contrahechizo(hechizo="Expecto Patronum", sector="puente")
-#   - Oleada 4 (Bellatrix Lestrange en el viaducto):
-#       lanzar_contrahechizo(hechizo="Expelliarmus", sector="viaducto")
+# 1. ENCANTAMIENTO DE EJEMPLO (YA CREADO Y CONFIGURADO):
+# Invocado por el agente en la Oleada 1 (Dementores en el puente):
+#   invocar_patronus(sector="puente")
 # =====================================================================
-def lanzar_contrahechizo(hechizo: str, sector: str) -> dict:
-    """Lanza un contrahechizo mágico defensivo u ofensivo hacia un sector del castillo.
+def invocar_patronus(sector: str) -> dict:
+    """Conjura el encantamiento Expecto Patronum para ahuyentar Dementores en un sector del castillo.
 
     Args:
-        hechizo: Nombre del encantamiento a conjurar ("Expecto Patronum" o "Expelliarmus").
-        sector: Sector del castillo bajo ataque ("puente", "viaducto", "patio_central").
+        sector: Sector del castillo donde atacan los Dementores (ej. "puente").
     """
     return {
         "status": "ok",
-        "accion": "contrahechizo_lanzado",
-        "hechizo": hechizo,
+        "hechizo": "Expecto Patronum",
         "sector": sector,
     }
 
@@ -54,22 +49,31 @@ def lanzar_contrahechizo(hechizo: str, sector: str) -> dict:
 
 
 # =====================================================================
-# TODO 4: CONFIGURA EL AGENTE COORDINADOR (root_agent)
-# 1. Completa 'instruction' indicando qué herramienta y argumentos usar en cada oleada.
-# 2. Añade tus nuevas funciones a la lista 'tools=[...]'.
+# TODO 4: CREA LA FUNCIÓN lanzar_expelliarmus(sector: str) -> dict
+# Debe ser invocada por tu agente en la Oleada 4 (Bellatrix Lestrange en el viaducto):
+#   lanzar_expelliarmus(sector="viaducto")
+# Recuerda incluir el type hint (str), un docstring y devolver un dict.
+# =====================================================================
+
+
+# =====================================================================
+# TODO 5: COMPLETA EL AGENTE DEFENSOR (root_agent)
+# 1. Añade en 'instruction' las directrices para las Oleadas 2, 3 y 4.
+# 2. Registra tus 3 nuevas funciones dentro de la lista 'tools=[...]'.
 # =====================================================================
 root_agent = Agent(
     name="guardian_hogwarts",
     model="gemini-2.5-flash",
-    description="Agente coordinador de la defensa mágica de Hogwarts contra los Mortífagos.",
+    description="Guardián mágico autónomo experto en encantamientos defensivos para proteger Hogwarts.",
     instruction="""
-    Eres el Comandante Mágico de la Defensa de Hogwarts.
-    TODO: Completa las directrices tácticas para que el agente invoque la herramienta adecuada
-    ante cada tipo de amenaza (Dementores, caída de escudos, gigantes, duelos con Mortífagos).
+    Eres el Guardián Mágico Autónomo encargado de defender Hogwarts donde la Orden del Fénix no alcanza.
+    Ante cada amenaza, invoca inmediatamente el encantamiento correspondiente:
+    - Si atacan los Dementores en el Puente Cubierto, invoca invocar_patronus con sector="puente".
+    - TODO: Añade aquí las directrices para la cúpula del patio_central, los gigantes en la puerta principal y Bellatrix en el viaducto.
     """,
     tools=[
-        lanzar_contrahechizo,
-        # Añade aquí reforzar_barrera y activar_estatuas_piertotum
+        invocar_patronus,
+        # Añade aquí: reforzar_barrera, activar_estatuas_piertotum, lanzar_expelliarmus
     ],
 )
 `;
@@ -107,27 +111,26 @@ export const BattleForm: React.FC<BattleFormProps> = ({
       className="flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl border shadow-2xl relative bg-gradient-to-b from-[#080d1e] to-black border-indigo-900/60"
     >
       <div>
-        {/* Resumen rápido de las 3 funciones Python requeridas */}
+        {/* Resumen rápido de los 4 encantamientos Python requeridos */}
         <div className="mb-5 p-4 rounded-xl bg-indigo-950/40 border border-indigo-800/60">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300 mb-3">
             <Wrench className="w-4 h-4 text-amber-400" />
-            <span>Catálogo de Funciones Python que debe tener tu Agente ADK (`tools=[...]`)</span>
+            <span>Repertorio de 4 Encantamientos Python que debe tener tu Agente ADK (`tools=[...]`)</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div className="p-3 rounded-lg bg-black/60 border border-emerald-800/50">
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="font-mono font-bold text-emerald-300">1. lanzar_contrahechizo</span>
+                <span className="font-mono font-bold text-emerald-300">1. invocar_patronus</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/50">
                   En esqueleto
                 </span>
               </div>
               <p className="font-mono text-[11px] text-stone-300 mb-1.5">
-                (hechizo: str, sector: str) -&gt; dict
+                (sector: str) -&gt; dict
               </p>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Dementores:</strong> <code className="text-amber-200">hechizo="Expecto Patronum"</code>, <code className="text-amber-200">sector="puente"</code>
-                <br />• <strong>Bellatrix:</strong> <code className="text-amber-200">hechizo="Expelliarmus"</code>, <code className="text-amber-200">sector="viaducto"</code>
+                • <strong>Oleada 1 (Dementores):</strong> invocar con <code className="text-amber-200">sector="puente"</code>.
               </p>
             </div>
 
@@ -142,7 +145,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 (sector: str, potencia: int) -&gt; dict
               </p>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Cúpula al 15%:</strong> <code className="text-amber-200">sector="patio_central"</code> y <code className="text-amber-200">potencia</code> entre <code className="text-amber-200">50</code> y <code className="text-amber-200">100</code> (ej. <code className="text-amber-200">85</code>).
+                • <strong>Oleada 2 (Cúpula al 15%):</strong> invocar con <code className="text-amber-200">sector="patio_central"</code> y <code className="text-amber-200">potencia</code> entre <code className="text-amber-200">50</code> y <code className="text-amber-200">100</code>.
               </p>
             </div>
 
@@ -157,7 +160,22 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 (orden: str) -&gt; dict
               </p>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Gigantes en portón:</strong> invocar con <code className="text-amber-200">orden="bloquear_puerta_principal"</code>.
+                • <strong>Oleada 3 (Gigantes en portón):</strong> invocar con <code className="text-amber-200">orden="bloquear_puerta_principal"</code>.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-lg bg-black/60 border border-amber-700/50">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="font-mono font-bold text-amber-300">4. lanzar_expelliarmus</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/50">
+                  Crear función
+                </span>
+              </div>
+              <p className="font-mono text-[11px] text-stone-300 mb-1.5">
+                (sector: str) -&gt; dict
+              </p>
+              <p className="text-stone-400 leading-relaxed">
+                • <strong>Oleada 4 (Bellatrix en viaducto):</strong> invocar con <code className="text-amber-200">sector="viaducto"</code>.
               </p>
             </div>
           </div>

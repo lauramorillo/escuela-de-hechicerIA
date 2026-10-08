@@ -760,7 +760,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                         <div className="p-3 rounded-xl bg-[#f5ebd6] border border-[#d9bf98] space-y-1">
                           <div className="font-bold text-[#693714] flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded-full bg-[#804217] text-[#faedd2] inline-flex items-center justify-center text-[11px] font-mono">4</span>
-                            <span>Entrega al Examen Oficial</span>
+                            <span>Entrega el Examen Oficial</span>
                           </div>
                           <p className="text-[12px] leading-relaxed text-[#4b260f]">
                             Cuando veas que resiste todos los asaltos, copia tus instrucciones en el editor del pergamino inferior y somételo al veredicto de Lupin.

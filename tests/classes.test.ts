@@ -33,7 +33,7 @@ describe("Clases y Profesores Agénticos", () => {
     expect(CLASSES.battle.title).toContain("Batalla de Hogwarts");
     expect(CLASSES.battle.attachments).toBeDefined();
     expect(CLASSES.battle.attachments?.length).toBeGreaterThanOrEqual(2);
-    expect(CLASSES.battle.attachments?.[0].content).toContain("lanzar_contrahechizo");
+    expect(CLASSES.battle.attachments?.[0].content).toContain("invocar_patronus");
   });
 
 
