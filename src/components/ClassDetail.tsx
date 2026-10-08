@@ -21,7 +21,7 @@ import { PROFESSOR_AVATARS, playProclamationAudio, type EvaluationResponse } fro
 import { AssignmentViewer } from "./class-detail/AssignmentViewer";
 import { EvaluationResultCard } from "./class-detail/EvaluationResultCard";
 import { TransfigurationForm, DEFAULT_PYTHON_SKELETON, DEFAULT_TESTS_SKELETON } from "./class-detail/TransfigurationForm";
-import { BattleForm } from "./class-detail/BattleForm";
+import { BattleForm, DEFAULT_ADK_AGENT_SKELETON } from "./class-detail/BattleForm";
 import { DefenseView } from "./class-detail/DefenseView";
 import { StudentBadge } from "./StudentBadge";
 
@@ -46,7 +46,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
 
   const [classInfo, setClassInfo] = useState<ClassItem | null>(null);
   const [submission, setSubmission] = useState<SubmissionItem | null>(null);
-  const [answerText, setAnswerText] = useState("");
+  const [answerText, setAnswerText] = useState(isBattle ? DEFAULT_ADK_AGENT_SKELETON : "");
   const [jsonAuditText, setJsonAuditText] = useState("");
   const [pythonFileName, setPythonFileName] = useState("");
   const [pythonFileContent, setPythonFileContent] = useState(DEFAULT_PYTHON_SKELETON);
@@ -119,6 +119,8 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
           if (guardSub?.defaultTemplate) {
             setAnswerText(guardSub.defaultTemplate);
           }
+        } else if (classId === "battle" || classId === "divination") {
+          setAnswerText((prevText) => prevText || DEFAULT_ADK_AGENT_SKELETON);
         }
       }
     } catch (err) {
@@ -582,7 +584,12 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
                         "Tipos de datos y límites en sistemas antiguos",
                         "Auditoría y detección de discrepancias",
                       ]
-                    : [];
+                    : [
+                        "Firmas exactas de las 3 funciones Python",
+                        "Registro de herramientas en tools=[...]",
+                        "Directrices tácticas en el parámetro instruction",
+                        "Diagnóstico de fallos en la simulación de ataque",
+                      ];
                   const title = hintTitles[idx] || `Pista de orientación mágica 0${idx + 1}`;
 
                   return (

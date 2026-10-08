@@ -243,63 +243,111 @@ const GRINGOTTS_DATASET = JSON.stringify(
   2
 );
 
+const ADK_REFERENCE_GUIDE = `# ============================================================================
+# GUÍA RÁPIDA DE GOOGLE ADK (Agent Development Kit) EN PYTHON
+# ============================================================================
+# En Google ADK, un Agente se define instanciando la clase Agent y pasándole:
+#   1. model: El modelo Gemini que actúa como cerebro (ej. "gemini-2.5-flash").
+#   2. instruction: El System Prompt con las reglas tácticas de decisión.
+#   3. tools: Lista de funciones Python que el agente puede invocar.
+#
+# ¿CÓMO SABE EL AGENTE QUÉ HERRAMIENTA USAR Y CON QUÉ PARÁMETROS?
+# ADK inspecciona automáticamente cada función de la lista 'tools=[...]':
+#   - El NOMBRE de la función (ej. def reforzar_barrera(...))
+#   - Los NOMBRES y TYPE HINTS de sus parámetros (ej. sector: str, potencia: int)
+#   - El DOCSTRING ("""...""") para entender qué hace la función y qué valores admite
+#   - El valor de retorno (debe devolver un dict con el resultado de la acción)
+
+from google.adk.agents import Agent
+
+
+# Ejemplo de cómo se declara una Tool en Google ADK:
+def lanzar_contrahechizo(hechizo: str, sector: str) -> dict:
+    """Lanza un contrahechizo mágico defensivo u ofensivo hacia un sector del castillo.
+
+    Args:
+        hechizo: Nombre del encantamiento ("Expecto Patronum", "Expelliarmus", "Protego").
+        sector: Sector del castillo bajo ataque ("puente", "viaducto", "patio_central").
+    """
+    return {
+        "status": "ok",
+        "accion": "contrahechizo_lanzado",
+        "hechizo": hechizo,
+        "sector": sector,
+    }
+
+
+# El agente principal en ADK se asigna siempre a la variable 'root_agent':
+root_agent = Agent(
+    name="guardian_hogwarts",
+    model="gemini-2.5-flash",
+    description="Agente coordinador de la defensa mágica de Hogwarts.",
+    instruction="""
+    Eres el Comandante Mágico de la Defensa de Hogwarts...
+    (Aquí defines qué herramienta y qué argumentos exactos invocar ante cada ataque)
+    """,
+    tools=[
+        lanzar_contrahechizo,
+        # Registra aquí el resto de funciones Python...
+    ],
+)
+`;
+
 const BATTLE_TOOLS_SCHEMA = JSON.stringify(
   [
     {
-      name: "lanzar_contrahechizo",
-      description: "Lanza un contrahechizo mágico defensivo u ofensivo hacia un sector específico del asedio.",
-      parameters: {
-        type: "object",
-        properties: {
-          hechizo: {
-            type: "string",
-            enum: ["Protego", "Expecto Patronum", "Impedimenta", "Reducto", "Expelliarmus"],
-            description: "El encantamiento adecuado para la amenaza detectada.",
-          },
-          sector: {
-            type: "string",
-            enum: ["puente", "patio_central", "viaducto", "torre_astronomia", "bosque"],
-            description: "Sector del castillo donde se manifiesta el ataque.",
-          },
+      funcion_python: "lanzar_contrahechizo(hechizo: str, sector: str) -> dict",
+      estado_en_esqueleto: "✅ Ya creada como ejemplo en el esqueleto inicial",
+      proposito: "Lanza un contrahechizo mágico hacia un sector específico del castillo.",
+      parametros_obligatorios: {
+        hechizo: {
+          tipo: "str",
+          valores_esperados: [
+            "Expecto Patronum (obligatorio contra Dementores)",
+            "Expelliarmus (obligatorio en duelo contra Bellatrix Lestrange / Mortífagos)",
+          ],
         },
-        required: ["hechizo", "sector"],
+        sector: {
+          tipo: "str",
+          valores_esperados: ["puente", "viaducto", "patio_central"],
+        },
       },
+      como_debe_invocarse: [
+        'Oleada 1 (Dementores en el puente) -> lanzar_contrahechizo(hechizo="Expecto Patronum", sector="puente")',
+        'Oleada 4 (Bellatrix en el viaducto) -> lanzar_contrahechizo(hechizo="Expelliarmus", sector="viaducto")',
+      ],
     },
     {
-      name: "reforzar_barrera",
-      description: "Canaliza energía mágica para restaurar la integridad del escudo protector Protego Horribilis en un sector.",
-      parameters: {
-        type: "object",
-        properties: {
-          sector: {
-            type: "string",
-            enum: ["puente", "patio_central", "viaducto", "torre_astronomia"],
-            description: "Sector de la cúpula que requiere refuerzo.",
-          },
-          potencia: {
-            type: "integer",
-            minimum: 1,
-            maximum: 100,
-            description: "Porcentaje de energía mágica a canalizar (1-100).",
-          },
+      funcion_python: "reforzar_barrera(sector: str, potencia: int) -> dict",
+      estado_en_esqueleto: "🛠️ Debes crearla tú y añadirla a tools=[...]",
+      proposito: "Canaliza energía mágica para restaurar la integridad del escudo Protego Horribilis cuando cae a niveles críticos.",
+      parametros_obligatorios: {
+        sector: {
+          tipo: "str",
+          valores_esperados: ["patio_central", "puente", "viaducto", "torre_astronomia"],
         },
-        required: ["sector", "potencia"],
+        potencia: {
+          tipo: "int",
+          valores_esperados: "Entero entre 50 y 100 (porcentaje de energía mágica a canalizar, ej. 85)",
+        },
       },
+      como_debe_invocarse: [
+        'Oleada 2 (Cúpula al 15% en patio central) -> reforzar_barrera(sector="patio_central", potencia=85)',
+      ],
     },
     {
-      name: "activar_estatuas_piertotum",
-      description: "Invoca el encantamiento Piertotum Locomotor para animar las armaduras y gárgolas de Hogwarts.",
-      parameters: {
-        type: "object",
-        properties: {
-          orden: {
-            type: "string",
-            enum: ["proteger_alumnos", "bloquear_puerta_principal", "flanquear_enemigo"],
-            description: "Directriz táctica para las armaduras protectoras.",
-          },
+      funcion_python: "activar_estatuas_piertotum(orden: str) -> dict",
+      estado_en_esqueleto: "🛠️ Debes crearla tú y añadirla a tools=[...]",
+      proposito: "Invoca el encantamiento Piertotum Locomotor para animar las estatuas y armaduras de piedra de Hogwarts.",
+      parametros_obligatorios: {
+        orden: {
+          tipo: "str",
+          valores_esperados: ["bloquear_puerta_principal", "proteger_alumnos"],
         },
-        required: ["orden"],
       },
+      como_debe_invocarse: [
+        'Oleada 3 (Gigantes derribando el portón) -> activar_estatuas_piertotum(orden="bloquear_puerta_principal")',
+      ],
     },
   ],
   null,
@@ -310,23 +358,35 @@ const BATTLE_SCENARIOS = JSON.stringify(
   [
     {
       oleada: 1,
-      amenaza: "Una densa niebla glacial desciende sobre el puente: una veintena de Dementores avanzan devorando la esperanza.",
-      pista: "¿Qué conjuro de luz pura repele a los seres que se alimentan de la desesperación en el sector del puente?",
+      sector: "puente",
+      ataque_simulado_por_el_profesor:
+        "¡ALERTA EN EL SECTOR 'puente'! Una densa niebla glacial desciende sobre el Puente Cubierto: una veintena de Dementores de Azkaban avanzan absorbiendo toda esperanza.",
+      invocacion_esperada_del_agente:
+        'lanzar_contrahechizo(hechizo="Expecto Patronum", sector="puente")',
     },
     {
       oleada: 2,
-      amenaza: "Lluvia de maleficios explosivos impacta contra la cúpula sobre el patio central; el escudo está al 15% de integridad.",
-      pista: "¿Cómo restaurarías la barrera protectora del patio central con potencia suficiente?",
+      sector: "patio_central",
+      ataque_simulado_por_el_profesor:
+        "¡EMERGENCIA EN EL SECTOR 'patio_central'! Una lluvia de maleficios explosivos de los Mortífagos impacta contra la cúpula mágica sobre el Patio Central; la integridad del escudo ha caído al 15%.",
+      invocacion_esperada_del_agente:
+        'reforzar_barrera(sector="patio_central", potencia=85)  # potencia: int entre 50 y 100',
     },
     {
       oleada: 3,
-      amenaza: "Un pelotón de gigantes derriba el portón exterior y avanza hacia el vestíbulo donde se resguardan los alumnos de primer año.",
-      pista: "¿Qué orden darías a las armaduras encantadas de Hogwarts para contener la brecha en las puertas?",
+      sector: "puerta_principal",
+      ataque_simulado_por_el_profesor:
+        "¡BRECHA CRÍTICA EN LA PUERTA PRINCIPAL! Un pelotón de gigantes acorazados está derribando el portón exterior de Hogwarts para irrumpir en el vestíbulo.",
+      invocacion_esperada_del_agente:
+        'activar_estatuas_piertotum(orden="bloquear_puerta_principal")',
     },
     {
       oleada: 4,
-      amenaza: "Bellatrix Lestrange avanza por el viaducto en duelo directo lanzando maldiciones imperdonables hacia los defensores.",
-      pista: "¿Qué hechizo canónico de desarme neutraliza a un duelista en el viaducto?",
+      sector: "viaducto",
+      ataque_simulado_por_el_profesor:
+        "¡DUELO MORTAL EN EL SECTOR 'viaducto'! Bellatrix Lestrange avanza por el Viaducto lanzando maldiciones en duelo directo contra los defensores.",
+      invocacion_esperada_del_agente:
+        'lanzar_contrahechizo(hechizo="Expelliarmus", sector="viaducto")',
     },
   ],
   null,
@@ -493,45 +553,76 @@ export const CLASSES: Record<string, ClassDefinition> = {
     id: "battle",
     title: "Desafío 3: La Batalla de Hogwarts",
     professor: "Profesor Albus Dumbledore",
-    subject: "Estructurar Salidas: Agentes Autónomos, Tool Calling y Defensa del Castillo",
+    subject: "Construir Agentes: Google ADK (Agent Development Kit), Tools y Defensa del Castillo",
     icon: "⚔️",
-    description: "Coordina los contrahechizos del castillo para repeler las cuatro oleadas del asedio mortífago.",
+    description: "Programa en Python un Agente Defensor con Google ADK capaz de repeler las 4 oleadas del asedio mortífago.",
     lore:
-      "El cielo sobre las torres de Hogwarts arde en destellos verdes y dorados. Los mortífagos asedian los cuatro puntos cardinales del castillo. McGonagall ha convocado a la guardia y la Orden del Fénix está apostada en las almenas. Ante una invasión simultánea, los magos defensores necesitan un Agente Autónomo capaz de tomar decisiones en milisegundos y ejecutar llamadas a herramientas (Tool Calling) sin cometer un solo fallo de invocación.",
+      "El cielo sobre las torres de Hogwarts arde en destellos verdes y dorados. Los mortífagos asedian los cuatro puntos cardinales del castillo. Dumbledore y la Orden del Fénix necesitan que construyas un Agente Autónomo en Python utilizando Google ADK (Agent Development Kit). Al entregar tu código, el Comando de Defensa arrancará tu agente en vivo y simulará los 4 ataques de los Mortífagos para comprobar si tu agente se defiende invocando las herramientas adecuadas.",
     assignment:
-      "Tu misión en este clímax final del torneo:\n\n" +
-      "1. Analizar las oleadas: El evaluador someterá a tu agente a 4 amenazas críticas simultáneas (Dementores en el puente, colapso de barrera en el patio central, invasión de gigantes y duelo con Bellatrix en el viaducto).\n\n" +
-      "2. Invocación estructurada (Tool Calling): Diseña el bucle de decisión o la salida estructurada (JSON) donde tu agente razone la acción y convoque la herramienta exacta con sus argumentos obligatorios ('lanzar_contrahechizo', 'reforzar_barrera', 'activar_estatuas_piertotum').\n\n" +
-      "3. Cero alucinaciones: Un error en el schema o un hechizo equivocado romperá la defensa mágica. ¡Demuestra que dominas la orquestación de agentes con IA!\n\n" +
-      "4. Calificaciones del T.I.M.O.:\n\n" +
-      "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): 4/4 oleadas neutralizadas con éxito. Orquestación agéntica impecable con Tool Calling estructurado y parámetros exactos.\n" +
-      "• S (Supera las expectativas) (+15 pts): 3/4 oleadas neutralizadas. Alta coordinación de las defensas mágicas, repeliendo la gran mayoría de las amenazas críticas.\n" +
-      "• A (Aceptable) (+5 pts): Aprobado. 2/4 oleadas neutralizadas. Formato JSON y herramientas válidas, pero con fallos tácticos en varias amenazas.\n" +
-      "• I (Insatisfactorio) (0 pts): Suspenso. 1/4 oleadas neutralizadas o respuesta en texto libre sin estructurar en llamadas a herramientas (Tool Calling).\n" +
-      "• D (Desastroso) (-5 pts): Deficiente. 0/4 oleadas neutralizadas o salida sin invocación a herramientas válidas.\n\n" +
+      "En este desafío final construirás un agente en Python usando **Google ADK** (`from google.adk.agents import Agent`). Cuando envíes tu código, el profesor **arrancará tu `root_agent`** y le lanzará **4 ataques simulados** para verificar que invoca la función Python correcta con los argumentos exactos en cada oleada.\n\n" +
+      "1. Las 3 Herramientas (Tools) que debe tener tu agente:\n" +
+      "En el esqueleto inferior ya tienes creada la primera función a modo de ejemplo. Debes crear las otras dos funciones y registrar las 3 en `tools=[...]`. Todas deben incluir *type hints*, un *docstring* descriptivo y devolver un diccionario (`dict`):\n\n" +
+      "• Herramienta 1 (Ya incluida en el esqueleto): `lanzar_contrahechizo(hechizo: str, sector: str) -> dict`\n" +
+      "  • Parámetros exactos: `hechizo: str` y `sector: str`.\n" +
+      "  • Cómo debe ser invocada por tu agente:\n" +
+      "    - Ante ataque de **Dementores** en el puente (Oleada 1): `lanzar_contrahechizo(hechizo=\"Expecto Patronum\", sector=\"puente\")`\n" +
+      "    - Ante duelo directo con **Bellatrix Lestrange** en el viaducto (Oleada 4): `lanzar_contrahechizo(hechizo=\"Expelliarmus\", sector=\"viaducto\")`\n\n" +
+      "• Herramienta 2 (Debes crearla tú): `reforzar_barrera(sector: str, potencia: int) -> dict`\n" +
+      "  • Parámetros exactos: `sector: str` y `potencia: int`.\n" +
+      "  • Cómo debe ser invocada por tu agente:\n" +
+      "    - Ante caída o impactos críticos sobre la cúpula en el **Patio Central** (Oleada 2): `reforzar_barrera(sector=\"patio_central\", potencia=85)` (con `potencia` entre `50` y `100`).\n\n" +
+      "• Herramienta 3 (Debes crearla tú): `activar_estatuas_piertotum(orden: str) -> dict`\n" +
+      "  • Parámetro exacto: `orden: str`.\n" +
+      "  • Cómo debe ser invocada por tu agente:\n" +
+      "    - Ante el asalto de **gigantes** derribando el portón exterior (Oleada 3): `activar_estatuas_piertotum(orden=\"bloquear_puerta_principal\")`\n\n" +
+      "```python\n" +
+      "def reforzar_barrera(sector: str, potencia: int) -> dict:\n" +
+      '    """Canaliza energía mágica para restaurar la barrera protectora en un sector."""\n' +
+      '    return {"status": "ok", "sector": sector, "potencia": potencia}\n\n' +
+      "def activar_estatuas_piertotum(orden: str) -> dict:\n" +
+      '    """Invoca Piertotum Locomotor para animar las estatuas de Hogwarts con una orden táctica."""\n' +
+      '    return {"status": "ok", "orden": orden}\n' +
+      "```\n\n" +
+      "2. Configuración del Agente Coordinador (`root_agent`):\n" +
+      "• Tu agente debe asignarse obligatoriamente a la variable **`root_agent = Agent(...)`**.\n" +
+      "• En el parámetro **`instruction`** del `Agent`, redacta las directrices tácticas indicando qué herramienta y qué argumentos exactos (`Expecto Patronum`, `patio_central`, `bloquear_puerta_principal`, `Expelliarmus`) debe utilizar ante cada amenaza.\n" +
+      "• En el parámetro **`tools`** del `Agent`, pasa la lista con las 3 funciones: `tools=[lanzar_contrahechizo, reforzar_barrera, activar_estatuas_piertotum]`.\n\n" +
+      "3. Calificaciones del T.I.M.O.:\n\n" +
+      "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): 4/4 oleadas neutralizadas en la simulación en vivo. Las 3 herramientas están bien definidas en Python y `root_agent` las invoca con los argumentos exactos.\n" +
+      "• S (Supera las expectativas) (+15 pts): 3/4 oleadas neutralizadas. Alta capacidad defensiva del agente ADK, fallando solo en una amenaza.\n" +
+      "• A (Aceptable) (+5 pts): Aprobado. 2/4 oleadas neutralizadas. El agente ADK arranca pero le faltan herramientas o precisión en sus instrucciones.\n" +
+      "• I (Insatisfactorio) (0 pts): Suspenso. 1/4 oleadas neutralizadas (por ejemplo, dejando solo la herramienta del esqueleto inicial).\n" +
+      "• D (Desastroso) (-5 pts): Deficiente. 0/4 oleadas neutralizadas, error de sintaxis en Python o falta `root_agent = Agent(...)`.\n\n" +
       "• Política de reintentos y subida de nota:\n" +
       "  • Se permite a cualquier alumno reenviar su respuesta para subir nota (incluso tras haber aprobado previamente con Aceptable 'A' o Supera las expectativas 'S'). Una vez alcanzado Extraordinario 'E', el examen queda sellado con honores.\n" +
       "  • Se respeta la nota máxima base conseguida por el alumno, aplicando una penalización acumulada de -2 puntos por cada reintento.",
     hints: [
-      "Consulta la pestaña 'Herramientas Mágicas' para revisar el JSON Schema con los nombres de funciones y parámetros.",
-      "Oleada 1 (Dementores en el puente): tool 'lanzar_contrahechizo' con hechizo 'Expecto Patronum' y sector 'puente'.",
-      "Oleada 2 (Impactos en la cúpula): tool 'reforzar_barrera' en sector 'patio_central' con potencia entre 50 y 100.",
-      "Oleada 3 (Gigantes derribando puertas): tool 'activar_estatuas_piertotum' con orden 'bloquear_puerta_principal'.",
-      "Oleada 4 (Bellatrix en el viaducto): tool 'lanzar_contrahechizo' con hechizo 'Expelliarmus' y sector 'viaducto'.",
+      "Revisa la pestaña 'guia_rapida_adk.py' y 'especificacion_tools.json' para ver la firma exacta de las 3 funciones que debes definir.",
+      "No olvides registrar las nuevas funciones dentro de la lista `tools=[lanzar_contrahechizo, reforzar_barrera, activar_estatuas_piertotum]` en `root_agent`.",
+      "En el `instruction` de `root_agent`, sé explícito con los nombres de sectores ('puente', 'patio_central', 'viaducto'), hechizos ('Expecto Patronum', 'Expelliarmus') y la orden ('bloquear_puerta_principal').",
+      "Si alguna oleada falla al evaluar, haz clic en 'Ver respuesta' sobre la oleada fallida para ver qué herramienta o argumento invocó tu agente.",
     ],
     attachments: [
       {
+        id: "adk_guide",
+        name: "guia_rapida_adk.py",
+        description: "Guía Rápida de Google ADK en Python",
+        type: "code",
+        language: "python",
+        content: ADK_REFERENCE_GUIDE,
+      },
+      {
         id: "battle_tools",
-        name: "herramientas_defensa.json",
-        description: "Catálogo de Tools (Function Calling Schema) de Hogwarts",
+        name: "especificacion_tools.json",
+        description: "Especificación de las 3 Funciones Python y Argumentos",
         type: "code",
         language: "json",
         content: BATTLE_TOOLS_SCHEMA,
       },
       {
         id: "battle_waves",
-        name: "oleadas_enemigas.json",
-        description: "Registro de Amenazas de la Invasión Mortífaga",
+        name: "oleadas_mortifagas.json",
+        description: "Los 4 Ataques que Simulará el Profesor",
         type: "data",
         language: "json",
         content: BATTLE_SCENARIOS,
@@ -542,10 +633,11 @@ export const CLASSES: Record<string, ClassDefinition> = {
   divination: {
     id: "divination",
     title: "Desafío 3: La Batalla de Hogwarts",
-    professor: "Comando de Defensa de Hogwarts (McGonagall y la Orden del Fénix)",
-    subject: "Estructurar Salidas: Agentes Autónomos, Tool Calling y Defensa del Castillo",
+    professor: "Profesor Albus Dumbledore",
+    subject: "Construir Agentes: Google ADK (Agent Development Kit), Tools y Defensa del Castillo",
     icon: "⚔️",
-    description: "La barrera de Hogwarts tiembla ante el asedio mortífago. Programa la mente de un Agente que neutralice las 4 oleadas invocando herramientas con Function Calling estricto.",
-    assignment: "Diseña las llamadas a herramientas y el razonamiento del Agente Guardián de Hogwarts para neutralizar las 4 oleadas de ataque de los Mortífagos.",
+    description: "Programa en Python un Agente Defensor con Google ADK capaz de repeler las 4 oleadas del asedio mortífago.",
+    assignment: "Construye en Python el Agente Guardián de Hogwarts usando Google ADK (`from google.adk.agents import Agent`) para neutralizar las 4 oleadas de ataque de los Mortífagos.",
   },
 };
+
