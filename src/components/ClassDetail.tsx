@@ -369,7 +369,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
               </span>
               <span className="px-3 py-1 rounded-full bg-rose-500/25 text-rose-200 border border-rose-500/50 font-mono font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(244,63,94,0.3)]">
                 <Flame className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
-                4 Oleadas de Mortífagos
+                7 Oleadas de Mortífagos
               </span>
             </div>
           </div>
@@ -468,7 +468,13 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
                     : "bg-black/60 text-stone-400 hover:text-white border border-stone-800"
                 }`}
               >
-                {att.type === "code" ? <Code2 className="w-4 h-4" /> : <Database className="w-4 h-4" />}
+                {att.type === "code" ? (
+                  <Code2 className="w-4 h-4" />
+                ) : att.type === "image" ? (
+                  <BookOpen className="w-4 h-4 text-amber-300" />
+                ) : (
+                  <Database className="w-4 h-4" />
+                )}
                 <span>{att.name}</span>
               </button>
             ))}
@@ -517,6 +523,8 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
                 <div className="flex items-center gap-2">
                   {currentAttachment.type === "code" ? (
                     <Code2 className="w-4 h-4 text-amber-400" />
+                  ) : currentAttachment.type === "image" ? (
+                    <BookOpen className="w-4 h-4 text-amber-400" />
                   ) : (
                     <Database className="w-4 h-4 text-blue-400" />
                   )}
@@ -525,28 +533,50 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
                     {currentAttachment.description}
                   </span>
                 </div>
-                <button
-                  onClick={() => handleCopy(currentAttachment.id, currentAttachment.content)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-mono font-bold transition-all cursor-pointer"
-                >
-                  {copiedId === currentAttachment.id ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedId === currentAttachment.id ? "¡Copiado!" : "Copiar"}</span>
-                </button>
+                {currentAttachment.type === "image" ? (
+                  <a
+                    href={currentAttachment.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Abrir pergamino completo</span>
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => handleCopy(currentAttachment.id, currentAttachment.content)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-mono font-bold transition-all cursor-pointer"
+                  >
+                    {copiedId === currentAttachment.id ? <Check className="w-3.5 h-3.5 text-amber-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedId === currentAttachment.id ? "¡Copiado!" : "Copiar"}</span>
+                  </button>
+                )}
               </div>
-              <div className="p-4 sm:p-5 overflow-x-auto text-xs font-mono text-amber-100/90 bg-[#101014] leading-relaxed max-h-[520px]">
-                <table className="w-full border-collapse">
-                  <tbody>
-                    {currentAttachment.content.split("\n").map((line, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="select-none text-stone-600 pr-4 text-right align-top w-12 border-r border-stone-800/80 mr-3 text-[11px] font-mono">
-                          {idx + 1}
-                        </td>
-                        <td className="pl-4 whitespace-pre font-mono">{line}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {currentAttachment.type === "image" ? (
+                <div className="p-4 sm:p-6 bg-[#120e0a] flex flex-col items-center justify-center">
+                  <img
+                    src={currentAttachment.content}
+                    alt={currentAttachment.description}
+                    className="max-h-[680px] w-auto rounded-xl border-2 border-amber-700/50 shadow-2xl object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="p-4 sm:p-5 overflow-x-auto text-xs font-mono text-amber-100/90 bg-[#101014] leading-relaxed max-h-[520px]">
+                  <table className="w-full border-collapse">
+                    <tbody>
+                      {currentAttachment.content.split("\n").map((line, idx) => (
+                        <tr key={idx} className="hover:bg-white/5 transition-colors">
+                          <td className="select-none text-stone-600 pr-4 text-right align-top w-12 border-r border-stone-800/80 mr-3 text-[11px] font-mono">
+                            {idx + 1}
+                          </td>
+                          <td className="pl-4 whitespace-pre font-mono">{line}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -585,7 +615,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
                         "Auditoría y detección de discrepancias",
                       ]
                     : [
-                        "Firmas exactas de las 3 funciones Python",
+                        "Firmas de las 6 funciones Python y el Grimorio",
                         "Registro de herramientas en tools=[...]",
                         "Directrices tácticas en el parámetro instruction",
                         "Diagnóstico de fallos en la simulación de ataque",

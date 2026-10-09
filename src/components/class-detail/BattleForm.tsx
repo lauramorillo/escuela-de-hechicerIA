@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Code2, RefreshCw, Swords, AlertCircle, Upload, RotateCcw, ShieldCheck, Wrench } from "lucide-react";
+import { Code2, RefreshCw, Swords, AlertCircle, Upload, RotateCcw, ShieldCheck, Wrench, BookOpen, Eye, X, ExternalLink } from "lucide-react";
 
 interface BattleFormProps {
   answerText: string;
@@ -15,51 +15,37 @@ export const DEFAULT_ADK_AGENT_SKELETON = `from google.adk.agents import Agent
 
 
 # =====================================================================
-# 1. ENCANTAMIENTO DE EJEMPLO (YA CREADO Y CONFIGURADO):
-# Invocado por el agente en la Oleada 1 (Dementores en el puente):
-#   invocar_patronus(sector="puente")
+# 1. ACCIÓN DE EJEMPLO (YA CREADA Y CONFIGURADA):
+# Invocada por el agente en la Oleada 1 (Dementores en el Puente Cubierto)
 # =====================================================================
-def invocar_patronus(sector: str) -> dict:
-    """Conjura el encantamiento Expecto Patronum para ahuyentar Dementores en un sector del castillo.
-
-    Args:
-        sector: Sector del castillo donde atacan los Dementores (ej. "puente").
-    """
+def espantar_dementores() -> dict:
+    """Conjura el encantamiento Patronus para ahuyentar a los Dementores."""
     return {
-        "status": "ok",
         "hechizo": "Expecto Patronum",
-        "sector": sector,
     }
 
 
 # =====================================================================
-# TODO 2: CREA LA FUNCIÓN reforzar_barrera(sector: str, potencia: int) -> dict
-# Debe ser invocada por tu agente en la Oleada 2 (Cúpula al 15% en patio central):
-#   reforzar_barrera(sector="patio_central", potencia=85)  # potencia entre 50 y 100
-# Recuerda incluir type hints (str, int), un docstring y devolver un dict.
+# TODO: CREA LAS 6 FUNCIONES DEFENSIVAS RESTANTES
+# Consulta el pergamino "grimorio_hechizos.jpg" para descubrir qué
+# encantamiento corresponde a cada acción y devuélvelo en {"hechizo": "..."}:
+#
+# 2. lanzar_escudo() -> dict          (Oleada 2: Lluvia de maleficios en el Patio)
+# 3. activar_estatuas() -> dict       (Oleada 3: Gigantes en el Portón Principal)
+# 4. desarmar_adversario() -> dict    (Oleada 4: Bellatrix Lestrange en el Viaducto)
+# 5. extinguir_incendio() -> dict     (Oleada 5: Fuego descontrolado en el Gran Comedor)
+# 6. petrificar_enemigo() -> dict     (Oleada 6: Mortífagos infiltrados en Astronomía)
+# 7. iluminar_tinieblas() -> dict     (Oleada 7: Oscuridad total en las Mazmorras)
+#
+# Recuerda incluir el type hint (-> dict), un docstring descriptivo
+# y devolver un diccionario {"hechizo": "<NOMBRE_DEL_HECHIZO>"}.
 # =====================================================================
 
 
 # =====================================================================
-# TODO 3: CREA LA FUNCIÓN activar_estatuas_piertotum(orden: str) -> dict
-# Debe ser invocada por tu agente en la Oleada 3 (Gigantes en el portón exterior):
-#   activar_estatuas_piertotum(orden="bloquear_puerta_principal")
-# Recuerda incluir el type hint (str), un docstring y devolver un dict.
-# =====================================================================
-
-
-# =====================================================================
-# TODO 4: CREA LA FUNCIÓN lanzar_expelliarmus(sector: str) -> dict
-# Debe ser invocada por tu agente en la Oleada 4 (Bellatrix Lestrange en el viaducto):
-#   lanzar_expelliarmus(sector="viaducto")
-# Recuerda incluir el type hint (str), un docstring y devolver un dict.
-# =====================================================================
-
-
-# =====================================================================
-# TODO 5: COMPLETA EL AGENTE DEFENSOR (root_agent)
-# 1. Añade en 'instruction' las directrices para las Oleadas 2, 3 y 4.
-# 2. Registra tus 3 nuevas funciones dentro de la lista 'tools=[...]'.
+# TODO: COMPLETA EL AGENTE DEFENSOR (root_agent)
+# 1. Añade en 'instruction' las directrices para las 7 oleadas.
+# 2. Registra las 7 funciones dentro de la lista 'tools=[...]'.
 # =====================================================================
 root_agent = Agent(
     name="guardian_hogwarts",
@@ -67,13 +53,14 @@ root_agent = Agent(
     description="Guardián mágico autónomo experto en encantamientos defensivos para proteger Hogwarts.",
     instruction="""
     Eres el Guardián Mágico Autónomo encargado de defender Hogwarts donde la Orden del Fénix no alcanza.
-    Ante cada amenaza, invoca inmediatamente el encantamiento correspondiente:
-    - Si atacan los Dementores en el Puente Cubierto, invoca invocar_patronus con sector="puente".
-    - TODO: Añade aquí las directrices para la cúpula del patio_central, los gigantes en la puerta principal y Bellatrix en el viaducto.
+    Ante cada amenaza, invoca inmediatamente la herramienta defensiva correspondiente:
+    - Si atacan los Dementores en el Puente Cubierto, invoca espantar_dementores.
+    - TODO: Añade aquí las directrices para las 6 amenazas restantes.
     """,
     tools=[
-        invocar_patronus,
-        # Añade aquí: reforzar_barrera, activar_estatuas_piertotum, lanzar_expelliarmus
+        espantar_dementores,
+        # Añade aquí: lanzar_escudo, activar_estatuas, desarmar_adversario,
+        #             extinguir_incendio, petrificar_enemigo, iluminar_tinieblas
     ],
 )
 `;
@@ -89,6 +76,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>("");
+  const [showGrimoire, setShowGrimoire] = useState<boolean>(false);
   const canSubmit = !submitting && answerText.trim().length > 0;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,71 +99,133 @@ export const BattleForm: React.FC<BattleFormProps> = ({
       className="flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl border shadow-2xl relative bg-gradient-to-b from-[#080d1e] to-black border-indigo-900/60"
     >
       <div>
-        {/* Resumen rápido de los 4 encantamientos Python requeridos */}
+        {/* Resumen rápido de las 7 acciones defensivas Python requeridas + botón del Grimorio */}
         <div className="mb-5 p-4 rounded-xl bg-indigo-950/40 border border-indigo-800/60">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300 mb-3">
-            <Wrench className="w-4 h-4 text-amber-400" />
-            <span>Repertorio de 4 Encantamientos Python que debe tener tu Agente ADK (`tools=[...]`)</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300">
+              <Wrench className="w-4 h-4 text-amber-400" />
+              <span>7 Acciones Defensivas Python (`tools=[...]`)</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowGrimoire((prev) => !prev)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-200 text-xs font-bold transition-all cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.2)]"
+            >
+              {showGrimoire ? <X className="w-3.5 h-3.5 text-amber-300" /> : <BookOpen className="w-3.5 h-3.5 text-amber-300" />}
+              <span>{showGrimoire ? "Ocultar Grimorio de Hechizos" : "📜 Abrir Grimorio de Hechizos (Chuleta)"}</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-            <div className="p-3 rounded-lg bg-black/60 border border-emerald-800/50">
+          {showGrimoire && (
+            <div className="mb-4 p-3 rounded-xl bg-black/80 border-2 border-amber-600/50 shadow-2xl">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-amber-900/40">
+                <div className="flex items-center gap-2 text-xs text-amber-200 font-bold">
+                  <Eye className="w-4 h-4 text-amber-400" />
+                  <span>Grimorio de Encantamientos de Hogwarts — Busca el hechizo adecuado para cada función</span>
+                </div>
+                <a
+                  href="/grimorio-hechizos.jpg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] text-amber-300 hover:text-amber-100 underline font-mono"
+                >
+                  <span>Abrir imagen a tamaño completo</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <div className="flex justify-center bg-[#120e0a] rounded-lg p-2 overflow-hidden">
+                <img
+                  src="/grimorio-hechizos.jpg"
+                  alt="Grimorio de Encantamientos de Hogwarts"
+                  className="max-h-[540px] w-auto rounded-lg object-contain border border-amber-900/40 shadow-lg"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+            <div className="p-2.5 rounded-lg bg-black/60 border border-emerald-800/50">
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="font-mono font-bold text-emerald-300">1. invocar_patronus</span>
+                <span className="font-mono font-bold text-emerald-300">1. espantar_dementores() -&gt; dict</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/50">
                   En esqueleto
                 </span>
               </div>
-              <p className="font-mono text-[11px] text-stone-300 mb-1.5">
-                (sector: str) -&gt; dict
-              </p>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 1 (Dementores):</strong> invocar con <code className="text-amber-200">sector="puente"</code>.
+                • <strong>Oleada 1 (Dementores en puente):</strong> devuelve <code className="text-emerald-300">{`{"hechizo": "Expecto Patronum"}`}</code>.
               </p>
             </div>
 
-            <div className="p-3 rounded-lg bg-black/60 border border-amber-700/50">
+            <div className="p-2.5 rounded-lg bg-black/60 border border-amber-700/50">
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="font-mono font-bold text-amber-300">2. reforzar_barrera</span>
+                <span className="font-mono font-bold text-amber-300">2. lanzar_escudo() -&gt; dict</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/50">
                   Crear función
                 </span>
               </div>
-              <p className="font-mono text-[11px] text-stone-300 mb-1.5">
-                (sector: str, potencia: int) -&gt; dict
-              </p>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 2 (Cúpula al 15%):</strong> invocar con <code className="text-amber-200">sector="patio_central"</code> y <code className="text-amber-200">potencia</code> entre <code className="text-amber-200">50</code> y <code className="text-amber-200">100</code>.
+                • <strong>Oleada 2 (Maleficios en el patio):</strong> consulta el Grimorio para elegir el encantamiento escudo.
               </p>
             </div>
 
-            <div className="p-3 rounded-lg bg-black/60 border border-amber-700/50">
+            <div className="p-2.5 rounded-lg bg-black/60 border border-amber-700/50">
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="font-mono font-bold text-amber-300">3. activar_estatuas_piertotum</span>
+                <span className="font-mono font-bold text-amber-300">3. activar_estatuas() -&gt; dict</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/50">
                   Crear función
                 </span>
               </div>
-              <p className="font-mono text-[11px] text-stone-300 mb-1.5">
-                (orden: str) -&gt; dict
-              </p>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 3 (Gigantes en portón):</strong> invocar con <code className="text-amber-200">orden="bloquear_puerta_principal"</code>.
+                • <strong>Oleada 3 (Gigantes en portón):</strong> consulta el Grimorio para animar las estatuas y armaduras.
               </p>
             </div>
 
-            <div className="p-3 rounded-lg bg-black/60 border border-amber-700/50">
+            <div className="p-2.5 rounded-lg bg-black/60 border border-amber-700/50">
               <div className="flex items-center justify-between gap-1 mb-1">
-                <span className="font-mono font-bold text-amber-300">4. lanzar_expelliarmus</span>
+                <span className="font-mono font-bold text-amber-300">4. desarmar_adversario() -&gt; dict</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/50">
                   Crear función
                 </span>
               </div>
-              <p className="font-mono text-[11px] text-stone-300 mb-1.5">
-                (sector: str) -&gt; dict
-              </p>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 4 (Bellatrix en viaducto):</strong> invocar con <code className="text-amber-200">sector="viaducto"</code>.
+                • <strong>Oleada 4 (Bellatrix en viaducto):</strong> consulta el Grimorio para arrebatar la varita al enemigo.
+              </p>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-black/60 border border-amber-700/50">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="font-mono font-bold text-amber-300">5. extinguir_incendio() -&gt; dict</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/50">
+                  Crear función
+                </span>
+              </div>
+              <p className="text-stone-400 leading-relaxed">
+                • <strong>Oleada 5 (Fuego en Gran Comedor):</strong> consulta el Grimorio para invocar agua desde la varita.
+              </p>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-black/60 border border-amber-700/50">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="font-mono font-bold text-amber-300">6. petrificar_enemigo() -&gt; dict</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/50">
+                  Crear función
+                </span>
+              </div>
+              <p className="text-stone-400 leading-relaxed">
+                • <strong>Oleada 6 (Infiltrados en Astronomía):</strong> consulta el Grimorio para inmovilizar el cuerpo del intruso.
+              </p>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-black/60 border border-amber-700/50 md:col-span-2">
+              <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="font-mono font-bold text-amber-300">7. iluminar_tinieblas() -&gt; dict</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/50">
+                  Crear función
+                </span>
+              </div>
+              <p className="text-stone-400 leading-relaxed">
+                • <strong>Oleada 7 (Oscuridad en Mazmorras):</strong> consulta el Grimorio para encender luz mágica en la punta de la varita.
               </p>
             </div>
           </div>
@@ -228,7 +278,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
 
         <textarea
           id="magic-answer"
-          rows={22}
+          rows={24}
           value={answerText}
           onChange={(e) => setAnswerText(e.target.value)}
           placeholder={DEFAULT_ADK_AGENT_SKELETON}
@@ -240,7 +290,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
         <div className="mt-2.5 flex items-center gap-2 text-[11px] text-stone-400 font-sans">
           <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
           <span>
-            Al enviar, el profesor arrancará tu <code className="text-indigo-300">root_agent</code> y simulará los 4 ataques mortífagos para comprobar qué herramientas Python invoca.
+            Al enviar, el profesor arrancará tu <code className="text-indigo-300">root_agent</code> y simulará las 7 oleadas mortífagas para comprobar qué funciones invoca y qué hechizo devuelve cada una.
           </span>
         </div>
 
@@ -276,7 +326,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
           {submitting ? (
             <>
               <RefreshCw className="w-5 h-5 animate-spin text-white" />
-              <span>Arrancando tu root_agent y simulando las 4 oleadas...</span>
+              <span>Arrancando tu root_agent y simulando las 7 oleadas...</span>
             </>
           ) : (
             <>
@@ -289,3 +339,4 @@ export const BattleForm: React.FC<BattleFormProps> = ({
     </form>
   );
 };
+
