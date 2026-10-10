@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Sparkles, ArrowLeft, Award, CheckCircle2, AlertCircle, Wand2, Shield, Eye, Flame, Map, Swords } from "lucide-react";
+import { Sparkles, ArrowLeft, Award, CheckCircle2, AlertCircle, Wand2, Shield, Eye, Flame, Map, Swords, Lock, Users } from "lucide-react";
 import { StudentBadge } from "./StudentBadge";
 
 export interface ClassAttachment {
@@ -90,6 +90,7 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
   onBackToResult,
 }) => {
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [unlockedClasses, setUnlockedClasses] = useState<string[]>([]);
   const [submissions, setSubmissions] = useState<Record<string, SubmissionItem>>({});
   const [houseScores, setHouseScores] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -98,23 +99,28 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
   const theme = HOUSE_THEMES[normalizedHouse] || HOUSE_THEMES.gryffindor;
 
   useEffect(() => {
-    fetchClasses();
+    fetchClasses(true);
+    const interval = setInterval(() => {
+      fetchClasses(false);
+    }, 4000);
+    return () => clearInterval(interval);
   }, [studentId]);
 
-  const fetchClasses = async () => {
+  const fetchClasses = async (showLoading = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch("/api/classes");
       if (res.ok) {
         const data = await res.json();
         setClasses(data.classes || []);
+        setUnlockedClasses(Array.isArray(data.unlockedClasses) ? data.unlockedClasses : []);
         setSubmissions(data.submissions || {});
         setHouseScores(data.houseScores || {});
       }
     } catch (err) {
       console.error("Error al cargar las clases:", err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -210,6 +216,7 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
           {classes.map((cls, idx) => {
             const submission = submissions[cls.id];
             const isCompleted = Boolean(submission);
+            const isUnlocked = unlockedClasses.includes(cls.id);
 
             return (
               <motion.div
@@ -217,30 +224,48 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className="relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-stone-900/90 to-black/95 border border-amber-900/50 hover:border-amber-500/60 shadow-[0_10px_35px_rgba(0,0,0,0.8)] transition-all group overflow-hidden"
+                whileHover={isUnlocked ? { y: -4, transition: { duration: 0.2 } } : undefined}
+                className={`relative flex flex-col justify-between p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-stone-900/90 to-black/95 border shadow-[0_10px_35px_rgba(0,0,0,0.8)] transition-all group overflow-hidden ${
+                  isUnlocked
+                    ? "border-amber-900/50 hover:border-amber-500/60"
+                    : "border-stone-800/80 opacity-85"
+                }`}
               >
                 {/* Iluminación de fondo al hover */}
-                <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                {isUnlocked && (
+                  <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                )}
 
                 {/* Imagen de fondo temática para cada desafío con luminosidad calibrada */}
                 {cls.id === "transfiguration" && (
                   <div
-                    className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-65 transition-all duration-500 pointer-events-none filter contrast-115 brightness-105 scale-100 group-hover:scale-105"
+                    className={`absolute inset-0 bg-cover bg-center transition-all duration-500 pointer-events-none ${
+                      isUnlocked
+                        ? "opacity-40 group-hover:opacity-65 filter contrast-115 brightness-105 scale-100 group-hover:scale-105"
+                        : "opacity-15 filter grayscale contrast-125"
+                    }`}
                     style={{ backgroundImage: "url('/transfiguracion-bg.jpg')" }}
                   />
                 )}
 
                 {cls.id === "defense" && (
                   <div
-                    className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-65 transition-all duration-500 pointer-events-none filter contrast-115 brightness-105 scale-100 group-hover:scale-105"
+                    className={`absolute inset-0 bg-cover bg-center transition-all duration-500 pointer-events-none ${
+                      isUnlocked
+                        ? "opacity-40 group-hover:opacity-65 filter contrast-115 brightness-105 scale-100 group-hover:scale-105"
+                        : "opacity-15 filter grayscale contrast-125"
+                    }`}
                     style={{ backgroundImage: "url('/mapa-merodeador-bg.jpg')" }}
                   />
                 )}
 
                 {(cls.id === "battle" || cls.id === "divination") && (
                   <div
-                    className="absolute inset-0 bg-cover bg-center opacity-40 group-hover:opacity-65 transition-all duration-500 pointer-events-none filter contrast-115 brightness-105 scale-100 group-hover:scale-105"
+                    className={`absolute inset-0 bg-cover bg-center transition-all duration-500 pointer-events-none ${
+                      isUnlocked
+                        ? "opacity-40 group-hover:opacity-65 filter contrast-115 brightness-105 scale-100 group-hover:scale-105"
+                        : "opacity-15 filter grayscale contrast-125"
+                    }`}
                     style={{ backgroundImage: "url('/mortifago-bg.jpg')" }}
                   />
                 )}
@@ -251,10 +276,21 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                 <div className="relative z-10 flex-1 flex flex-col">
                   {/* Encabezado de la tarjeta */}
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-14 h-14 rounded-xl bg-black/60 border border-amber-600/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
-                      {getClassIcon(cls.id)}
+                    <div
+                      className={`w-14 h-14 rounded-xl bg-black/60 border flex items-center justify-center shadow-inner transition-transform ${
+                        isUnlocked
+                          ? "border-amber-600/30 group-hover:scale-105"
+                          : "border-stone-700/60 opacity-60"
+                      }`}
+                    >
+                      {isUnlocked ? getClassIcon(cls.id) : <Lock className="w-7 h-7 text-stone-400" />}
                     </div>
-                    {isCompleted ? (
+                    {!isUnlocked ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-stone-900/90 text-stone-400 border border-stone-700/80 flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-amber-500/70" />
+                        Sellado
+                      </span>
+                    ) : isCompleted ? (
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${getGradeColor(submission.grade)}`}>
                         {submission.first_house_bonus ? (
                           <span>🏆</span>
@@ -270,8 +306,8 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                         } pts
                       </span>
                     ) : (
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-stone-800/80 text-stone-400 border border-stone-700">
-                        Pendiente
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-950/60 text-amber-300 border border-amber-600/40">
+                        Activo
                       </span>
                     )}
                   </div>
@@ -318,17 +354,33 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                       ? "Descubre la identidad del merodeador secreto burlando al guardián y blinda el mapa con defensas mágicas."
                       : "Coordina los contrahechizos del castillo para repeler las cuatro oleadas del asedio mortífago."}
                   </p>
+                  {isUnlocked && isCompleted && ["E", "S", "A"].includes(submission.grade) && (
+                    <div className="mt-auto pt-2 flex items-start gap-2 text-[11px] text-emerald-300/90 bg-emerald-950/30 border border-emerald-700/40 rounded-lg px-2.5 py-2 font-sans">
+                      <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                      <span>¡Desafío superado! Ayuda a tus compañeros de <strong>{theme.name}</strong> a resolverlo para sumar más puntos.</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Pie de tarjeta: botón para entrar o reintentar */}
+                {/* Pie de tarjeta: botón para entrar o bloqueado */}
                 <div className="relative z-10 mt-4 pt-4 border-t border-stone-800/80">
-                  <button
-                    onClick={() => onSelectClass(cls.id)}
-                    className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:from-amber-500 hover:to-yellow-400 text-black shadow-lg hover:shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all duration-300 cursor-pointer"
-                  >
-                    <Wand2 className="w-4 h-4 text-stone-900" />
-                    <span>{isCompleted ? "Revisar / Reintentar" : "Entrar a Clase"}</span>
-                  </button>
+                  {isUnlocked ? (
+                    <button
+                      onClick={() => onSelectClass(cls.id)}
+                      className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:from-amber-500 hover:to-yellow-400 text-black shadow-lg hover:shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all duration-300 cursor-pointer"
+                    >
+                      <Wand2 className="w-4 h-4 text-stone-900" />
+                      <span>{isCompleted ? "Revisar / Mejorar Nota" : "Entrar a Clase"}</span>
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 bg-stone-900/90 border border-stone-700/70 text-stone-400 cursor-not-allowed"
+                    >
+                      <Lock className="w-4 h-4 text-stone-500" />
+                      <span>Espera a la Profesora</span>
+                    </button>
+                  )}
                 </div>
               </motion.div>
             );

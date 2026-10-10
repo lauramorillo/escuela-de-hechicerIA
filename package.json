@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "clean:test-data": "tsx scripts/clean_test_data.ts",
     "workshop": "tsx scripts/set_workshop.ts",
-    "passkey": "tsx scripts/set_passkey.ts"
+    "passkey": "tsx scripts/set_passkey.ts",
+    "professor-passkey": "tsx scripts/set_professor_passkey.ts"
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.2.0",

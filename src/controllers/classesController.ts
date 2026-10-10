@@ -41,15 +41,35 @@ export async function getAvailableClasses(req: Request, res: Response): Promise<
   const student = await dbService.getStudent(workshopId, identity.studentId);
   const house = student?.house || (identity.house?.toLowerCase() as HouseId) || "gryffindor";
 
-  const [submissions, houseScores] = await Promise.all([
+  const [submissions, houseScores, unlockedClasses] = await Promise.all([
     dbService.getSubmissions(workshopId, identity.studentId),
     dbService.getHouseScores(workshopId),
+    dbService.getUnlockedClasses(workshopId),
   ]);
 
-  const canonicalClasses = [CLASSES.transfiguration, CLASSES.defense, CLASSES.battle];
+  const unlockedSet = new Set(unlockedClasses);
+  const canonicalClasses = [CLASSES.transfiguration, CLASSES.defense, CLASSES.battle].map((cls) => {
+    if (unlockedSet.has(cls.id)) {
+      return cls;
+    }
+    // Si el desafío está bloqueado, ocultar el enunciado, adjuntos y detalles para que nadie pueda cotillearlo
+    return {
+      id: cls.id,
+      title: cls.title,
+      professor: cls.professor,
+      subject: cls.subject,
+      icon: cls.icon,
+      description: cls.description,
+      assignment: "🔒 Este desafío permanece sellado por el Claustro. Espera a que la Profesora lo active.",
+      attachments: [],
+      subExercises: [],
+      hints: [],
+    };
+  });
 
   res.json({
     classes: canonicalClasses,
+    unlockedClasses,
     submissions,
     houseScores,
     student: {

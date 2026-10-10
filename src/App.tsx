@@ -9,12 +9,23 @@ import { ClassesHub } from './components/ClassesHub.tsx';
 import { ClassDetail } from './components/ClassDetail.tsx';
 import { GatekeeperScreen } from './components/GatekeeperScreen.tsx';
 import { StudentBadge } from './components/StudentBadge.tsx';
+import { ProfessorPanel } from './components/ProfessorPanel.tsx';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-type AppState = 'welcome' | 'scanning' | 'detecting' | 'speaking' | 'result' | 'classes_hub' | 'class_detail' | 'error';
+type AppState =
+  | 'welcome'
+  | 'scanning'
+  | 'detecting'
+  | 'speaking'
+  | 'result'
+  | 'classes_hub'
+  | 'class_detail'
+  | 'professor_panel'
+  | 'professor_winners'
+  | 'error';
 
 
 interface DetectionResult {
@@ -47,6 +58,16 @@ export interface ParsedRoute {
 export function parseRoute(pathname: string): ParsedRoute {
   const clean = pathname.replace(/\/+$/, '') || '/';
 
+  // /profesor/ganadores o /profesora/ganadores o /admin/ganadores
+  if (/^\/(profesor|profesora|admin)\/(ganadores|winners|campeones)$/i.test(clean)) {
+    return { state: 'professor_winners', classId: null };
+  }
+
+  // /profesor o /profesora o /admin
+  if (/^\/(profesor|profesora|admin)$/i.test(clean)) {
+    return { state: 'professor_panel', classId: null };
+  }
+
   // /classes/:classId o /classes
   const classMatch = clean.match(/^\/classes(?:\/([^/]+))?$/i);
   if (classMatch) {
@@ -67,6 +88,10 @@ export function parseRoute(pathname: string): ParsedRoute {
 
 export function getPathForState(state: AppState, classId: string | null): string {
   switch (state) {
+    case 'professor_winners':
+      return '/profesor/ganadores';
+    case 'professor_panel':
+      return '/profesor';
     case 'class_detail':
       return classId && VALID_CLASS_IDS.has(classId) ? `/classes/${classId}` : '/classes';
     case 'classes_hub':
@@ -93,6 +118,9 @@ export default function App() {
     Boolean(localStorage.getItem('sorting_hat_student_id') || localStorage.getItem('sorting_hat_house'));
 
   const [appState, setAppState] = useState<AppState>(() => {
+    if (initialRoute.state === 'professor_panel' || initialRoute.state === 'professor_winners') {
+      return initialRoute.state;
+    }
     if (hasLocalStudent) {
       if (
         initialRoute.state === 'class_detail' ||
@@ -212,8 +240,13 @@ export default function App() {
 
           setCapturedImage(savedPhoto);
 
-          // Respetar la ruta actual solicitada por el usuario (ej: /classes/defense)
+          // Respetar la ruta actual solicitada por el usuario (ej: /classes/defense o /profesor)
           const currentRoute = parseRoute(window.location.pathname);
+          if (currentRoute.state === 'professor_panel' || currentRoute.state === 'professor_winners') {
+            setSelectedClassId(null);
+            setAppState(currentRoute.state);
+            return;
+          }
           if (currentRoute.state === 'class_detail' && currentRoute.classId) {
             setSelectedClassId(currentRoute.classId);
             setAppState('class_detail');
@@ -233,8 +266,13 @@ export default function App() {
             navigateTo('classes_hub', null, true);
           }
         } else {
-          // El usuario no tiene casa asignada: obligar a pasar por la ceremonia
+          // El usuario no tiene casa asignada: obligar a pasar por la ceremonia salvo si entra al panel de profesora
           const currentRoute = parseRoute(window.location.pathname);
+          if (currentRoute.state === 'professor_panel' || currentRoute.state === 'professor_winners') {
+            setSelectedClassId(null);
+            setAppState(currentRoute.state);
+            return;
+          }
           if (currentRoute.state !== 'welcome') {
             setAppState('welcome');
             setSelectedClassId(null);
@@ -258,6 +296,12 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const route = parseRoute(window.location.pathname);
+      if (route.state === 'professor_panel' || route.state === 'professor_winners') {
+        setSelectedClassId(null);
+        setAppState(route.state);
+        return;
+      }
+
       const isAssigned = Boolean(
         result?.house ||
         (typeof localStorage !== 'undefined' && localStorage.getItem('sorting_hat_house'))
@@ -831,6 +875,24 @@ export default function App() {
         return 'bg-black/30 border-white/20';
     }
   };
+
+  if (appState === 'professor_panel' || appState === 'professor_winners') {
+    return (
+      <ProfessorPanel
+        mode={appState === 'professor_winners' ? 'winners' : 'dashboard'}
+        onNavigateMode={(targetMode) => {
+          const nextState = targetMode === 'winners' ? 'professor_winners' : 'professor_panel';
+          setAppState(nextState);
+          navigateTo(nextState, null);
+        }}
+        onExitToApp={() => {
+          const nextState = result?.house ? 'classes_hub' : 'welcome';
+          setAppState(nextState);
+          navigateTo(nextState, null);
+        }}
+      />
+    );
+  }
 
   if (isGateLocked === null) {
     return (

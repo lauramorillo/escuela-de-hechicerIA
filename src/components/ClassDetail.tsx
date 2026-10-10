@@ -96,6 +96,11 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
       if (!res.ok) return;
 
       const data = await res.json();
+      const unlockedList: string[] = Array.isArray(data.unlockedClasses) ? data.unlockedClasses : [];
+      if (!unlockedList.includes(classId)) {
+        onBack();
+        return;
+      }
       if (data.student?.defenseUnlocked) {
         setServerDefenseUnlocked(true);
       }

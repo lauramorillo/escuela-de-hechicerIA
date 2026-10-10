@@ -64,6 +64,21 @@ describe("Frontend SPA Routing (Estandarizado en Inglés)", () => {
     });
   });
 
+  it("debe parsear las rutas exclusivas del panel de profesora y ceremonia de ganadores", () => {
+    expect(parseRoute("/profesor")).toEqual({
+      state: "professor_panel",
+      classId: null,
+    });
+    expect(parseRoute("/profesora")).toEqual({
+      state: "professor_panel",
+      classId: null,
+    });
+    expect(parseRoute("/profesor/ganadores")).toEqual({
+      state: "professor_winners",
+      classId: null,
+    });
+  });
+
   it("debe generar los paths canónicos correctos mediante getPathForState", () => {
     expect(getPathForState("class_detail", "defense")).toBe("/classes/defense");
     expect(getPathForState("class_detail", "transfiguration")).toBe("/classes/transfiguration");
@@ -71,6 +86,8 @@ describe("Frontend SPA Routing (Estandarizado en Inglés)", () => {
     expect(getPathForState("class_detail", "unknown")).toBe("/classes");
     expect(getPathForState("classes_hub", null)).toBe("/classes");
     expect(getPathForState("result", null)).toBe("/result");
+    expect(getPathForState("professor_panel", null)).toBe("/profesor");
+    expect(getPathForState("professor_winners", null)).toBe("/profesor/ganadores");
     expect(getPathForState("welcome", null)).toBe("/");
   });
 });

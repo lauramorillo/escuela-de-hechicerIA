@@ -29,6 +29,18 @@ export async function proxyEvaluation(req: Request, res: Response): Promise<void
     return;
   }
 
+  const workshopIdForCheck = req.body?.workshopId || (await dbService.getEffectiveWorkshopId());
+  const requestedClassId = req.body?.classId;
+  if (requestedClassId) {
+    const unlockedClasses = await dbService.getUnlockedClasses(String(workshopIdForCheck));
+    if (!unlockedClasses.includes(String(requestedClassId))) {
+      res.status(403).json({
+        error: "🔒 Este desafío aún está bloqueado por la Profesora. Espera a que se active para enviar tu solución.",
+      });
+      return;
+    }
+  }
+
   const remoteServiceUrl = getEvaluationServiceUrl();
   const targetUrl = `${remoteServiceUrl.replace(/\/$/, "")}/api/evaluate`;
 
@@ -97,6 +109,18 @@ export async function proxyGuardianChat(req: Request, res: Response): Promise<vo
   if (req.headers["x-proxy-hop"]) {
     res.status(508).json({
       error: "Bucle de proxy detectado: la petición fue redirigida a este mismo servidor.",
+    });
+    return;
+  }
+
+  const workshopIdForCheck =
+    req.body?.workshopId ||
+    req.headers["x-workshop-id"] ||
+    (await dbService.getEffectiveWorkshopId());
+  const unlockedClasses = await dbService.getUnlockedClasses(String(workshopIdForCheck));
+  if (!unlockedClasses.includes("defense")) {
+    res.status(403).json({
+      error: "🔒 El desafío del Mapa del Merodeador aún está sellado por la Profesora.",
     });
     return;
   }

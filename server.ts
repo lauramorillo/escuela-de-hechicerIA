@@ -10,6 +10,13 @@ import { detectAndSort, synthesizeSpeech } from "./src/controllers/sortingContro
 import { getAvailableClasses, unlockDefensePhase1 } from "./src/controllers/classesController.ts";
 import { getGatekeeperStatus, verifyGatekeeperPasskey } from "./src/controllers/gatekeeperController.ts";
 import { proxyEvaluation, proxyGuardianChat } from "./src/controllers/evaluationProxyController.ts";
+import {
+  getProfessorStatus,
+  verifyProfessorPasskey,
+  logoutProfessor,
+  getProfessorDashboard,
+  toggleClassLock,
+} from "./src/controllers/professorController.ts";
 
 process.on("unhandledRejection", (reason) => {
   console.warn("⚠️ Unhandled Rejection detectada:", reason);
@@ -44,7 +51,7 @@ async function startServer(): Promise<void> {
   // Middleware CORS para llamadas locales y externas
   app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-student-id, x-student-house, x-workshop-id");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, x-student-id, x-student-house, x-workshop-id, x-professor-password");
     res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
     if (req.method === "OPTIONS") {
       res.sendStatus(200);
@@ -55,6 +62,11 @@ async function startServer(): Promise<void> {
 
   app.get("/api/gatekeeper/status", getGatekeeperStatus);
   app.post("/api/gatekeeper/verify", verifyGatekeeperPasskey);
+  app.get("/api/professor/status", getProfessorStatus);
+  app.post("/api/professor/verify", verifyProfessorPasskey);
+  app.post("/api/professor/logout", logoutProfessor);
+  app.get("/api/professor/dashboard", getProfessorDashboard);
+  app.post("/api/professor/classes/toggle", toggleClassLock);
   app.get("/api/me", getStudentSession);
   app.all("/api/reset", resetSession);
   app.get("/api/houses", getHouseStats);

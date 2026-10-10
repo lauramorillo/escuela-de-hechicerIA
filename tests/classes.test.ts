@@ -200,4 +200,89 @@ describe("Clases y Profesores Agénticos", () => {
     const studentAfter = await dbService.getStudent(ws, studentId);
     expect(studentAfter?.defense_unlocked).toBe(true);
   });
+
+  it("debe iniciar todos los desafíos bloqueados por defecto y permitir a la profesora activarlos o bloquearlos", async () => {
+    const ws = trackWorkshop(`test-locks-${Date.now()}`);
+    await dbService.ensureHousesInitialized(ws);
+
+    const initialUnlocked = await dbService.getUnlockedClasses(ws);
+    expect(initialUnlocked).toEqual([]);
+
+    const afterFirst = await dbService.setClassUnlocked(ws, "transfiguration", true);
+    expect(afterFirst).toContain("transfiguration");
+    expect(afterFirst).not.toContain("defense");
+
+    const afterSecond = await dbService.setClassUnlocked(ws, "defense", true);
+    expect(afterSecond).toEqual(expect.arrayContaining(["transfiguration", "defense"]));
+
+    const afterRelock = await dbService.setClassUnlocked(ws, "transfiguration", false);
+    expect(afterRelock).toEqual(["defense"]);
+  });
+
+  it("debe proclamar la casa ganadora y el alumno MVP que más puntos ha aportado dentro de esa casa", async () => {
+    const ws = trackWorkshop(`test-mvp-${Date.now()}`);
+    await dbService.ensureHousesInitialized(ws);
+
+    await dbService.assignStudentToBalancedHouse(ws, "raven_alice", "ravenclaw");
+    await dbService.assignStudentToBalancedHouse(ws, "raven_bob", "ravenclaw");
+    await dbService.assignStudentToBalancedHouse(ws, "slyth_draco", "slytherin");
+
+    // raven_alice aporta 25 + 35 = 60 pts a Ravenclaw
+    await dbService.saveSubmission(ws, "raven_alice", {
+      class_id: "transfiguration",
+      grade: "E",
+      grade_label: "Extraordinario",
+      points: 25,
+      total_awarded_points: 25,
+      feedback: "Genial",
+      advice: "Sigue así",
+      house: "ravenclaw",
+    } as any);
+    await dbService.saveSubmission(ws, "raven_alice", {
+      class_id: "defense",
+      grade: "E",
+      grade_label: "Extraordinario",
+      points: 25,
+      bonus_points: 10,
+      total_awarded_points: 35,
+      first_house_bonus: true,
+      feedback: "Primera de la casa",
+      advice: "Excelente",
+      house: "ravenclaw",
+    } as any);
+
+    // raven_bob aporta 15 pts a Ravenclaw (Total Ravenclaw = 75 pts)
+    await dbService.saveSubmission(ws, "raven_bob", {
+      class_id: "transfiguration",
+      grade: "S",
+      grade_label: "Supera las expectativas",
+      points: 15,
+      total_awarded_points: 15,
+      feedback: "Bien",
+      advice: "Casi",
+      house: "ravenclaw",
+    } as any);
+
+    // slyth_draco aporta 65 pts individuales pero Slytherin tiene 65 pts < 75 pts de Ravenclaw
+    await dbService.saveSubmission(ws, "slyth_draco", {
+      class_id: "battle",
+      grade: "E",
+      grade_label: "Extraordinario",
+      points: 65,
+      total_awarded_points: 65,
+      feedback: "Bien",
+      advice: "Bien",
+      house: "slytherin",
+    } as any);
+
+    const summary = await dbService.getTournamentSummary(ws);
+    expect(summary.winningHouse).toBe("ravenclaw");
+    expect(summary.houseScores.ravenclaw).toBe(75);
+    expect(summary.mvpStudent).not.toBeNull();
+    // El MVP premiado debe ser de la casa ganadora (raven_alice con 60 pts)
+    expect(summary.mvpStudent?.studentId).toBe("raven_alice");
+    expect(summary.mvpStudent?.house).toBe("ravenclaw");
+    expect(summary.mvpStudent?.totalPoints).toBe(60);
+    expect(summary.mvpStudent?.completedCount).toBe(2);
+  });
 });

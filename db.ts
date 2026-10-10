@@ -135,6 +135,39 @@ export interface SubmissionDoc {
 }
 
 
+export interface StudentContribution {
+  studentId: string;
+  house: HouseId;
+  totalPoints: number;
+  completedCount: number;
+  firstHouseBonuses: number;
+  submissions: Record<string, {
+    classId: string;
+    grade: string;
+    points: number;
+    firstHouseBonus?: boolean;
+  }>;
+}
+
+export interface HouseRankingItem {
+  house: HouseId;
+  houseName: string;
+  score: number;
+  membersCount: number;
+  topStudent: StudentContribution | null;
+  students: StudentContribution[];
+}
+
+export interface TournamentSummary {
+  workshopId: string;
+  houseScores: Record<HouseId, number>;
+  houseCounts: Record<HouseId, number>;
+  unlockedClasses: string[];
+  winningHouse: HouseId | null;
+  mvpStudent: StudentContribution | null;
+  houseRankings: HouseRankingItem[];
+}
+
 export interface AssignmentResult {
   studentId: string;
   house: HouseId;
@@ -170,11 +203,118 @@ export function selectBalancedHouse(counts: HouseCounts, preferredHouse?: HouseI
   return lowestHouses[Math.floor(Math.random() * lowestHouses.length)];
 }
 
+export function buildTournamentSummaryFromRaw(
+  workshopId: string,
+  houseScores: Record<HouseId, number>,
+  houseCounts: Record<HouseId, number>,
+  unlockedClasses: string[],
+  studentsMap: Record<string, { house: string }>,
+  submissionsMap: Record<string, Record<string, SubmissionDoc & { house?: string }>>
+): TournamentSummary {
+  const allStudentIds = new Set<string>([
+    ...Object.keys(studentsMap || {}),
+    ...Object.keys(submissionsMap || {}),
+  ]);
+
+  const studentsByHouse: Record<HouseId, StudentContribution[]> = {
+    gryffindor: [],
+    slytherin: [],
+    ravenclaw: [],
+    hufflepuff: [],
+  };
+
+  for (const studentId of allStudentIds) {
+    const studentDoc = studentsMap?.[studentId];
+    const studentSubs = submissionsMap?.[studentId] || {};
+    let house = (studentDoc?.house || "").toLowerCase() as HouseId;
+
+    let totalPoints = 0;
+    let completedCount = 0;
+    let firstHouseBonuses = 0;
+    const formattedSubs: StudentContribution["submissions"] = {};
+
+    for (const [classId, sub] of Object.entries(studentSubs)) {
+      if (!house && sub?.house) {
+        house = sub.house.toLowerCase() as HouseId;
+      }
+      const pts = sub?.total_awarded_points ?? sub?.points ?? 0;
+      totalPoints += pts;
+      if (sub?.grade && ["E", "S", "A"].includes(sub.grade)) {
+        completedCount += 1;
+      }
+      if (sub?.first_house_bonus) {
+        firstHouseBonuses += 1;
+      }
+      formattedSubs[classId] = {
+        classId,
+        grade: sub?.grade || "-",
+        points: pts,
+        firstHouseBonus: Boolean(sub?.first_house_bonus),
+      };
+    }
+
+    if (!HOUSES.includes(house)) {
+      house = "gryffindor";
+    }
+
+    studentsByHouse[house].push({
+      studentId,
+      house,
+      totalPoints,
+      completedCount,
+      firstHouseBonuses,
+      submissions: formattedSubs,
+    });
+  }
+
+  for (const h of HOUSES) {
+    studentsByHouse[h].sort((a, b) => {
+      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+      if (b.completedCount !== a.completedCount) return b.completedCount - a.completedCount;
+      if (b.firstHouseBonuses !== a.firstHouseBonuses) return b.firstHouseBonuses - a.firstHouseBonuses;
+      return a.studentId.localeCompare(b.studentId);
+    });
+  }
+
+  const houseRankings: HouseRankingItem[] = HOUSES.map((house) => {
+    const students = studentsByHouse[house];
+    const topStudent = students.length > 0 ? students[0] : null;
+    return {
+      house,
+      houseName: HOUSE_NAMES[house],
+      score: houseScores[house] ?? 0,
+      membersCount: Math.max(houseCounts[house] ?? 0, students.length),
+      topStudent,
+      students,
+    };
+  }).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const aTop = a.topStudent?.totalPoints ?? 0;
+    const bTop = b.topStudent?.totalPoints ?? 0;
+    if (bTop !== aTop) return bTop - aTop;
+    return b.membersCount - a.membersCount;
+  });
+
+  const winningHouse = houseRankings.length > 0 ? houseRankings[0].house : null;
+  const mvpStudent = houseRankings.length > 0 ? houseRankings[0].topStudent : null;
+
+  return {
+    workshopId,
+    houseScores,
+    houseCounts,
+    unlockedClasses,
+    winningHouse,
+    mvpStudent,
+    houseRankings,
+  };
+}
+
 class InMemoryDb {
   private workshops = new Map<string, {
     houses: Map<HouseId, HouseDoc>;
     students: Map<string, StudentDoc>;
     submissions: Map<string, Map<string, SubmissionDoc>>;
+    unlockedClasses: Set<string>;
   }>();
 
   private getWorkshop(workshopId: string) {
@@ -184,13 +324,14 @@ class InMemoryDb {
       for (const house of HOUSES) {
         houses.set(house, { members_count: 0, score: 0, updated_at: new Date() });
       }
-      ws = { houses, students: new Map(), submissions: new Map() };
+      ws = { houses, students: new Map(), submissions: new Map(), unlockedClasses: new Set() };
       this.workshops.set(workshopId, ws);
     }
     return ws;
   }
 
   private globalPasskey: string | null = "alohomora";
+  private professorPasskey: string = process.env.PROFESSOR_PASSKEY?.trim() || "mcgonagall";
 
   async getGlobalWorkshopId(): Promise<string | null> {
     return DEFAULT_WORKSHOP_ID;
@@ -202,6 +343,118 @@ class InMemoryDb {
 
   async setWorkshopPasskey(passkey: string | null): Promise<void> {
     this.globalPasskey = passkey ? passkey.trim() : null;
+  }
+
+  async getProfessorPasskey(): Promise<string> {
+    if (process.env.PROFESSOR_PASSKEY?.trim()) {
+      return process.env.PROFESSOR_PASSKEY.trim();
+    }
+    return this.professorPasskey;
+  }
+
+  async setProfessorPasskey(passkey: string): Promise<void> {
+    this.professorPasskey = passkey.trim();
+  }
+
+  async getUnlockedClasses(workshopId: string): Promise<string[]> {
+    const ws = this.getWorkshop(workshopId);
+    try {
+      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        const fromFile = parsed.unlockedClasses?.[workshopId];
+        if (Array.isArray(fromFile)) {
+          ws.unlockedClasses = new Set(fromFile);
+        }
+      }
+    } catch {}
+    return Array.from(ws.unlockedClasses);
+  }
+
+  async setClassUnlocked(workshopId: string, classId: string, unlocked: boolean): Promise<string[]> {
+    const ws = this.getWorkshop(workshopId);
+    if (unlocked) {
+      ws.unlockedClasses.add(classId);
+    } else {
+      ws.unlockedClasses.delete(classId);
+    }
+
+    try {
+      await withFileLock(() => {
+        let currentData: any = {};
+        if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+          try {
+            currentData = JSON.parse(fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8"));
+          } catch {}
+        }
+        if (!currentData.unlockedClasses) currentData.unlockedClasses = {};
+        const currentList = Array.isArray(currentData.unlockedClasses[workshopId])
+          ? new Set<string>(currentData.unlockedClasses[workshopId])
+          : new Set<string>(ws.unlockedClasses);
+
+        if (unlocked) {
+          currentList.add(classId);
+        } else {
+          currentList.delete(classId);
+        }
+        currentData.unlockedClasses[workshopId] = Array.from(currentList);
+        ws.unlockedClasses = currentList;
+        writeSharedDbAtomic(currentData);
+      });
+    } catch {}
+
+    return Array.from(ws.unlockedClasses);
+  }
+
+  async getTournamentSummary(workshopId: string): Promise<TournamentSummary> {
+    const ws = this.getWorkshop(workshopId);
+    const [houseScores, houseCounts, unlockedClasses] = await Promise.all([
+      this.getHouseScores(workshopId),
+      this.getHouseStats(workshopId),
+      this.getUnlockedClasses(workshopId),
+    ]);
+
+    const studentsMap: Record<string, { house: string }> = {};
+    const submissionsMap: Record<string, Record<string, SubmissionDoc & { house?: string }>> = {};
+
+    ws.students.forEach((doc, sId) => {
+      studentsMap[sId] = { house: doc.house };
+    });
+    ws.submissions.forEach((classMap, sId) => {
+      submissionsMap[sId] = {};
+      classMap.forEach((sub, cId) => {
+        submissionsMap[sId][cId] = sub as any;
+      });
+    });
+
+    try {
+      if (fs.existsSync(SHARED_LOCAL_DB_FILE)) {
+        const raw = fs.readFileSync(SHARED_LOCAL_DB_FILE, "utf-8");
+        const parsed = JSON.parse(raw);
+        const fileStudents = parsed.students?.[workshopId] || {};
+        for (const [sId, sDoc] of Object.entries(fileStudents)) {
+          if ((sDoc as any)?.house) {
+            studentsMap[sId] = { house: (sDoc as any).house };
+          }
+        }
+        const fileSubs = parsed.submissions?.[workshopId] || {};
+        for (const [sId, cMap] of Object.entries(fileSubs)) {
+          if (!submissionsMap[sId]) submissionsMap[sId] = {};
+          for (const [cId, sub] of Object.entries(cMap as Record<string, any>)) {
+            submissionsMap[sId][cId] = sub;
+          }
+        }
+      }
+    } catch {}
+
+    return buildTournamentSummaryFromRaw(
+      workshopId,
+      houseScores,
+      houseCounts,
+      unlockedClasses,
+      studentsMap,
+      submissionsMap
+    );
   }
 
   async ensureHousesInitialized(workshopId: string): Promise<void> {
@@ -642,6 +895,126 @@ class DatabaseService {
       );
     }
     await this.inMemoryFallback.setWorkshopPasskey(trimmed);
+  }
+
+  async getProfessorPasskey(): Promise<string> {
+    if (process.env.PROFESSOR_PASSKEY?.trim()) {
+      return process.env.PROFESSOR_PASSKEY.trim();
+    }
+    if (!this.isUsingFallback && this.firestore) {
+      try {
+        const configDoc = await this.firestore.doc("config/global").get();
+        if (configDoc.exists) {
+          const data = configDoc.data();
+          if (data && typeof data.professor_passkey === "string" && data.professor_passkey.trim().length > 0) {
+            return data.professor_passkey.trim();
+          }
+          await this.firestore.doc("config/global").set(
+            { professor_passkey: "mcgonagall", updated_at: FieldValue.serverTimestamp() },
+            { merge: true }
+          );
+          return "mcgonagall";
+        }
+      } catch (err) {
+        console.warn("Error leyendo professor_passkey de Firestore, usando fallback:", err);
+      }
+    }
+    return this.inMemoryFallback.getProfessorPasskey();
+  }
+
+  async setProfessorPasskey(passkey: string): Promise<void> {
+    const trimmed = passkey.trim();
+    if (!this.isUsingFallback && this.firestore) {
+      await this.firestore.doc("config/global").set(
+        {
+          professor_passkey: trimmed,
+          updated_at: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    await this.inMemoryFallback.setProfessorPasskey(trimmed);
+  }
+
+  async getUnlockedClasses(workshopId: string): Promise<string[]> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.getUnlockedClasses(workshopId);
+    }
+    try {
+      const wsDoc = await this.firestore.doc(`workshops/${workshopId}`).get();
+      if (wsDoc.exists) {
+        const list = wsDoc.data()?.unlocked_classes;
+        if (Array.isArray(list)) {
+          return list.filter((item): item is string => typeof item === "string");
+        }
+      }
+      return [];
+    } catch {
+      return this.inMemoryFallback.getUnlockedClasses(workshopId);
+    }
+  }
+
+  async setClassUnlocked(workshopId: string, classId: string, unlocked: boolean): Promise<string[]> {
+    await this.inMemoryFallback.setClassUnlocked(workshopId, classId, unlocked);
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.getUnlockedClasses(workshopId);
+    }
+    try {
+      const wsRef = this.firestore.doc(`workshops/${workshopId}`);
+      await wsRef.set(
+        {
+          unlocked_classes: unlocked
+            ? FieldValue.arrayUnion(classId)
+            : FieldValue.arrayRemove(classId),
+          updated_at: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      return await this.getUnlockedClasses(workshopId);
+    } catch {
+      return this.inMemoryFallback.getUnlockedClasses(workshopId);
+    }
+  }
+
+  async getTournamentSummary(workshopId: string): Promise<TournamentSummary> {
+    if (this.isUsingFallback || !this.firestore) {
+      return this.inMemoryFallback.getTournamentSummary(workshopId);
+    }
+    try {
+      const [houseScores, houseCounts, unlockedClasses, studentsSnap] = await Promise.all([
+        this.getHouseScores(workshopId),
+        this.getHouseStats(workshopId),
+        this.getUnlockedClasses(workshopId),
+        this.firestore.collection(`workshops/${workshopId}/students`).get(),
+      ]);
+
+      const studentsMap: Record<string, { house: string }> = {};
+      const submissionsMap: Record<string, Record<string, SubmissionDoc & { house?: string }>> = {};
+
+      await Promise.all(
+        studentsSnap.docs.map(async (studentDoc) => {
+          const sId = studentDoc.id;
+          const sData = studentDoc.data() as StudentDoc;
+          studentsMap[sId] = { house: sData.house || "gryffindor" };
+          const subsSnap = await studentDoc.ref.collection("submissions").get();
+          submissionsMap[sId] = {};
+          subsSnap.forEach((subDoc) => {
+            submissionsMap[sId][subDoc.id] = subDoc.data() as any;
+          });
+        })
+      );
+
+      return buildTournamentSummaryFromRaw(
+        workshopId,
+        houseScores,
+        houseCounts,
+        unlockedClasses,
+        studentsMap,
+        submissionsMap
+      );
+    } catch {
+      return this.inMemoryFallback.getTournamentSummary(workshopId);
+    }
   }
 
   async ensureHousesInitialized(workshopId: string): Promise<void> {
