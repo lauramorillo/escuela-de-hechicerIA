@@ -155,11 +155,82 @@ const TimoGradeCard: React.FC<{
         </div>
       </div>
       <div className={`text-base leading-relaxed font-sans sm:pt-0.5 ${isParchment ? "text-[#2e1709]" : "text-stone-200"}`}>
-        {desc}
+        {renderInlineText(desc, isParchment)}
       </div>
     </div>
   );
 };
+
+function renderInlineText(text: string, isParchment: boolean): React.ReactNode {
+  const tokenRegex = /(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|https?:\/\/[^\s),]+|\*\*[^*]+\*\*|`[^`]+`)/g;
+  const parts = text.split(tokenRegex);
+
+  return parts.map((part, i) => {
+    if (!part) return null;
+
+    const mdLinkMatch = part.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
+    if (mdLinkMatch) {
+      return (
+        <a
+          key={i}
+          href={mdLinkMatch[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline font-semibold transition-colors ${
+            isParchment
+              ? "text-[#8a380f] hover:text-[#532709]"
+              : "text-amber-300 hover:text-amber-100"
+          }`}
+        >
+          {mdLinkMatch[1]} ↗
+        </a>
+      );
+    }
+
+    if (/^https?:\/\/[^\s),]+$/.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`underline font-mono text-sm transition-colors ${
+            isParchment
+              ? "text-[#8a380f] hover:text-[#532709]"
+              : "text-amber-300 hover:text-amber-100"
+          }`}
+        >
+          {part} ↗
+        </a>
+      );
+    }
+
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return (
+        <strong key={i} className={isParchment ? "font-bold text-[#221207]" : "font-bold text-amber-100"}>
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+
+    if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+      return (
+        <code
+          key={i}
+          className={`px-1.5 py-0.5 rounded font-mono text-sm ${
+            isParchment
+              ? "bg-[#ead4a8]/70 text-[#532709] border border-[#cbb085]"
+              : "bg-black/60 text-amber-200 border border-stone-700/80"
+          }`}
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
+}
 
 const BulletList: React.FC<{ content: string; keyPrefix: string | number; theme?: "dark" | "parchment" }> = ({
   content,
@@ -211,7 +282,7 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number; theme?
               <span className={`font-bold shrink-0 ${isParchment ? "text-[#7a431c]" : "text-amber-300"}`}>
                 {noteMatch[1]}:
               </span>
-              <span>{noteMatch[2]}</span>
+              <span>{renderInlineText(noteMatch[2], isParchment)}</span>
             </div>
           );
         }
@@ -224,7 +295,7 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number; theme?
                 isParchment ? "text-[#7a431c]" : "text-amber-300"
               }`}
             >
-              <span>{cleanLine}</span>
+              <span>{renderInlineText(cleanLine, isParchment)}</span>
             </div>
           );
         }
@@ -240,7 +311,7 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number; theme?
               <span className={`text-xs shrink-0 mt-1.5 font-bold ${isParchment ? "text-[#8a4a1c]" : "text-amber-400/90"}`}>
                 ▸
               </span>
-              <span className="font-sans">{cleanLine}</span>
+              <span className="font-sans">{renderInlineText(cleanLine, isParchment)}</span>
             </div>
           );
         }
@@ -255,7 +326,7 @@ const BulletList: React.FC<{ content: string; keyPrefix: string | number; theme?
             <span className={`font-bold mt-1 text-sm shrink-0 ${isParchment ? "text-[#7a431c]" : "text-amber-400"}`}>
               ◆
             </span>
-            <span className="font-sans">{cleanLine}</span>
+            <span className="font-sans">{renderInlineText(cleanLine, isParchment)}</span>
           </div>
         );
       })}
@@ -308,7 +379,7 @@ export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment, 
                             isParchment ? "text-[#2e1709]" : "text-stone-200"
                           }`}
                         >
-                          {rest}
+                          {renderInlineText(rest, isParchment)}
                         </p>
                       )
                     )}
@@ -329,7 +400,7 @@ export const AssignmentViewer: React.FC<AssignmentViewerProps> = ({ assignment, 
                     isParchment ? "text-[#2e1709]" : "text-stone-200"
                   }`}
                 >
-                  {trimmed}
+                  {renderInlineText(trimmed, isParchment)}
                 </p>
               );
             })}

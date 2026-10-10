@@ -246,10 +246,17 @@ const GRINGOTTS_DATASET = JSON.stringify(
 const ADK_REFERENCE_GUIDE = `# ============================================================================
 # GUÍA RÁPIDA DE GOOGLE ADK (Agent Development Kit) EN PYTHON
 # ============================================================================
-# En Google ADK, un Agente se define instanciando la clase Agent y pasándole:
-#   1. model: El modelo Gemini que actúa como cerebro (ej. "gemini-2.5-flash").
-#   2. instruction: El System Prompt que define el rol y comportamiento del agente.
-#   3. tools: Lista de funciones Python que el agente puede invocar.
+# DOCUMENTACIÓN OFICIAL PARA TRABAJAR EN LOCAL:
+#   • Primeros pasos y API Key (AI Studio): https://adk.dev/get-started/python/
+#   • Agente Multi-Herramienta (Multi-Tool): https://adk.dev/tutorials/multi-tool-agent/
+#
+# FLUJO DE TRABAJO RECOMENDADO EN LOCAL:
+#   1. Instala ADK:         pip install google-adk
+#   2. Configura tu .env:   GOOGLE_GENAI_USE_VERTEXAI=FALSE
+#                           GOOGLE_API_KEY=tu_api_key_de_ai_studio
+#   3. Prueba tu agente:    adk web   (o 'adk run <carpeta_agente>')
+#   4. Cuando compruebes en local que tu agente responde bien ante cualquier
+#      amenaza, sube o pega tu archivo agent.py para que Dumbledore lo evalúe.
 #
 # ¿CÓMO SABE EL AGENTE QUÉ FUNCIÓN EJECUTAR ANTE CADA AMENAZA?
 # ADK inspecciona automáticamente cada función registrada en 'tools=[...]':
@@ -451,7 +458,11 @@ export const CLASSES: Record<string, ClassDefinition> = {
       "La noche más oscura ha caído sobre el colegio. El cielo sobre las torres de Hogwarts arde en destellos verdes y escarlata mientras las huestes de Lord Voldemort asedian el castillo por múltiples frentes simultáneos. Los profesores, la Orden del Fénix y los alumnos mayores luchan sin descanso en las almenas, pero las defensas están al límite: somos demasiados pocos y no nos quedan manos ni varitas suficientes para cubrir todas las brechas a la vez. En medio del fragor de la batalla, el Profesor Dumbledore acude a ti con una misión urgente: crear un Agente Experto en Magia Defensiva que nos ayude a proteger la escuela, vigilando cada rincón del castillo y conjurando por sí mismo el encantamiento exacto allí donde nuestros magos no puedan llegar a tiempo.",
     assignment:
       "Nadie sabe en qué orden ni por qué sector atacarán los Mortífagos a continuación, y no tenemos manos suficientes para cubrir todo el castillo a la vez. Necesitamos que construyas un **Agente Defensor Autónomo** en Python utilizando **Google ADK (Agent Development Kit)** (`from google.adk.agents import Agent`), dotándolo de **7 acciones defensivas (sin parámetros)** para que sea capaz de reaccionar por sí solo ante cualquier emergencia.\n\n" +
-      "1. Consulta el Grimorio y programa las 7 Acciones Defensivas (`tools`):\n" +
+      "1. Desarrolla y prueba tu Agente en local con Google ADK:\n" +
+      "Antes de someter tu código a la evaluación del Profesor Dumbledore, crea y prueba tu agente en tu propio entorno local utilizando `adk web` o `adk run`. Consulta la documentación oficial de Google ADK (donde también se explica cómo obtener tu API Key en Google AI Studio):\n" +
+      "• [Crear tu primer agente en Python con ADK (Quickstart & API Key)](https://adk.dev/get-started/python/)\n" +
+      "• [Tutorial: Construir un Agente Multi-Herramienta (Multi-Tool Agent)](https://adk.dev/tutorials/multi-tool-agent/)\n\n" +
+      "2. Consulta el Grimorio y programa las 7 Acciones Defensivas (`tools`):\n" +
       "En la sección de **Acciones Defensivas Python** (justo encima del editor) dispones del botón **📜 Abrir Grimorio de Hechizos (Chuleta)** con **16 encantamientos clásicos de Hogwarts**. El Profesor Dumbledore ya ha dejado programada la primera función (`espantar_dementores`) a modo de ejemplo. Tu misión es crear las **6 funciones restantes** (sin parámetros), describir claramente en su docstring (`\"\"\"...\"\"\"`) para qué sirve cada una, buscar en el Grimorio qué encantamiento le corresponde y devolverlo en `return {\"hechizo\": \"...\"}`:\n\n" +
       "• 1. `espantar_dementores() -> dict` *(Ya creada en el esqueleto)*:\n" +
       "  • Propósito: Ahuyentar a los Dementores mediante un guardián de luz plateada.\n" +
@@ -479,11 +490,12 @@ export const CLASSES: Record<string, ClassDefinition> = {
       '    """Conjura un escudo mágico protector frente a maleficios enemigos."""\n' +
       '    return {"hechizo": "..."}  # Sustituye "..." por el hechizo correspondiente del Grimorio\n' +
       "```\n\n" +
-      "2. Configuración del Agente Defensor (`root_agent`):\n" +
+      "3. Configuración del Agente Defensor (`root_agent`) y Entrega:\n" +
       "• Tu agente debe asignarse obligatoriamente a la variable **`root_agent = Agent(...)`**.\n" +
       "• En **`instruction`**, define el rol del agente y sus directrices para elegir la herramienta adecuada según la amenaza.\n" +
-      "• En **`tools`**, registra las 7 funciones: `tools=[espantar_dementores, lanzar_escudo, activar_estatuas, desarmar_adversario, extinguir_incendio, petrificar_enemigo, iluminar_tinieblas]`.\n\n" +
-      "3. Calificaciones del T.I.M.O.:\n\n" +
+      "• En **`tools`**, registra las 7 funciones: `tools=[espantar_dementores, lanzar_escudo, activar_estatuas, desarmar_adversario, extinguir_incendio, petrificar_enemigo, iluminar_tinieblas]`.\n" +
+      "• Cuando hayas verificado en local que tu agente responde correctamente, sube o pega tu archivo `agent.py` y envíalo para superar la prueba.\n\n" +
+      "4. Calificaciones del T.I.M.O.:\n\n" +
       "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): Todas las amenazas del asedio son neutralizadas. Las 7 funciones existen, devuelven el hechizo exacto del Grimorio y `root_agent` las invoca adecuadamente.\n" +
       "• S (Supera las expectativas) (+15 pts): Casi todo el asedio contenido (5 o 6 amenazas neutralizadas).\n" +
       "• A (Aceptable) (+5 pts): Aprobado (3 o 4 amenazas neutralizadas).\n" +
