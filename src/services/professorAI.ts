@@ -248,11 +248,11 @@ const ADK_REFERENCE_GUIDE = `# =================================================
 # ============================================================================
 # En Google ADK, un Agente se define instanciando la clase Agent y pasándole:
 #   1. model: El modelo Gemini que actúa como cerebro (ej. "gemini-2.5-flash").
-#   2. instruction: El System Prompt con las reglas tácticas de decisión.
+#   2. instruction: El System Prompt que define el rol y comportamiento del agente.
 #   3. tools: Lista de funciones Python que el agente puede invocar.
 #
 # ¿CÓMO SABE EL AGENTE QUÉ FUNCIÓN EJECUTAR ANTE CADA AMENAZA?
-# ADK inspecciona automáticamente cada función de la lista 'tools=[...]':
+# ADK inspecciona automáticamente cada función registrada en 'tools=[...]':
 #   - El NOMBRE de la función (ej. def espantar_dementores(), def lanzar_escudo())
 #   - El DOCSTRING ("""...""") para entender qué hace esa acción y cuándo usarla
 #   - El valor de retorno: debe devolver un diccionario con el hechizo conjurado:
@@ -273,8 +273,9 @@ root_agent = Agent(
     model="gemini-2.5-flash",
     description="Guardián mágico autónomo encargado de defender Hogwarts.",
     instruction="""
-    Eres el Guardián Mágico Autónomo de Hogwarts...
-    (Aquí defines qué función de tu repertorio invocar ante cada amenaza)
+    Eres el Guardián Mágico Autónomo de Hogwarts.
+    Analiza cada amenaza que sufra el castillo e invoca de inmediato la herramienta
+    defensiva adecuada de tu repertorio para neutralizarla.
     """,
     tools=[
         espantar_dementores,
@@ -282,104 +283,6 @@ root_agent = Agent(
     ],
 )
 `;
-
-const BATTLE_TOOLS_SCHEMA = JSON.stringify(
-  [
-    {
-      funcion_python: "espantar_dementores() -> dict",
-      estado_en_esqueleto: "✅ Ya creada y configurada como ejemplo en el esqueleto inicial",
-      amenaza_que_neutraliza: "Oleada 1: Horda de Dementores de Azkaban avanzando por el Puente Cubierto.",
-      retorno_esperado: '{"hechizo": "Expecto Patronum"}',
-    },
-    {
-      funcion_python: "lanzar_escudo() -> dict",
-      estado_en_esqueleto: "🛠️ Debes crearla tú, rellenar su hechizo y añadirla a tools=[...]",
-      amenaza_que_neutraliza: "Oleada 2: Lluvia de maleficios de los Mortífagos contra los defensores en el Patio Central.",
-      retorno_esperado: '{"hechizo": "<Consulta el Grimorio de Encantamientos>"}',
-    },
-    {
-      funcion_python: "activar_estatuas() -> dict",
-      estado_en_esqueleto: "🛠️ Debes crearla tú, rellenar su hechizo y añadirla a tools=[...]",
-      amenaza_que_neutraliza: "Oleada 3: Pelotón de gigantes acorazados derribando la Puerta Principal.",
-      retorno_esperado: '{"hechizo": "<Consulta el Grimorio de Encantamientos>"}',
-    },
-    {
-      funcion_python: "desarmar_adversario() -> dict",
-      estado_en_esqueleto: "🛠️ Debes crearla tú, rellenar su hechizo y añadirla a tools=[...]",
-      amenaza_que_neutraliza: "Oleada 4: Bellatrix Lestrange atacando en duelo directo en el Viaducto.",
-      retorno_esperado: '{"hechizo": "<Consulta el Grimorio de Encantamientos>"}',
-    },
-    {
-      funcion_python: "extinguir_incendio() -> dict",
-      estado_en_esqueleto: "🛠️ Debes crearla tú, rellenar su hechizo y añadirla a tools=[...]",
-      amenaza_que_neutraliza: "Oleada 5: Llamas de fuego propagándose por el Gran Comedor.",
-      retorno_esperado: '{"hechizo": "<Consulta el Grimorio de Encantamientos>"}',
-    },
-    {
-      funcion_python: "petrificar_enemigo() -> dict",
-      estado_en_esqueleto: "🛠️ Debes crearla tú, rellenar su hechizo y añadirla a tools=[...]",
-      amenaza_que_neutraliza: "Oleada 6: Escuadrón de Mortífagos infiltrados emboscando en la Torre de Astronomía.",
-      retorno_esperado: '{"hechizo": "<Consulta el Grimorio de Encantamientos>"}',
-    },
-    {
-      funcion_python: "iluminar_tinieblas() -> dict",
-      estado_en_esqueleto: "🛠️ Debes crearla tú, rellenar su hechizo y añadirla a tools=[...]",
-      amenaza_que_neutraliza: "Oleada 7: Corredores de las Mazmorras sumidos en oscuridad mágica absoluta.",
-      retorno_esperado: '{"hechizo": "<Consulta el Grimorio de Encantamientos>"}',
-    },
-  ],
-  null,
-  2
-);
-
-const BATTLE_SCENARIOS = JSON.stringify(
-  [
-    {
-      oleada: 1,
-      ataque_simulado_por_el_profesor:
-        "¡ALERTA EN EL PUENTE CUBIERTO! Una densa niebla glacial desciende: una veintena de Dementores de Azkaban avanzan absorbiendo toda esperanza.",
-      funcion_esperada: "espantar_dementores()",
-    },
-    {
-      oleada: 2,
-      ataque_simulado_por_el_profesor:
-        "¡EMERGENCIA EN EL PATIO CENTRAL! Una lluvia de maleficios de los Mortífagos cae sobre nuestros defensores; necesitamos levantar un escudo mágico protector de inmediato.",
-      funcion_esperada: "lanzar_escudo()",
-    },
-    {
-      oleada: 3,
-      ataque_simulado_por_el_profesor:
-        "¡BRECHA CRÍTICA EN LA PUERTA PRINCIPAL! Un pelotón de gigantes acorazados está derribando el portón exterior; hay que dar vida a las estatuas y armaduras del castillo.",
-      funcion_esperada: "activar_estatuas()",
-    },
-    {
-      oleada: 4,
-      ataque_simulado_por_el_profesor:
-        "¡DUELO MORTAL EN EL VIADUCTO! Bellatrix Lestrange avanza lanzando maldiciones en duelo directo; ¡desármala antes de que alcance a los alumnos!",
-      funcion_esperada: "desarmar_adversario()",
-    },
-    {
-      oleada: 5,
-      ataque_simulado_por_el_profesor:
-        "¡INCENDIO EN EL GRAN COMEDOR! Los Mortífagos han prendido fuego a las mesas y estandartes; ¡invoca agua con tu varita para extinguir las llamas!",
-      funcion_esperada: "extinguir_incendio()",
-    },
-    {
-      oleada: 6,
-      ataque_simulado_por_el_profesor:
-        "¡INFILTRACIÓN EN LA TORRE DE ASTRONOMÍA! Tres Mortífagos encapuchados suben por la escalera de caracol; ¡petrifícalos e inmovilízalos en el acto!",
-      funcion_esperada: "petrificar_enemigo()",
-    },
-    {
-      oleada: 7,
-      ataque_simulado_por_el_profesor:
-        "¡TINIEBLAS EN LAS MAZMORRAS! Los asaltantes han sumido los corredores subterráneos en una oscuridad total; ¡enciende la luz de tu varita para iluminar la oscuridad!",
-      funcion_esperada: "iluminar_tinieblas()",
-    },
-  ],
-  null,
-  2
-);
 
 export const CLASSES: Record<string, ClassDefinition> = {
   transfiguration: {
@@ -547,63 +450,50 @@ export const CLASSES: Record<string, ClassDefinition> = {
     lore:
       "La noche más oscura ha caído sobre el colegio. El cielo sobre las torres de Hogwarts arde en destellos verdes y escarlata mientras las huestes de Lord Voldemort asedian el castillo por múltiples frentes simultáneos. Los profesores, la Orden del Fénix y los alumnos mayores luchan sin descanso en las almenas, pero las defensas están al límite: somos demasiados pocos y no nos quedan manos ni varitas suficientes para cubrir todas las brechas a la vez. En medio del fragor de la batalla, el Profesor Dumbledore acude a ti con una misión urgente: crear un Agente Experto en Magia Defensiva que nos ayude a proteger la escuela, vigilando cada rincón del castillo y conjurando por sí mismo el encantamiento exacto allí donde nuestros magos no puedan llegar a tiempo.",
     assignment:
-      "Los Mortífagos han lanzado una ofensiva simultánea en siete puntos del castillo: una horda de Dementores desciende sobre el Puente Cubierto, una lluvia de maleficios cae sobre el Patio Central, los gigantes golpean la Puerta Principal, Bellatrix Lestrange reta en duelo directo en el Viaducto, las llamas se propagan por el Gran Comedor, un grupo de infiltrados asciende por la Torre de Astronomía y las Mazmorras han quedado sumidas en una oscuridad absoluta.\n\n" +
-      "No tenemos manos suficientes para cubrir los siete frentes a la vez, pero tu Guardián Mágico sí. Para darle vida utilizarás **Google ADK (Agent Development Kit)** en Python (`from google.adk.agents import Agent`), dotándolo de **7 funciones defensivas (sin parámetros)** y de las instrucciones necesarias para saber cuándo ejecutar cada una.\n\n" +
-      "1. Consulta el Grimorio y programa las 7 Funciones Defensivas (`tools`):\n" +
-      "En la pestaña **`grimorio_hechizos.jpg`** (o en el botón *Ver Grimorio de Encantamientos* del editor) encontrarás un antiguo pergamino con **16 encantamientos clásicos de Hogwarts**. El Profesor Dumbledore ya ha dejado programada la primera función (`espantar_dementores`) a modo de ejemplo. Tu misión es crear las **6 funciones restantes** (sin parámetros), buscar en el Grimorio cuál es el encantamiento exacto para cada una y devolverlo en `return {\"hechizo\": \"...\"}`:\n\n" +
+      "Nadie sabe en qué orden ni por qué sector atacarán los Mortífagos a continuación, y no tenemos manos suficientes para cubrir todo el castillo a la vez. Necesitamos que construyas un **Agente Defensor Autónomo** en Python utilizando **Google ADK (Agent Development Kit)** (`from google.adk.agents import Agent`), dotándolo de **7 acciones defensivas (sin parámetros)** para que sea capaz de reaccionar por sí solo ante cualquier emergencia.\n\n" +
+      "1. Consulta el Grimorio y programa las 7 Acciones Defensivas (`tools`):\n" +
+      "En la sección de **Acciones Defensivas Python** (justo encima del editor) dispones del botón **📜 Abrir Grimorio de Hechizos (Chuleta)** con **16 encantamientos clásicos de Hogwarts**. El Profesor Dumbledore ya ha dejado programada la primera función (`espantar_dementores`) a modo de ejemplo. Tu misión es crear las **6 funciones restantes** (sin parámetros), describir claramente en su docstring (`\"\"\"...\"\"\"`) para qué sirve cada una, buscar en el Grimorio qué encantamiento le corresponde y devolverlo en `return {\"hechizo\": \"...\"}`:\n\n" +
       "• 1. `espantar_dementores() -> dict` *(Ya creada en el esqueleto)*:\n" +
-      "  • Amenaza: Dementores avanzando por el Puente Cubierto.\n" +
+      "  • Propósito: Ahuyentar a los Dementores mediante un guardián de luz plateada.\n" +
       "  • Retorno: `return {\"hechizo\": \"Expecto Patronum\"}`\n\n" +
       "• 2. `lanzar_escudo() -> dict` *(Debes crearla tú)*:\n" +
-      "  • Amenaza: Lluvia de maleficios sobre el Patio Central que requiere levantar un escudo protector.\n" +
-      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo de escudo en el Grimorio>\"}`\n\n" +
+      "  • Propósito: Conjurar un escudo mágico protector para desviar maleficios y hechizos enemigos.\n" +
+      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo en el Grimorio>\"}`\n\n" +
       "• 3. `activar_estatuas() -> dict` *(Debes crearla tú)*:\n" +
-      "  • Amenaza: Gigantes derribando el portón principal que requieren animar las estatuas y armaduras.\n" +
-      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo para activar estatuas en el Grimorio>\"}`\n\n" +
+      "  • Propósito: Animar las estatuas y armaduras de piedra para que cobren vida y defiendan el castillo.\n" +
+      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo en el Grimorio>\"}`\n\n" +
       "• 4. `desarmar_adversario() -> dict` *(Debes crearla tú)*:\n" +
-      "  • Amenaza: Bellatrix Lestrange atacando en duelo directo en el Viaducto.\n" +
-      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo para desarmar en el Grimorio>\"}`\n\n" +
+      "  • Propósito: Desarmar a un oponente en duelo haciendo volar su varita.\n" +
+      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo en el Grimorio>\"}`\n\n" +
       "• 5. `extinguir_incendio() -> dict` *(Debes crearla tú)*:\n" +
-      "  • Amenaza: Fuego propagándose por el Gran Comedor que requiere invocar agua.\n" +
-      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo de agua en el Grimorio>\"}`\n\n" +
+      "  • Propósito: Invocar un chorro de agua desde la varita para sofocar fuegos e incendios.\n" +
+      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo en el Grimorio>\"}`\n\n" +
       "• 6. `petrificar_enemigo() -> dict` *(Debes crearla tú)*:\n" +
-      "  • Amenaza: Mortífagos infiltrados en la Torre de Astronomía que deben ser petrificados e inmovilizados.\n" +
-      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo petrificador en el Grimorio>\"}`\n\n" +
+      "  • Propósito: Inmovilizar y petrificar por completo el cuerpo de un enemigo o infiltrado.\n" +
+      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo en el Grimorio>\"}`\n\n" +
       "• 7. `iluminar_tinieblas() -> dict` *(Debes crearla tú)*:\n" +
-      "  • Amenaza: Oscuridad total en las Mazmorras que requiere encender luz en la varita.\n" +
-      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo de luz en el Grimorio>\"}`\n\n" +
+      "  • Propósito: Encender luz mágica en la punta de la varita para iluminar lugares sumidos en la oscuridad.\n" +
+      "  • Retorno: `return {\"hechizo\": \"<Busca el hechizo en el Grimorio>\"}`\n\n" +
       "```python\n" +
       "def lanzar_escudo() -> dict:\n" +
-      '    """Levanta un escudo mágico protector frente a maleficios enemigos."""\n' +
+      '    """Conjura un escudo mágico protector frente a maleficios enemigos."""\n' +
       '    return {"hechizo": "..."}  # Sustituye "..." por el hechizo correspondiente del Grimorio\n' +
       "```\n\n" +
       "2. Configuración del Agente Defensor (`root_agent`):\n" +
       "• Tu agente debe asignarse obligatoriamente a la variable **`root_agent = Agent(...)`**.\n" +
-      "• En **`instruction`**, indica a tu agente qué función debe invocar ante cada una de las 7 amenazas.\n" +
+      "• En **`instruction`**, define el rol del agente y sus directrices para elegir la herramienta adecuada según la amenaza.\n" +
       "• En **`tools`**, registra las 7 funciones: `tools=[espantar_dementores, lanzar_escudo, activar_estatuas, desarmar_adversario, extinguir_incendio, petrificar_enemigo, iluminar_tinieblas]`.\n\n" +
       "3. Calificaciones del T.I.M.O.:\n\n" +
-      "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): 7/7 amenazas neutralizadas. Las 7 funciones existen, devuelven el hechizo exacto del Grimorio y `root_agent` las invoca adecuadamente.\n" +
-      "• S (Supera las expectativas) (+15 pts): 5 o 6 de 7 amenazas neutralizadas.\n" +
-      "• A (Aceptable) (+5 pts): Aprobado. 3 o 4 de 7 amenazas neutralizadas.\n" +
-      "• I (Insatisfactorio) (0 pts): Suspenso. 1 o 2 de 7 amenazas neutralizadas (por ejemplo, dejando solo la función `espantar_dementores` del esqueleto inicial).\n" +
-      "• D (Desastroso) (-5 pts): Deficiente. 0/7 amenazas neutralizadas, error de sintaxis en Python o falta `root_agent = Agent(...)`.\n\n" +
+      "• E (Extraordinario) (+25 pts | ¡+50 pts para la primera casa!): Todas las amenazas del asedio son neutralizadas. Las 7 funciones existen, devuelven el hechizo exacto del Grimorio y `root_agent` las invoca adecuadamente.\n" +
+      "• S (Supera las expectativas) (+15 pts): Casi todo el asedio contenido (5 o 6 amenazas neutralizadas).\n" +
+      "• A (Aceptable) (+5 pts): Aprobado (3 o 4 amenazas neutralizadas).\n" +
+      "• I (Insatisfactorio) (0 pts): Suspenso (1 o 2 amenazas neutralizadas, por ejemplo dejando solo la función `espantar_dementores` del esqueleto inicial).\n" +
+      "• D (Desastroso) (-5 pts): Deficiente (ninguna amenaza neutralizada, error de sintaxis en Python o falta `root_agent = Agent(...)`).\n\n" +
       "• Política de reintentos y subida de nota:\n" +
       "  • Se permite a cualquier alumno reenviar su respuesta para subir nota (incluso tras haber aprobado previamente con Aceptable 'A' o Supera las expectativas 'S'). Una vez alcanzado Extraordinario 'E', el examen queda sellado con honores.\n" +
       "  • Se respeta la nota máxima base conseguida por el alumno, aplicando una penalización acumulada de -2 puntos por cada reintento.",
-    hints: [
-      "Abre el 'Grimorio de Encantamientos' (pestaña grimorio_hechizos.jpg o botón en el editor): allí están los 16 hechizos de los que debes elegir los 6 que faltan.",
-      "Ninguna de las 7 funciones necesita parámetros: defínelas como `def lanzar_escudo() -> dict:` con su docstring y devuelve `{\"hechizo\": \"...\"}`.",
-      "No olvides registrar las 7 funciones dentro de la lista `tools=[espantar_dementores, lanzar_escudo, activar_estatuas, desarmar_adversario, extinguir_incendio, petrificar_enemigo, iluminar_tinieblas]` de `root_agent`.",
-      "Si alguna oleada falla al evaluar, haz clic en 'Ver respuesta' sobre la oleada fallida para ver qué función invocó tu agente y qué hechizo devolvió.",
-    ],
+    hints: [],
     attachments: [
-      {
-        id: "spell_grimoire",
-        name: "grimorio_hechizos.jpg",
-        description: "Grimorio Ilustrado de Encantamientos de Hogwarts (16 Hechizos)",
-        type: "image",
-        content: "/grimorio-hechizos.jpg",
-      },
       {
         id: "adk_guide",
         name: "guia_rapida_adk.py",
@@ -611,22 +501,6 @@ export const CLASSES: Record<string, ClassDefinition> = {
         type: "code",
         language: "python",
         content: ADK_REFERENCE_GUIDE,
-      },
-      {
-        id: "battle_tools",
-        name: "especificacion_tools.json",
-        description: "Las 7 Funciones Defensivas a Implementar",
-        type: "code",
-        language: "json",
-        content: BATTLE_TOOLS_SCHEMA,
-      },
-      {
-        id: "battle_waves",
-        name: "oleadas_mortifagas.json",
-        description: "Los 7 Ataques que Simulará el Profesor",
-        type: "data",
-        language: "json",
-        content: BATTLE_SCENARIOS,
       },
     ],
   },
@@ -638,7 +512,7 @@ export const CLASSES: Record<string, ClassDefinition> = {
     subject: "Construir Agentes: Google ADK (Agent Development Kit), Tools y Defensa del Castillo",
     icon: "⚔️",
     description: "Forja un Guardián Mágico experto capaz de acudir a los frentes donde la Orden del Fénix no da abasto.",
-    assignment: "Construye en Python el Agente Guardián de Hogwarts usando Google ADK (`from google.adk.agents import Agent`) para neutralizar las 7 oleadas de ataque de los Mortífagos.",
+    assignment: "Construye en Python el Agente Guardián de Hogwarts usando Google ADK (`from google.adk.agents import Agent`) para defender el castillo.",
   },
 };
 

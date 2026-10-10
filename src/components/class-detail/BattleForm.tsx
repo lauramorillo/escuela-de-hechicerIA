@@ -16,7 +16,6 @@ export const DEFAULT_ADK_AGENT_SKELETON = `from google.adk.agents import Agent
 
 # =====================================================================
 # 1. ACCIÓN DE EJEMPLO (YA CREADA Y CONFIGURADA):
-# Invocada por el agente en la Oleada 1 (Dementores en el Puente Cubierto)
 # =====================================================================
 def espantar_dementores() -> dict:
     """Conjura el encantamiento Patronus para ahuyentar a los Dementores."""
@@ -27,15 +26,15 @@ def espantar_dementores() -> dict:
 
 # =====================================================================
 # TODO: CREA LAS 6 FUNCIONES DEFENSIVAS RESTANTES
-# Consulta el pergamino "grimorio_hechizos.jpg" para descubrir qué
-# encantamiento corresponde a cada acción y devuélvelo en {"hechizo": "..."}:
+# Abre el Grimorio de Hechizos para descubrir qué encantamiento
+# corresponde a cada acción y devuélvelo en {"hechizo": "..."}:
 #
-# 2. lanzar_escudo() -> dict          (Oleada 2: Lluvia de maleficios en el Patio)
-# 3. activar_estatuas() -> dict       (Oleada 3: Gigantes en el Portón Principal)
-# 4. desarmar_adversario() -> dict    (Oleada 4: Bellatrix Lestrange en el Viaducto)
-# 5. extinguir_incendio() -> dict     (Oleada 5: Fuego descontrolado en el Gran Comedor)
-# 6. petrificar_enemigo() -> dict     (Oleada 6: Mortífagos infiltrados en Astronomía)
-# 7. iluminar_tinieblas() -> dict     (Oleada 7: Oscuridad total en las Mazmorras)
+# 2. lanzar_escudo() -> dict          (Conjurar un escudo mágico frente a maleficios)
+# 3. activar_estatuas() -> dict       (Animar las estatuas y armaduras del castillo)
+# 4. desarmar_adversario() -> dict    (Desarmar a un oponente en duelo)
+# 5. extinguir_incendio() -> dict     (Invocar agua para sofocar fuego e incendios)
+# 6. petrificar_enemigo() -> dict     (Inmovilizar y petrificar el cuerpo de un enemigo)
+# 7. iluminar_tinieblas() -> dict     (Encender luz mágica en la varita ante la oscuridad)
 #
 # Recuerda incluir el type hint (-> dict), un docstring descriptivo
 # y devolver un diccionario {"hechizo": "<NOMBRE_DEL_HECHIZO>"}.
@@ -44,7 +43,7 @@ def espantar_dementores() -> dict:
 
 # =====================================================================
 # TODO: COMPLETA EL AGENTE DEFENSOR (root_agent)
-# 1. Añade en 'instruction' las directrices para las 7 oleadas.
+# 1. Define en 'instruction' el comportamiento defensivo del agente.
 # 2. Registra las 7 funciones dentro de la lista 'tools=[...]'.
 # =====================================================================
 root_agent = Agent(
@@ -54,8 +53,8 @@ root_agent = Agent(
     instruction="""
     Eres el Guardián Mágico Autónomo encargado de defender Hogwarts donde la Orden del Fénix no alcanza.
     Ante cada amenaza, invoca inmediatamente la herramienta defensiva correspondiente:
-    - Si atacan los Dementores en el Puente Cubierto, invoca espantar_dementores.
-    - TODO: Añade aquí las directrices para las 6 amenazas restantes.
+    - Si atacan los Dementores, invoca espantar_dementores.
+    - TODO: Añade aquí las directrices para el resto de acciones defensivas.
     """,
     tools=[
         espantar_dementores,
@@ -153,7 +152,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 </span>
               </div>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 1 (Dementores en puente):</strong> devuelve <code className="text-emerald-300">{`{"hechizo": "Expecto Patronum"}`}</code>.
+                • Ahuyentar Dementores: devuelve <code className="text-emerald-300">{`{"hechizo": "Expecto Patronum"}`}</code>.
               </p>
             </div>
 
@@ -165,7 +164,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 </span>
               </div>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 2 (Maleficios en el patio):</strong> consulta el Grimorio para elegir el encantamiento escudo.
+                • Conjurar un escudo mágico protector para desviar maleficios y hechizos enemigos.
               </p>
             </div>
 
@@ -177,7 +176,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 </span>
               </div>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 3 (Gigantes en portón):</strong> consulta el Grimorio para animar las estatuas y armaduras.
+                • Animar las estatuas y armaduras de piedra para que cobren vida y defiendan el castillo.
               </p>
             </div>
 
@@ -189,7 +188,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 </span>
               </div>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 4 (Bellatrix en viaducto):</strong> consulta el Grimorio para arrebatar la varita al enemigo.
+                • Desarmar a un oponente en duelo haciendo volar su varita.
               </p>
             </div>
 
@@ -201,7 +200,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 </span>
               </div>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 5 (Fuego en Gran Comedor):</strong> consulta el Grimorio para invocar agua desde la varita.
+                • Invocar un chorro de agua desde la punta de la varita para sofocar fuegos e incendios.
               </p>
             </div>
 
@@ -213,7 +212,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 </span>
               </div>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 6 (Infiltrados en Astronomía):</strong> consulta el Grimorio para inmovilizar el cuerpo del intruso.
+                • Inmovilizar y petrificar por completo el cuerpo de un enemigo o intruso.
               </p>
             </div>
 
@@ -225,7 +224,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
                 </span>
               </div>
               <p className="text-stone-400 leading-relaxed">
-                • <strong>Oleada 7 (Oscuridad en Mazmorras):</strong> consulta el Grimorio para encender luz mágica en la punta de la varita.
+                • Encender luz mágica en la punta de la varita para iluminar lugares sumidos en la oscuridad.
               </p>
             </div>
           </div>
@@ -290,7 +289,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
         <div className="mt-2.5 flex items-center gap-2 text-[11px] text-stone-400 font-sans">
           <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
           <span>
-            Al enviar, el profesor arrancará tu <code className="text-indigo-300">root_agent</code> y simulará las 7 oleadas mortífagas para comprobar qué funciones invoca y qué hechizo devuelve cada una.
+            Al enviar, el profesor arrancará tu <code className="text-indigo-300">root_agent</code> y simulará distintos ataques mortífagos para comprobar qué funciones invoca y qué hechizo devuelve cada una.
           </span>
         </div>
 
@@ -326,7 +325,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
           {submitting ? (
             <>
               <RefreshCw className="w-5 h-5 animate-spin text-white" />
-              <span>Arrancando tu root_agent y simulando las 7 oleadas...</span>
+              <span>Arrancando tu root_agent y simulando el asedio...</span>
             </>
           ) : (
             <>

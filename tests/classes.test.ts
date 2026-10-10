@@ -32,9 +32,8 @@ describe("Clases y Profesores Agénticos", () => {
     expect(CLASSES.battle).toBeDefined();
     expect(CLASSES.battle.title).toContain("Batalla de Hogwarts");
     expect(CLASSES.battle.attachments).toBeDefined();
-    expect(CLASSES.battle.attachments?.length).toBeGreaterThanOrEqual(3);
-    expect(CLASSES.battle.attachments?.[0].content).toContain("grimorio-hechizos.jpg");
-    expect(CLASSES.battle.attachments?.[1].content).toContain("espantar_dementores");
+    expect(CLASSES.battle.attachments?.length).toBe(1);
+    expect(CLASSES.battle.attachments?.[0].content).toContain("espantar_dementores");
   });
 
 

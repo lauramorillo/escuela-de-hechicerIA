@@ -369,7 +369,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
               </span>
               <span className="px-3 py-1 rounded-full bg-rose-500/25 text-rose-200 border border-rose-500/50 font-mono font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(244,63,94,0.3)]">
                 <Flame className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
-                7 Oleadas de Mortífagos
+                Asedio Mortífago en Curso
               </span>
             </div>
           </div>
