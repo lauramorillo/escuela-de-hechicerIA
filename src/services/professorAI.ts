@@ -451,7 +451,7 @@ export const CLASSES: Record<string, ClassDefinition> = {
     id: "battle",
     title: "Desafío 3: La Batalla de Hogwarts",
     professor: "Profesor Albus Dumbledore",
-    subject: "Construir Agentes: Google ADK (Agent Development Kit), Tools y Defensa del Castillo",
+    subject: "Estructurar a la IA: Agentes con Google ADK, Tools y Defensa del Castillo",
     icon: "⚔️",
     description: "Forja un Guardián Mágico experto capaz de acudir a los frentes donde la Orden del Fénix no da abasto.",
     lore:
@@ -521,7 +521,7 @@ export const CLASSES: Record<string, ClassDefinition> = {
     id: "divination",
     title: "Desafío 3: La Batalla de Hogwarts",
     professor: "Profesor Albus Dumbledore",
-    subject: "Construir Agentes: Google ADK (Agent Development Kit), Tools y Defensa del Castillo",
+    subject: "Estructurar a la IA: Agentes con Google ADK, Tools y Defensa del Castillo",
     icon: "⚔️",
     description: "Forja un Guardián Mágico experto capaz de acudir a los frentes donde la Orden del Fénix no da abasto.",
     assignment: "Construye en Python el Agente Guardián de Hogwarts usando Google ADK (`from google.adk.agents import Agent`) para defender el castillo.",

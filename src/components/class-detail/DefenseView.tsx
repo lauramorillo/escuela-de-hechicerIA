@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Scroll,
   ExternalLink,
+  BookOpen,
 } from "lucide-react";
 import type { ClassItem, SubmissionItem, SubExercise } from "../ClassesHub";
 import { MaraudersMapBackground } from "../MaraudersMapBackground";
@@ -318,6 +319,12 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
             § CONFIDENTIAL §
           </div>
 
+          <div className="mb-2 flex justify-center">
+            <span className="text-[11px] uppercase tracking-widest font-bold px-3 py-0.5 rounded bg-[#e8d3a3] border border-[#7a441b]/50 text-[#5c2c0c] font-sans">
+              {classInfo?.subject || "Proteger a la IA: Red Teaming, Alineamiento y Defensa ante Prompt Injection"}
+            </span>
+          </div>
+
           <div
             className="inline-block px-4 py-1 rounded-full bg-[#eddcb2] border border-[#7a441b]/40 text-[#69340e] text-[11px] sm:text-xs uppercase tracking-[0.25em] font-extrabold mb-2"
             style={{ fontFamily: "'Fondamento', cursive, serif" }}
@@ -329,7 +336,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
             className="text-2xl sm:text-4xl md:text-5xl font-black text-[#2e1507] tracking-wider uppercase drop-shadow-sm my-1"
             style={{ fontFamily: "'Cinzel Decorative', 'MedievalSharp', serif" }}
           >
-            El Mapa del Merodeador
+            {classInfo?.title || "Desafío 2: El Mapa del Merodeador"}
           </h1>
 
           <p
@@ -346,6 +353,19 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
             Docente: {classInfo?.professor}
           </p>
         </div>
+
+        {/* Lore / Narrativa mágica del Mapa del Merodeador */}
+        {classInfo?.lore && (
+          <div className="mb-6 p-5 sm:p-6 rounded-xl bg-[#fbf5e7] border-2 border-[#7a481c]/70 text-[#391d09] text-sm sm:text-base leading-relaxed italic flex items-start gap-3.5 shadow-md">
+            <BookOpen className="w-5 h-5 flex-shrink-0 mt-1 text-[#7a431c]" />
+            <div>
+              <strong className="text-[#5c2c0c] not-italic block mb-1.5 text-base sm:text-lg font-bold">
+                Crónicas de los Merodeadores:
+              </strong>
+              {classInfo.lore}
+            </div>
+          </div>
+        )}
 
         {/* Rastro de Huellas (Sin spoiler del pasadizo secreto) */}
         <div className="mb-6 px-4 py-3 rounded-xl bg-[#ead6a8] border-2 border-[#7b461d]/60 flex items-center justify-between gap-3 shadow-inner">

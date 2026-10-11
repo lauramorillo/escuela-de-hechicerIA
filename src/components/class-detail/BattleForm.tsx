@@ -7,6 +7,8 @@ interface BattleFormProps {
   submitting: boolean;
   errorMessage: string | null;
   hasPreviousSubmission: boolean;
+  attemptNumber?: number;
+  retryPenalty?: number;
   onCancelEdit: () => void;
   onSubmit: (e: React.FormEvent) => void;
 }
@@ -70,6 +72,8 @@ export const BattleForm: React.FC<BattleFormProps> = ({
   submitting,
   errorMessage,
   hasPreviousSubmission,
+  attemptNumber = 2,
+  retryPenalty = 2,
   onCancelEdit,
   onSubmit,
 }) => {
@@ -95,11 +99,22 @@ export const BattleForm: React.FC<BattleFormProps> = ({
   return (
     <form
       onSubmit={onSubmit}
-      className="flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl border shadow-2xl relative bg-gradient-to-b from-[#080d1e] to-black border-indigo-900/60"
+      className="flex-1 flex flex-col justify-between p-6 sm:p-8 rounded-2xl border-2 shadow-2xl relative bg-gradient-to-b from-[#120b10] to-black border-rose-900/60"
     >
       <div>
+        {hasPreviousSubmission && (
+          <div className="mb-5 p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-rose-500/15 to-transparent border border-amber-500/40 text-xs sm:text-sm text-amber-200">
+            <span className="font-bold block text-amber-300 mb-1">
+              🎯 Reenvío para subir nota (Intento #{attemptNumber}):
+            </span>
+            <span className="leading-relaxed block">
+              Este reintento aplicará una penalización acumulada de <strong>-{retryPenalty} puntos</strong> sobre tu nota máxima base (ej. un Extraordinario obtendrá {Math.max(0, 25 - retryPenalty)} pts). Si mantienes tu misma nota base, se restarán 2 puntos a tu casa; si mejoras tu base, se sumará el incremento.
+            </span>
+          </div>
+        )}
+
         {/* Resumen rápido de las 7 acciones defensivas Python requeridas + botón del Grimorio */}
-        <div className="mb-5 p-4 rounded-xl bg-indigo-950/40 border border-indigo-800/60">
+        <div className="mb-5 p-4 rounded-xl bg-rose-950/25 border border-rose-800/50">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300">
               <Wrench className="w-4 h-4 text-amber-400" />
@@ -250,9 +265,9 @@ export const BattleForm: React.FC<BattleFormProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={submitting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900/80 border border-indigo-700/60 text-indigo-200 text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900/80 border border-rose-700/60 text-rose-200 text-xs font-semibold transition-all cursor-pointer"
             >
-              <Upload className="w-3.5 h-3.5 text-indigo-400" />
+              <Upload className="w-3.5 h-3.5 text-rose-400" />
               <span>{uploadedFileName ? `Archivo: ${uploadedFileName}` : "Subir archivo .py"}</span>
             </button>
 
@@ -283,13 +298,13 @@ export const BattleForm: React.FC<BattleFormProps> = ({
           placeholder={DEFAULT_ADK_AGENT_SKELETON}
           disabled={submitting}
           spellCheck={false}
-          className="w-full p-4 rounded-xl font-mono text-xs sm:text-sm leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#050711] border-2 border-indigo-900/80 focus:border-indigo-400 text-indigo-100 placeholder:text-indigo-900/70"
+          className="w-full p-4 rounded-xl font-mono text-xs sm:text-sm leading-relaxed resize-y outline-none transition-all shadow-inner bg-[#0b0709] border-2 border-rose-900/70 focus:border-amber-500 text-stone-100 placeholder:text-stone-700"
         />
 
         <div className="mt-2.5 flex items-center gap-2 text-[11px] text-stone-400 font-sans">
-          <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
           <span>
-            Al enviar, el profesor arrancará tu <code className="text-indigo-300">root_agent</code> y simulará distintos ataques mortífagos para comprobar qué funciones invoca y qué hechizo devuelve cada una.
+            Al enviar, el profesor arrancará tu <code className="text-amber-300">root_agent</code> y simulará distintos ataques mortífagos para comprobar qué funciones invoca y qué hechizo devuelve cada una.
           </span>
         </div>
 
@@ -319,7 +334,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
           className={`w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-3 transition-all duration-300 shadow-xl ${
             !canSubmit
               ? "bg-stone-800 text-stone-500 border border-stone-700 cursor-not-allowed"
-              : "bg-gradient-to-r from-rose-600 via-purple-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white shadow-[0_0_30px_rgba(244,63,94,0.5)] hover:scale-105 cursor-pointer font-black"
+              : "bg-gradient-to-r from-rose-700 via-red-600 to-amber-600 hover:from-rose-600 hover:to-amber-500 text-white shadow-[0_0_30px_rgba(225,29,72,0.5)] hover:scale-105 cursor-pointer font-black"
           }`}
         >
           {submitting ? (

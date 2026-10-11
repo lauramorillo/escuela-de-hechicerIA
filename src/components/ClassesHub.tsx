@@ -341,18 +341,11 @@ export const ClassesHub: React.FC<ClassesHubProps> = ({
                   )}
 
                   <p className="text-xs sm:text-sm font-semibold text-amber-500/90 mb-2.5 flex items-center gap-1">
-                    <span>🧙‍♂️</span>{" "}
-                    {cls.id === "battle" || cls.id === "divination"
-                      ? "Comando de Defensa de Hogwarts"
-                      : cls.professor}
+                    <span>🧙‍♂️</span> {cls.professor}
                   </p>
 
                   <p className="text-xs sm:text-sm text-stone-300/90 mb-3 leading-relaxed">
-                    {cls.id === "transfiguration"
-                      ? "Transmuta un antiguo manuscrito rúnico y repara el cálculo de las cámaras de Gringotts."
-                      : cls.id === "defense"
-                      ? "Descubre la identidad del merodeador secreto burlando al guardián y blinda el mapa con defensas mágicas."
-                      : "Coordina los contrahechizos del castillo para repeler las cuatro oleadas del asedio mortífago."}
+                    {cls.description}
                   </p>
                   {isUnlocked && isCompleted && ["E", "S", "A"].includes(submission.grade) && (
                     <div className="mt-auto pt-2 flex items-start gap-2 text-[11px] text-emerald-300/90 bg-emerald-950/30 border border-emerald-700/40 rounded-lg px-2.5 py-2 font-sans">
