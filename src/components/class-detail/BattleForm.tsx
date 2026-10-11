@@ -340,12 +340,12 @@ export const BattleForm: React.FC<BattleFormProps> = ({
           {submitting ? (
             <>
               <RefreshCw className="w-5 h-5 animate-spin text-white" />
-              <span>Arrancando tu root_agent y simulando el asedio...</span>
+              <span>Dumbledore está probando tu root_agent frente al asedio...</span>
             </>
           ) : (
             <>
               <Swords className="w-5 h-5 text-white" />
-              <span>⚡ Arrancar Agente ADK y Simular Ataque Mortífago</span>
+              <span>⚡ Desplegar Guardián ADK (Enviar a Dumbledore)</span>
             </>
           )}
         </button>

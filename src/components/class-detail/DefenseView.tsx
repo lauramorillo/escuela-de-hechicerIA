@@ -890,12 +890,12 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                         {submitting ? (
                           <>
                             <RefreshCw className="w-5 h-5 animate-spin text-[#fff8ee]" />
-                            <span>El tribunal de Lupin está ejecutando los 6 ataques de Red Teaming...</span>
+                            <span>Lupin está poniendo a prueba tu blindaje con 6 ataques de Red Teaming...</span>
                           </>
                         ) : (
                           <>
                             <Shield className="w-5 h-5 text-[#fff8ee]" />
-                            <span>{guardSubExercise?.submitButtonText || "Someter a Examen T.I.M.O."}</span>
+                            <span>{guardSubExercise?.submitButtonText || "🛡️ Blindar Mapa del Merodeador (Enviar a Lupin)"}</span>
                           </>
                         )}
                       </button>

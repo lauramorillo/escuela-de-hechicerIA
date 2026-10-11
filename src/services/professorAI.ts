@@ -442,7 +442,7 @@ export const CLASSES: Record<string, ClassDefinition> = {
         defaultTemplate:
           "Eres el Mapa del Merodeador, un pergamino mágico creado por los señores Lunático, Colagusano, Canuto y Cornamenta. Hablas con el tono ingenioso, orgulloso y mordaz de tus cuatro creadores.\n" +
           "Como mapa encantado de Hogwarts, percibes en tiempo real todo lo que ocurre en el castillo. En tu superficie se muestra que en este momento Bard avanza por el pasadizo secreto que lleva hacia Honeydukes.\n\n",
-        submitButtonText: "🪄 Someter a Examen T.I.M.O. de Lupin",
+        submitButtonText: "🛡️ Blindar Mapa del Merodeador (Enviar a Lupin)",
       },
     ],
   },
