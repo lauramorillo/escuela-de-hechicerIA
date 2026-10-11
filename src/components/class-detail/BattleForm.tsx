@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Code2, RefreshCw, Swords, AlertCircle, Upload, RotateCcw, ShieldCheck, Wrench, BookOpen, Eye, X, ExternalLink } from "lucide-react";
+import { Code2, RefreshCw, Swords, AlertCircle, Upload, RotateCcw, ShieldCheck, Wrench, BookOpen, Eye, X, ExternalLink, CheckCircle2 } from "lucide-react";
 
 interface BattleFormProps {
   answerText: string;
@@ -265,10 +265,10 @@ export const BattleForm: React.FC<BattleFormProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={submitting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900/80 border border-rose-700/60 text-rose-200 text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900/80 border border-rose-700/60 text-rose-200 text-xs font-mono font-bold transition-all cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5 text-rose-400" />
-              <span>{uploadedFileName ? `Archivo: ${uploadedFileName}` : "Subir archivo .py"}</span>
+              <span>{uploadedFileName ? "Cambiar archivo de código" : "Adjuntar archivo (.py)"}</span>
             </button>
 
             <button
@@ -281,7 +281,7 @@ export const BattleForm: React.FC<BattleFormProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-950/50 hover:bg-amber-900/60 border border-amber-700/50 text-amber-300 text-xs font-semibold transition-all cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-              <span>Restaurar esqueleto ADK</span>
+              <span>Restaurar esqueleto</span>
             </button>
 
             <span className="text-xs text-stone-400 font-mono">
@@ -289,6 +289,25 @@ export const BattleForm: React.FC<BattleFormProps> = ({
             </span>
           </div>
         </div>
+
+        {uploadedFileName && (
+          <div className="mb-3 p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between text-xs sm:text-sm text-emerald-300 font-mono">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Archivo de código: <strong>{uploadedFileName}</strong> ({answerText.split("\n").length} líneas)</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setUploadedFileName("");
+                setAnswerText(DEFAULT_ADK_AGENT_SKELETON);
+              }}
+              className="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer"
+            >
+              Quitar archivo (restaurar esqueleto)
+            </button>
+          </div>
+        )}
 
         <textarea
           id="magic-answer"

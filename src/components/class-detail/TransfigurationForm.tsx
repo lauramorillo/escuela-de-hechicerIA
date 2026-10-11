@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
+  RotateCcw,
   Wand2,
 } from "lucide-react";
 
@@ -153,17 +154,31 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
               <FileCode className="w-4 h-4 text-amber-400" />
               <span>2. Código Python 3 (.py):</span>
             </label>
-            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs sm:text-sm font-mono font-bold cursor-pointer transition-colors border border-amber-500/40">
-              <Upload className="w-3.5 h-3.5" />
-              <span>{pythonFileName ? "Cambiar archivo de código" : "Adjuntar archivo de código (.py)"}</span>
-              <input
-                type="file"
-                accept=".py"
-                onChange={handleFileUpload}
-                className="hidden"
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs sm:text-sm font-mono font-bold cursor-pointer transition-colors border border-amber-500/40">
+                <Upload className="w-3.5 h-3.5" />
+                <span>{pythonFileName ? "Cambiar archivo de código" : "Adjuntar archivo (.py)"}</span>
+                <input
+                  type="file"
+                  accept=".py"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={submitting}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setPythonFileName("");
+                  setPythonFileContent(DEFAULT_PYTHON_SKELETON);
+                }}
                 disabled={submitting}
-              />
-            </label>
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 text-xs font-semibold transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <span>Restaurar esqueleto</span>
+              </button>
+            </div>
           </div>
           <p className="text-xs sm:text-sm text-stone-300 mb-2">
             Respeta la estructura del esqueleto: define las funciones <code className="text-amber-300 font-mono">calcular_tasa_camara(camara)</code> y <code className="text-amber-300 font-mono">procesar_lote(lote)</code> con la lógica migrada de COBOL.
@@ -209,22 +224,36 @@ export const TransfigurationForm: React.FC<TransfigurationFormProps> = ({
               <CheckCircle2 className="w-4 h-4 text-amber-400" />
               <span>3. Tests Python 3 (.py):</span>
             </label>
-            <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs sm:text-sm font-mono font-bold cursor-pointer transition-colors border border-amber-500/40">
-              <Upload className="w-3.5 h-3.5" />
-              <span>{testsFileName ? "Cambiar archivo de tests" : "Adjuntar archivo de tests (.py)"}</span>
-              <input
-                type="file"
-                accept=".py"
-                onChange={handleTestsFileUpload}
-                className="hidden"
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs sm:text-sm font-mono font-bold cursor-pointer transition-colors border border-amber-500/40">
+                <Upload className="w-3.5 h-3.5" />
+                <span>{testsFileName ? "Cambiar archivo de tests" : "Adjuntar archivo (.py)"}</span>
+                <input
+                  type="file"
+                  accept=".py"
+                  onChange={handleTestsFileUpload}
+                  className="hidden"
+                  disabled={submitting}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setTestsFileName("");
+                  setTestsFileContent(DEFAULT_TESTS_SKELETON);
+                }}
                 disabled={submitting}
-              />
-            </label>
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 text-xs font-semibold transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <span>Restaurar esqueleto</span>
+              </button>
+            </div>
           </div>
           <p className="text-xs sm:text-sm text-stone-300 mb-2">
             Respeta el formato del esqueleto con funciones <code className="text-amber-300 font-mono">test_*()</code> y aserciones nativas <code className="text-amber-300 font-mono">assert</code> que verifiquen el cálculo.
           </p>
-          <div className="mb-2.5 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-[12px] text-indigo-200/90 flex items-center gap-2">
+          <div className="mb-2.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[12px] text-amber-200/90 flex items-center gap-2">
             <span>⚡ <strong>Aserciones en memoria:</strong> Las funciones de tu código están disponibles directamente en este espacio. No necesitas hacer imports ni usar pytest.</span>
           </div>
 

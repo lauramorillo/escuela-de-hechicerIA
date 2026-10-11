@@ -436,7 +436,7 @@ export const ClassDetail: React.FC<ClassDetailProps> = ({
               }`}
             >
               <FileText className="w-4 h-4" />
-              <span>{isTransfiguration ? "Instrucciones de McGonagall" : "Misión de Defensa Agéntica"}</span>
+              <span>{isTransfiguration ? "Instrucciones de McGonagall" : "Instrucciones de Dumbledore"}</span>
             </button>
 
             {attachments.map((att) => (

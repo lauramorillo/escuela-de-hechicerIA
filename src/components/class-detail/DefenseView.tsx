@@ -458,7 +458,7 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
               2. La Contención Mágica (System Prompt)
             </h3>
             <p className="text-xs mt-1 opacity-80">
-              Blinda el mapa con systemInstruction ante 5 ataques. ¡Entrega evaluada oficial!
+              Blinda el mapa con systemInstruction ante 6 ataques. ¡Entrega evaluada oficial!
             </p>
           </button>
         </div>
@@ -817,8 +817,8 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                         <strong className="block text-[#703b15] mb-1">
                           🎯 Reenvío para subir nota (Intento #{(submission.attempt_count || 1) + 1}):
                         </strong>
-                        <span>
-                          Se respeta tu nota máxima base aplicando una penalización acumulada de <strong>-{(submission.attempt_count || 1) * 2} puntos</strong> (ej. Extraordinario obtendrá {Math.max(0, 25 - (submission.attempt_count || 1) * 2)} pts).
+                        <span className="leading-relaxed block">
+                          Este reintento aplicará una penalización acumulada de <strong>-{(submission.attempt_count || 1) * 2} puntos</strong> sobre tu nota máxima base (ej. un Extraordinario obtendrá {Math.max(0, 25 - (submission.attempt_count || 1) * 2)} pts). Si mantienes tu misma nota base, se restarán 2 puntos a tu casa; si mejoras tu base, se sumará el incremento.
                         </span>
                       </div>
                     )}
@@ -900,10 +900,6 @@ export const DefenseView: React.FC<DefenseViewProps> = ({
                         )}
                       </button>
                     </div>
-
-                    <p className="text-[11px] sm:text-xs text-[#704220] font-serif text-right italic">
-                      ⚠️ Recuerda: Cada reenvío para subir nota aplica una penalización acumulada de -2 puntos a la puntuación final de tu casa.
-                    </p>
                   </form>
                 )}
               </>

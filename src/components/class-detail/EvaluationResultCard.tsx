@@ -65,10 +65,10 @@ const TestResultsBreakdown: React.FC<{
         <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-[#8a5223]/25">
           <span className="text-xs uppercase tracking-widest text-[#703b15] font-bold flex items-center gap-1.5">
             <ClipboardCheck className="w-4 h-4 text-[#8a5223]" />
-            Validación de Criterios Oficiales:
+            Comprobaciones Técnicas del Tribunal:
           </span>
           <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-[#ead3a4] text-[#4d280e] border border-[#8a5223]/40">
-            {passed} / {total} superados
+            {passed} / {total} superadas
           </span>
         </div>
         <ul className="space-y-2 text-xs sm:text-sm font-sans">
@@ -331,7 +331,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
         <div className="my-5 p-5 rounded-xl bg-[#f4e7cb] border border-[#8f5a2e]/60">
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <p className="text-xs sm:text-sm uppercase tracking-widest text-[#703b15] font-bold">
-              Dictamen del Profesor {professorName || "Remus Lupin"}:
+              Dictamen de {professorName || "Profesor Remus Lupin"}:
             </p>
             <button
               type="button"
@@ -339,7 +339,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#ded0b1] hover:bg-[#d0be98] text-[#4d280e] text-xs sm:text-sm font-bold border border-[#7a441b]/50 shadow-sm transition-colors cursor-pointer"
             >
               <Volume2 className="w-3.5 h-3.5 text-[#7a441b]" />
-              Escuchar voz
+              Escuchar proclamación del profesor
             </button>
           </div>
           <p className="text-lg sm:text-xl md:text-2xl italic text-[#2b1609] leading-relaxed">
@@ -402,7 +402,7 @@ export const EvaluationResultCard: React.FC<EvaluationResultCardProps> = ({
       className={`mb-8 p-6 sm:p-8 rounded-2xl border-2 relative overflow-hidden ${
         isTransfiguration
           ? "bg-gradient-to-b from-[#22150e] to-black border-amber-600/70 shadow-[0_15px_60px_rgba(217,119,6,0.3)]"
-          : "bg-gradient-to-b from-[#0c1228] to-black border-indigo-500/70 shadow-[0_15px_60px_rgba(99,102,241,0.3)]"
+          : "bg-gradient-to-b from-[#1a0b12] to-black border-rose-600/70 shadow-[0_15px_60px_rgba(225,29,72,0.3)]"
       }`}
     >
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-stone-800">
